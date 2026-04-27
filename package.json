@@ -2,16 +2,16 @@
   "name": "studio9moneyflow",
   "version": "1.0.0",
   "description": "",
-  "main": "server.js",
+  "main": "index.html",
   "scripts": {
-    "start": "node server.js"
+    "dev": "npx vercel dev",
+    "start": "npx vercel dev"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "express": "^5.2.1",
-    "socket.io": "^4.8.3"
+    "@supabase/supabase-js": "^2.104.1"
   }
 }

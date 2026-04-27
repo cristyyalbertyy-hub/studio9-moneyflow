@@ -10,6 +10,8 @@ const state = {
 
 const sessionCacheKey = "studio9-session-v1";
 const periodStorageKey = "studio9-period-month-v1";
+const bootstrapPollMs = 15000;
+let bootstrapPollTimer = null;
 
 const refs = {
   totalPorPagar: document.getElementById("totalPorPagar"),
@@ -96,9 +98,9 @@ async function boot() {
   if (cached) {
     state.session = cached;
     showAuthedUi();
-    connectSocket();
     try {
       await fetchBootstrap();
+      ensureBootstrapPolling();
       return;
     } catch {
       logout(false);
@@ -122,8 +124,8 @@ async function loginWithPassword(profile, password) {
     state.session = { token: data.token, profile: data.profile };
     persistSessionCache();
     showAuthedUi();
-    connectSocket();
     await fetchBootstrap();
+    ensureBootstrapPolling();
   } catch (error) {
     console.error(error);
     showAuthError("Erro de ligacao. Tenta de novo.");
@@ -132,6 +134,7 @@ async function loginWithPassword(profile, password) {
 
 function logout(showOverlay) {
   state.session = null;
+  stopBootstrapPolling();
   if (state.socket) {
     state.socket.disconnect();
     state.socket = null;
@@ -177,19 +180,6 @@ function showAuthedUi() {
   refs.expensePerson.value = state.session.profile;
 }
 
-function connectSocket() {
-  if (state.socket || !state.session) return;
-  state.socket = io({ auth: { token: state.session.token } });
-  state.socket.on("data:update", (payload) => {
-    state.expenses = payload.expenses;
-    state.incomes = payload.incomes;
-    state.categories = payload.categories;
-    state.documents = Array.isArray(payload.documents) ? payload.documents : [];
-    state.activities = Array.isArray(payload.activities) ? payload.activities : [];
-    render();
-  });
-}
-
 async function fetchBootstrap() {
   const response = await apiFetch("/api/bootstrap");
   state.expenses = Array.isArray(response.expenses) ? response.expenses : [];
@@ -198,6 +188,25 @@ async function fetchBootstrap() {
   state.documents = Array.isArray(response.documents) ? response.documents : [];
   state.activities = Array.isArray(response.activities) ? response.activities : [];
   render();
+}
+
+function ensureBootstrapPolling() {
+  stopBootstrapPolling();
+  bootstrapPollTimer = window.setInterval(async () => {
+    if (!state.session?.token) return;
+    try {
+      await fetchBootstrap();
+    } catch (error) {
+      console.error(error);
+    }
+  }, bootstrapPollMs);
+}
+
+function stopBootstrapPolling() {
+  if (bootstrapPollTimer) {
+    window.clearInterval(bootstrapPollTimer);
+    bootstrapPollTimer = null;
+  }
 }
 
 async function handleExpenseSubmit(event) {
