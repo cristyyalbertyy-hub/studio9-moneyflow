@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="pt">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Studio9 MoneyFlow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div id="authOverlay" class="auth-overlay">
+      <div class="auth-card">
+        <img class="brand-logo" src="./public/S9.png" alt="Studio9" />
+        <h2>Entrar no MoneyFlow</h2>
+
+        <form id="authForm" class="auth-form">
+          <p class="auth-intro">
+            Uma entrada: indica quem es e a palavra-passe partilhada da equipa.
+          </p>
+          <label>
+            Sou
+            <select id="loginProfile" required>
+              <option value="" disabled selected>Escolher…</option>
+              <option value="Cris">Cris</option>
+              <option value="Alex">Alex</option>
+            </select>
+          </label>
+          <label class="auth-pin-label">
+            Palavra-passe
+            <input
+              id="authPassword"
+              type="password"
+              maxlength="128"
+              autocomplete="current-password"
+              placeholder="Password partilhada"
+            />
+          </label>
+          <p id="authError" class="auth-error hidden" role="alert"></p>
+          <button type="submit" class="btn-primary auth-submit">Entrar</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="app-shell">
+      <header class="hero-card">
+        <div>
+          <img class="brand-logo" src="./public/S9.png" alt="Studio9" />
+          <div class="session-row">
+            <span id="activeProfile">Perfil: -</span>
+            <button id="logoutBtn" class="btn-ghost">Terminar sessao</button>
+          </div>
+          <h1>Gestao de Fluxo de Caixa</h1>
+          <p id="periodMonthDisplay" class="period-display" aria-live="polite"></p>
+          <label class="period-field">
+            Mes de referencia
+            <input type="month" id="periodMonth" />
+          </label>
+          <p class="subtitle">
+            Visao mensal: os valores dos cartoes e da atividade seguem o mes de
+            referencia. A listagem usa tambem «De/Ate» (pre-preenchidos ao
+            mudar o mes; podes ajustar se precisares).
+          </p>
+        </div>
+        <div class="summary-grid">
+          <article class="summary-item alert">
+            <span>Despesas por pagar (no mes)</span>
+            <strong id="totalPorPagar">EUR 0,00</strong>
+          </article>
+          <article class="summary-item">
+            <span>Total pago (no mes)</span>
+            <strong id="totalPago">EUR 0,00</strong>
+          </article>
+          <article class="summary-item income">
+            <span>Entradas (no mes)</span>
+            <strong id="totalEntradas">EUR 0,00</strong>
+          </article>
+          <article class="summary-item balance">
+            <span>Disponibilidade (no mes)</span>
+            <strong id="disponibilidadeAtual">EUR 0,00</strong>
+          </article>
+        </div>
+        <p class="summary-hint">
+          Disponibilidade = entradas do mes menos reembolsos (despesas) ja pagos
+          menos documentos ja pagos no painel Pagamentos.
+        </p>
+        <div class="legend-rg legend-rg--hero" aria-hidden="true">
+          <span class="legend-rg-item"
+            ><span class="legend-swatch legend-swatch--red"></span>Por pagar</span
+          >
+          <span class="legend-rg-item"
+            ><span class="legend-swatch legend-swatch--green"></span>Pago</span
+          >
+        </div>
+      </header>
+
+      <section class="panel list-panel">
+        <div class="panel-title">
+          <h2>Reembolsos Cris / Alex</h2>
+          <p>
+            Por defeito esta a ver o que falta pagar neste mes. O pagamento
+            faz-se aqui: interruptor vermelho (por pagar) passa a verde quando
+            a Studio9 efectua o reembolso.
+          </p>
+          <div class="legend-rg" aria-hidden="true">
+            <span class="legend-rg-item"
+              ><span class="legend-swatch legend-swatch--red"></span>Por pagar</span
+            >
+            <span class="legend-rg-item"
+              ><span class="legend-swatch legend-swatch--green"></span>Pago</span
+            >
+          </div>
+        </div>
+
+        <div class="filters">
+          <label>
+            Pessoa
+            <select id="filterPerson">
+              <option value="Todas">Todas</option>
+              <option value="Cris">Cris</option>
+              <option value="Alex">Alex</option>
+            </select>
+          </label>
+          <label>
+            Estado
+            <select id="filterStatus">
+              <option value="Por pagar" selected>Por pagar</option>
+              <option value="Pago">Pago</option>
+              <option value="Todos">Todos</option>
+            </select>
+          </label>
+          <label>
+            De
+            <input id="filterStartDate" type="date" />
+          </label>
+          <label>
+            Ate
+            <input id="filterEndDate" type="date" />
+          </label>
+          <button id="clearFilters" class="btn-ghost">Limpar filtros</button>
+          <button id="exportExcelBtn" class="btn-ghost">Exportar Excel</button>
+          <button id="exportPdfBtn" class="btn-ghost">Exportar PDF</button>
+        </div>
+
+        <div class="table-wrap">
+          <table class="expense-table">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Pessoa</th>
+                <th>Categoria</th>
+                <th>Descricao</th>
+                <th>Valor</th>
+                <th>Reembolso</th>
+              </tr>
+            </thead>
+            <tbody id="expenseRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel payments-panel">
+        <div class="panel-title">
+          <h2>Pagamentos</h2>
+          <p>
+            Documentos da Studio9 (fornecedores, servicos, etc.). Mesmo codigo
+            de cores: interruptor vermelho = por pagar; verde = pagamento
+            processado (reduz a disponibilidade).
+          </p>
+          <div class="legend-rg" aria-hidden="true">
+            <span class="legend-rg-item"
+              ><span class="legend-swatch legend-swatch--red"></span>Por pagar</span
+            >
+            <span class="legend-rg-item"
+              ><span class="legend-swatch legend-swatch--green"></span>Pago</span
+            >
+          </div>
+        </div>
+        <form id="documentForm" class="document-form">
+          <label>
+            Data (mes)
+            <input id="documentDate" type="date" required />
+          </label>
+          <label>
+            Valor (EUR)
+            <input
+              id="documentAmount"
+              type="number"
+              min="0.01"
+              step="0.01"
+              placeholder="0.00"
+              required
+            />
+          </label>
+          <label class="document-form-wide">
+            Descricao / referencia
+            <input
+              id="documentLabel"
+              type="text"
+              maxlength="160"
+              placeholder="Ex: Fatura electricidade Abril"
+              required
+            />
+          </label>
+          <button type="submit" class="btn-primary">Adicionar documento</button>
+        </form>
+        <div class="payments-meta">
+          <span id="documentsPendingTotal">Pendentes no mes: EUR 0,00</span>
+        </div>
+        <ul id="paymentDocsList" class="payments-list"></ul>
+      </section>
+
+      <main class="main-grid">
+        <section class="panel">
+          <div class="panel-title">
+            <h2>Nova despesa</h2>
+            <p>Registar compra feita por Cris ou Alex</p>
+          </div>
+          <form id="expenseForm" class="form-grid">
+            <label>
+              Pessoa
+              <select id="expensePerson" required>
+                <option value="Cris">Cris</option>
+                <option value="Alex">Alex</option>
+              </select>
+            </label>
+            <label>
+              Data
+              <input id="expenseDate" type="date" required />
+            </label>
+            <label>
+              Valor (EUR)
+              <input
+                id="expenseAmount"
+                type="number"
+                min="0.01"
+                step="0.01"
+                placeholder="0.00"
+                required
+              />
+            </label>
+            <label>
+              Categoria
+              <div class="category-row">
+                <select id="expenseCategorySelect" required></select>
+                <button type="button" id="newCategoryBtn" class="btn-ghost">
+                  + Nova categoria
+                </button>
+              </div>
+            </label>
+            <label class="full-width">
+              Descricao
+              <input
+                id="expenseDescription"
+                type="text"
+                maxlength="120"
+                placeholder="Ex: Compra de dossiers e canetas"
+                required
+              />
+            </label>
+            <div class="full-width">
+              <span class="inline-field-label">Reembolso pela Studio9</span>
+              <div class="switch-row switch-row--form">
+                <label class="payment-switch payment-switch--form">
+                  <span class="off" id="statusLabel">Por pagar</span>
+                  <input type="checkbox" id="expensePaid" />
+                </label>
+                <span class="switch-hint"
+                  >Vermelho = ainda por reembolsar. Verde = ja pago.</span
+                >
+              </div>
+            </div>
+            <button type="submit" class="btn-primary full-width">
+              Guardar despesa
+            </button>
+          </form>
+        </section>
+
+        <section class="panel">
+          <div class="panel-title">
+            <h2>Nova entrada</h2>
+            <p>Registar dinheiro que entrou na Studio9</p>
+          </div>
+          <form id="incomeForm" class="form-grid">
+            <label>
+              Data
+              <input id="incomeDate" type="date" required />
+            </label>
+            <label>
+              Valor (EUR)
+              <input
+                id="incomeAmount"
+                type="number"
+                min="0.01"
+                step="0.01"
+                placeholder="0.00"
+                required
+              />
+            </label>
+            <label class="full-width">
+              Origem / Nota
+              <input
+                id="incomeSource"
+                type="text"
+                maxlength="120"
+                placeholder="Ex: Pagamento cliente X"
+                required
+              />
+            </label>
+            <button type="submit" class="btn-secondary full-width">
+              Guardar entrada
+            </button>
+          </form>
+        </section>
+      </main>
+
+      <section class="panel activity-panel">
+        <div class="panel-title">
+          <h2>Atividade recente</h2>
+          <p>
+            Gastos, entradas e reembolsos (quando uma despesa «por pagar» passa
+            a paga).
+          </p>
+        </div>
+        <ul id="activityList" class="activity-list"></ul>
+      </section>
+
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
