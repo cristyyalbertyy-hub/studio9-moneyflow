@@ -34,7 +34,6 @@ const refs = {
   logoutBtn: document.getElementById("logoutBtn"),
   exportExcelBtn: document.getElementById("exportExcelBtn"),
   exportPdfBtn: document.getElementById("exportPdfBtn"),
-  statusLabel: document.getElementById("statusLabel"),
   expenseCategorySelect: document.getElementById("expenseCategorySelect"),
   newCategoryBtn: document.getElementById("newCategoryBtn"),
   editCategoryBtn: document.getElementById("editCategoryBtn"),
@@ -45,7 +44,6 @@ const refs = {
   expenseDate: document.getElementById("expenseDate"),
   expenseAmount: document.getElementById("expenseAmount"),
   expenseDescription: document.getElementById("expenseDescription"),
-  expensePaid: document.getElementById("expensePaid"),
   incomeForm: document.getElementById("incomeForm"),
   incomeDate: document.getElementById("incomeDate"),
   incomeAmount: document.getElementById("incomeAmount"),
@@ -188,7 +186,6 @@ async function boot() {
   i18n.initLangSwitchers();
   i18n.onChange(() => {
     i18n.applyPageTranslations();
-    updatePaidLabel();
     refreshProfileLabel();
     renderProfitDistribution();
     render();
@@ -201,7 +198,6 @@ async function boot() {
   refs.incomeDate.value = now;
   if (refs.documentDate) refs.documentDate.value = now;
   initPeriodMonth();
-  refs.expensePaid.addEventListener("change", updatePaidLabel);
   refs.newCategoryBtn.addEventListener("click", handleNewCategory);
   if (refs.editCategoryBtn) refs.editCategoryBtn.addEventListener("click", handleEditCategory);
   if (refs.deleteCategoryBtn) refs.deleteCategoryBtn.addEventListener("click", handleDeleteCategory);
@@ -226,7 +222,6 @@ async function boot() {
     });
   }
 
-  updatePaidLabel();
   renderPeriodHeader();
 
   const cached = readSessionCache();
@@ -454,15 +449,13 @@ async function handleExpenseSubmit(event) {
       amount,
       category,
       description,
-      paid: refs.expensePaid.checked,
+      paid: false,
     }),
   });
 
   refs.expenseForm.reset();
   refs.expenseDate.value = todayISO();
   refs.expensePerson.value = state.session.profile;
-  refs.expensePaid.checked = false;
-  updatePaidLabel();
 }
 
 async function handleIncomeSubmit(event) {
@@ -495,13 +488,6 @@ async function handleDocumentSubmit(event) {
 
   refs.documentForm.reset();
   refs.documentDate.value = todayISO();
-}
-
-function updatePaidLabel() {
-  const paid = refs.expensePaid.checked;
-  refs.statusLabel.textContent = paid ? t("status.paid") : t("status.unpaid");
-  refs.statusLabel.classList.toggle("on", paid);
-  refs.statusLabel.classList.toggle("off", !paid);
 }
 
 function clearFilters() {
