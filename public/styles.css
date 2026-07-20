@@ -737,12 +737,28 @@ select option {
 
 .category-row {
   display: grid;
-  grid-template-columns: 1fr auto;
   gap: 8px;
 }
 
-.category-row .btn-ghost {
+.category-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.category-row .btn-ghost,
+.category-actions .btn-ghost {
   white-space: nowrap;
+}
+
+.btn-ghost--danger {
+  color: #fca5a5;
+  border-color: rgba(248, 113, 113, 0.35);
+}
+
+.btn-ghost--danger:hover {
+  color: #fecaca;
+  border-color: rgba(248, 113, 113, 0.55);
 }
 
 .switch-wrap input[type="checkbox"] {

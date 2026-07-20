@@ -37,6 +37,8 @@ const refs = {
   statusLabel: document.getElementById("statusLabel"),
   expenseCategorySelect: document.getElementById("expenseCategorySelect"),
   newCategoryBtn: document.getElementById("newCategoryBtn"),
+  editCategoryBtn: document.getElementById("editCategoryBtn"),
+  deleteCategoryBtn: document.getElementById("deleteCategoryBtn"),
   expenseRows: document.getElementById("expenseRows"),
   expenseForm: document.getElementById("expenseForm"),
   expensePerson: document.getElementById("expensePerson"),
@@ -201,6 +203,8 @@ async function boot() {
   initPeriodMonth();
   refs.expensePaid.addEventListener("change", updatePaidLabel);
   refs.newCategoryBtn.addEventListener("click", handleNewCategory);
+  if (refs.editCategoryBtn) refs.editCategoryBtn.addEventListener("click", handleEditCategory);
+  if (refs.deleteCategoryBtn) refs.deleteCategoryBtn.addEventListener("click", handleDeleteCategory);
   refs.expenseForm.addEventListener("submit", handleExpenseSubmit);
   refs.incomeForm.addEventListener("submit", handleIncomeSubmit);
   if (refs.documentForm) refs.documentForm.addEventListener("submit", handleDocumentSubmit);
@@ -322,12 +326,97 @@ function showAuthedUi() {
 
 async function fetchBootstrap() {
   const response = await apiFetch("/api/bootstrap");
+  applyBootstrapPayload(response);
+}
+
+function applyBootstrapPayload(response) {
   state.expenses = Array.isArray(response.expenses) ? response.expenses : [];
   state.incomes = Array.isArray(response.incomes) ? response.incomes : [];
   state.categories = Array.isArray(response.categories) ? response.categories : [];
   state.documents = Array.isArray(response.documents) ? response.documents : [];
   state.activities = Array.isArray(response.activities) ? response.activities : [];
   render();
+}
+
+function getSelectedCategory() {
+  return refs.expenseCategorySelect ? refs.expenseCategorySelect.value.trim() : "";
+}
+
+async function runCategoryMutation(request, selectedAfter) {
+  try {
+    const response = await request();
+    applyBootstrapPayload(response);
+    if (selectedAfter && refs.expenseCategorySelect && state.categories.includes(selectedAfter)) {
+      refs.expenseCategorySelect.value = selectedAfter;
+    }
+  } catch (error) {
+    window.alert(parseApiErrorMessage(error));
+  }
+}
+
+function parseApiErrorMessage(error) {
+  const raw = String(error?.message || "").trim();
+  if (!raw) return t("errors.connection");
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed?.error) return i18n.translateApiError(parsed.error) || parsed.error;
+  } catch {
+    /* not json */
+  }
+  return i18n.translateApiError(raw) || raw;
+}
+
+async function handleNewCategory() {
+  const value = window.prompt(t("category.prompt"));
+  if (!value) return;
+  const category = value.trim();
+  if (!category) return;
+  await runCategoryMutation(
+    () =>
+      apiFetch("/api/categories", {
+        method: "POST",
+        body: JSON.stringify({ category }),
+      }),
+    category
+  );
+}
+
+async function handleEditCategory() {
+  const current = getSelectedCategory();
+  if (!current) {
+    window.alert(t("category.noneSelected"));
+    return;
+  }
+  const value = window.prompt(t("category.editPrompt"), current);
+  if (!value) return;
+  const next = value.trim();
+  if (!next || next === current) return;
+  await runCategoryMutation(
+    () =>
+      apiFetch("/api/categories", {
+        method: "PATCH",
+        body: JSON.stringify({ oldName: current, newName: next }),
+      }),
+    next
+  );
+}
+
+async function handleDeleteCategory() {
+  const current = getSelectedCategory();
+  if (!current) {
+    window.alert(t("category.noneSelected"));
+    return;
+  }
+  const confirmed = window.confirm(t("category.deleteConfirm").replace("{name}", current));
+  if (!confirmed) return;
+  await runCategoryMutation(
+    () =>
+      apiFetch("/api/categories", {
+        method: "DELETE",
+        body: JSON.stringify({ category: current }),
+      }),
+    null
+  );
 }
 
 function ensureBootstrapPolling() {
@@ -406,18 +495,6 @@ async function handleDocumentSubmit(event) {
 
   refs.documentForm.reset();
   refs.documentDate.value = todayISO();
-}
-
-async function handleNewCategory() {
-  const value = window.prompt(t("category.prompt"));
-  if (!value) return;
-  const category = value.trim();
-  if (!category) return;
-  await apiFetch("/api/categories", {
-    method: "POST",
-    body: JSON.stringify({ category }),
-  });
-  refs.expenseCategorySelect.value = category;
 }
 
 function updatePaidLabel() {

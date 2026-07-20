@@ -67,6 +67,11 @@
       "expense.descriptionPlaceholder": "Ex: Compra de dossiers e canetas",
       "expense.reimbursementAria": "Estado do reembolso",
       "category.prompt": "Nome da nova categoria:",
+      "category.editBtn": "Editar categoria",
+      "category.deleteBtn": "Apagar categoria",
+      "category.editPrompt": "Novo nome da categoria:",
+      "category.deleteConfirm": "Apagar a categoria «{name}»?",
+      "category.noneSelected": "Escolhe uma categoria primeiro.",
       "income.new": "Nova entrada",
       "income.subtitle": "Registar dinheiro que entrou na Studio9",
       "income.source": "Origem / Nota",
@@ -98,6 +103,9 @@
       "api.wrongPassword": "Palavra-passe incorrecta.",
       "api.missingPassword": "Palavra-passe partilhada em falta (STUDIO9_PASSWORD).",
       "api.invalidProfile": "Perfil invalido",
+      "api.categoryExists": "Categoria ja existe",
+      "api.categoryInUse": "Categoria em uso em despesas existentes",
+      "api.categoryNotFound": "Categoria nao encontrada",
     },
     en: {
       "auth.title": "Sign in to MoneyFlow",
@@ -164,6 +172,11 @@
       "expense.descriptionPlaceholder": "E.g. Folders and pens purchase",
       "expense.reimbursementAria": "Reimbursement status",
       "category.prompt": "New category name:",
+      "category.editBtn": "Edit category",
+      "category.deleteBtn": "Delete category",
+      "category.editPrompt": "New category name:",
+      "category.deleteConfirm": "Delete category «{name}»?",
+      "category.noneSelected": "Choose a category first.",
       "income.new": "New income",
       "income.subtitle": "Record money received by Studio9",
       "income.source": "Source / note",
@@ -195,6 +208,9 @@
       "api.wrongPassword": "Incorrect password.",
       "api.missingPassword": "Shared password missing (STUDIO9_PASSWORD).",
       "api.invalidProfile": "Invalid profile",
+      "api.categoryExists": "Category already exists",
+      "api.categoryInUse": "Category is used by existing expenses",
+      "api.categoryNotFound": "Category not found",
     },
   };
 
@@ -202,6 +218,9 @@
     "Palavra-passe incorrecta.": "api.wrongPassword",
     "Palavra-passe partilhada em falta (STUDIO9_PASSWORD).": "api.missingPassword",
     "Perfil invalido": "api.invalidProfile",
+    "Categoria ja existe": "api.categoryExists",
+    "Categoria em uso em despesas existentes": "api.categoryInUse",
+    "Categoria nao encontrada": "api.categoryNotFound",
   };
 
   let currentLang = readLang();

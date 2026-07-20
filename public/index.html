@@ -186,9 +186,17 @@
               <span data-i18n="table.category">Categoria</span>
               <div class="category-row">
                 <select id="expenseCategorySelect" required></select>
-                <button type="button" id="newCategoryBtn" class="btn-ghost" data-i18n="expense.newCategory">
-                  + Nova categoria
-                </button>
+                <div class="category-actions">
+                  <button type="button" id="newCategoryBtn" class="btn-ghost" data-i18n="expense.newCategory">
+                    + Nova categoria
+                  </button>
+                  <button type="button" id="editCategoryBtn" class="btn-ghost" data-i18n="category.editBtn">
+                    Editar categoria
+                  </button>
+                  <button type="button" id="deleteCategoryBtn" class="btn-ghost btn-ghost--danger" data-i18n="category.deleteBtn">
+                    Apagar categoria
+                  </button>
+                </div>
               </div>
             </label>
             <label class="full-width">
