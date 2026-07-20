@@ -552,26 +552,37 @@ h1 {
   gap: 18px;
 }
 
+.profit-panel .panel-title p {
+  margin-bottom: 10px;
+}
+
+.profit-split-wrap {
+  max-width: 420px;
+}
+
 .profit-amount-field {
-  max-width: 320px;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
+}
+
+.profit-amount-field input {
+  max-width: 180px;
 }
 
 .profit-split-head,
 .profit-split-row {
   display: grid;
-  grid-template-columns: minmax(88px, 1fr) 120px minmax(120px, 1fr);
+  grid-template-columns: 88px 76px minmax(0, 1fr);
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .profit-split-head {
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   color: #94a3b8;
-  font-size: 0.82rem;
+  font-size: 0.72rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
 }
 
 .profit-split-list {
@@ -579,40 +590,44 @@ h1 {
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 10px;
+  gap: 4px;
 }
 
 .profit-split-row {
-  padding: 12px 14px;
-  border-radius: 12px;
+  padding: 6px 8px;
+  border-radius: 8px;
   background: rgba(15, 23, 42, 0.55);
   border: 1px solid rgba(148, 163, 184, 0.18);
 }
 
 .profit-split-label {
   font-weight: 600;
+  font-size: 0.9rem;
 }
 
 .profit-pct-field {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+  font-size: 0.85rem;
 }
 
 .profit-pct-field input {
-  width: 88px;
+  width: 58px;
+  padding: 6px 8px;
 }
 
 .profit-split-amount {
   text-align: right;
   color: #7dd3fc;
-  font-size: 1.05rem;
+  font-size: 0.92rem;
+  white-space: nowrap;
 }
 
 .profit-total-hint {
-  margin: 14px 0 0;
+  margin: 8px 0 0;
   color: var(--muted);
-  font-size: 0.92rem;
+  font-size: 0.85rem;
 }
 
 .profit-total-hint.is-warning {
@@ -962,10 +977,14 @@ tbody tr:hover {
     grid-template-columns: 1fr;
   }
 
+  .profit-split-wrap {
+    max-width: 100%;
+  }
+
   .profit-split-head,
   .profit-split-row {
     grid-template-columns: 1fr;
-    gap: 8px;
+    gap: 6px;
   }
 
   .profit-split-amount {

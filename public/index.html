@@ -272,98 +272,6 @@
           <ul id="paymentDocsList" class="payments-list"></ul>
         </section>
 
-        <section class="panel profit-panel">
-          <div class="panel-title">
-            <h2 data-i18n="profit.title">Distribuicao de lucro</h2>
-            <p data-i18n="profit.desc">
-              Introduz o lucro total e ajusta as percentagens. Os valores atribuidos
-              calculam-se automaticamente.
-            </p>
-          </div>
-          <label class="profit-amount-field">
-            <span data-i18n="profit.amount">Lucro a distribuir (EUR)</span>
-            <input
-              id="profitAmount"
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="0.00"
-            />
-          </label>
-          <div class="profit-split-head" aria-hidden="true">
-            <span></span>
-            <span data-i18n="profit.percent">Percentagem</span>
-            <span data-i18n="profit.assigned">Valor atribuido</span>
-          </div>
-          <ul class="profit-split-list">
-            <li class="profit-split-row">
-              <span class="profit-split-label">Cris</span>
-              <label class="profit-pct-field">
-                <input
-                  id="profitPctCris"
-                  class="profit-pct-input"
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  value="30"
-                />
-                <span>%</span>
-              </label>
-              <strong id="profitAmtCris" class="profit-split-amount">EUR 0,00</strong>
-            </li>
-            <li class="profit-split-row">
-              <span class="profit-split-label">Alex</span>
-              <label class="profit-pct-field">
-                <input
-                  id="profitPctAlex"
-                  class="profit-pct-input"
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  value="30"
-                />
-                <span>%</span>
-              </label>
-              <strong id="profitAmtAlex" class="profit-split-amount">EUR 0,00</strong>
-            </li>
-            <li class="profit-split-row">
-              <span class="profit-split-label">Studio9</span>
-              <label class="profit-pct-field">
-                <input
-                  id="profitPctStudio9"
-                  class="profit-pct-input"
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  value="30"
-                />
-                <span>%</span>
-              </label>
-              <strong id="profitAmtStudio9" class="profit-split-amount">EUR 0,00</strong>
-            </li>
-            <li class="profit-split-row">
-              <span class="profit-split-label" data-i18n="profit.charity">Caridade</span>
-              <label class="profit-pct-field">
-                <input
-                  id="profitPctCharity"
-                  class="profit-pct-input"
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  value="10"
-                />
-                <span>%</span>
-              </label>
-              <strong id="profitAmtCharity" class="profit-split-amount">EUR 0,00</strong>
-            </li>
-          </ul>
-          <p id="profitTotalHint" class="profit-total-hint"></p>
-        </section>
-
         <section class="panel list-panel">
         <div class="panel-title">
           <h2 data-i18n="list.title">Reembolsos Cris / Alex</h2>
@@ -435,6 +343,100 @@
             <tbody id="expenseRows"></tbody>
           </table>
         </div>
+        </section>
+
+        <section class="panel profit-panel">
+          <div class="panel-title">
+            <h2 data-i18n="profit.title">Distribuicao de lucro</h2>
+            <p data-i18n="profit.desc">
+              Introduz o lucro total e ajusta as percentagens. Os valores atribuidos
+              calculam-se automaticamente.
+            </p>
+          </div>
+          <div class="profit-split-wrap">
+            <label class="profit-amount-field">
+              <span data-i18n="profit.amount">Lucro a distribuir (EUR)</span>
+              <input
+                id="profitAmount"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+              />
+            </label>
+            <div class="profit-split-head" aria-hidden="true">
+              <span></span>
+              <span data-i18n="profit.percent">Percentagem</span>
+              <span data-i18n="profit.assigned">Valor atribuido</span>
+            </div>
+            <ul class="profit-split-list">
+              <li class="profit-split-row">
+                <span class="profit-split-label">Cris</span>
+                <label class="profit-pct-field">
+                  <input
+                    id="profitPctCris"
+                    class="profit-pct-input"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    value="30"
+                  />
+                  <span>%</span>
+                </label>
+                <strong id="profitAmtCris" class="profit-split-amount">EUR 0,00</strong>
+              </li>
+              <li class="profit-split-row">
+                <span class="profit-split-label">Alex</span>
+                <label class="profit-pct-field">
+                  <input
+                    id="profitPctAlex"
+                    class="profit-pct-input"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    value="30"
+                  />
+                  <span>%</span>
+                </label>
+                <strong id="profitAmtAlex" class="profit-split-amount">EUR 0,00</strong>
+              </li>
+              <li class="profit-split-row">
+                <span class="profit-split-label">Studio9</span>
+                <label class="profit-pct-field">
+                  <input
+                    id="profitPctStudio9"
+                    class="profit-pct-input"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    value="30"
+                  />
+                  <span>%</span>
+                </label>
+                <strong id="profitAmtStudio9" class="profit-split-amount">EUR 0,00</strong>
+              </li>
+              <li class="profit-split-row">
+                <span class="profit-split-label" data-i18n="profit.charity">Caridade</span>
+                <label class="profit-pct-field">
+                  <input
+                    id="profitPctCharity"
+                    class="profit-pct-input"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    value="10"
+                  />
+                  <span>%</span>
+                </label>
+                <strong id="profitAmtCharity" class="profit-split-amount">EUR 0,00</strong>
+              </li>
+            </ul>
+            <p id="profitTotalHint" class="profit-total-hint"></p>
+          </div>
         </section>
       </div>
 
