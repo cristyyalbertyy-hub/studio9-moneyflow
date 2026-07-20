@@ -75,6 +75,8 @@ body {
 
 .auth-card-top .brand-logo {
   margin: 0;
+  height: 40px;
+  max-width: min(220px, 55vw);
 }
 
 .lang-switch {
@@ -461,10 +463,12 @@ body {
 }
 
 .brand-logo {
-  height: 44px;
+  height: 48px;
   width: auto;
+  max-width: min(300px, 72vw);
   object-fit: contain;
   margin-bottom: 8px;
+  display: block;
 }
 
 .session-row {
