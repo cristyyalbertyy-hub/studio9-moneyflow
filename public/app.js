@@ -8,6 +8,10 @@ const state = {
   socket: null,
 };
 
+const i18n = window.MoneyFlowI18n;
+const t = (key) => i18n.t(key);
+const locale = () => i18n.locale();
+
 const sessionCacheKey = "studio9-session-v1";
 const periodStorageKey = "studio9-period-month-v1";
 const bootstrapPollMs = 15000;
@@ -59,10 +63,19 @@ const refs = {
 
 boot().catch((error) => {
   console.error(error);
-  window.alert("Nao foi possivel iniciar a aplicacao.");
+  window.alert(t("errors.boot"));
 });
 
 async function boot() {
+  i18n.applyPageTranslations();
+  i18n.initLangSwitchers();
+  i18n.onChange(() => {
+    i18n.applyPageTranslations();
+    updatePaidLabel();
+    refreshProfileLabel();
+    render();
+  });
+
   const now = todayISO();
   refs.expenseDate.value = now;
   refs.incomeDate.value = now;
@@ -118,7 +131,7 @@ async function loginWithPassword(profile, password) {
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      showAuthError(data.error || "Nao foi possivel entrar.");
+      showAuthError(i18n.translateApiError(data.error) || t("errors.login"));
       return;
     }
     state.session = { token: data.token, profile: data.profile };
@@ -128,7 +141,7 @@ async function loginWithPassword(profile, password) {
     ensureBootstrapPolling();
   } catch (error) {
     console.error(error);
-    showAuthError("Erro de ligacao. Tenta de novo.");
+    showAuthError(t("errors.connection"));
   }
 }
 
@@ -145,10 +158,19 @@ function logout(showOverlay) {
 
 function showAuthUi() {
   refs.authOverlay.classList.remove("hidden");
-  refs.activeProfile.textContent = "Perfil: -";
+  refreshProfileLabel(true);
   if (refs.authForm) refs.authForm.reset();
   if (refs.authPassword) refs.authPassword.value = "";
   hideAuthError();
+}
+
+function refreshProfileLabel(signedOut = false) {
+  if (!refs.activeProfile) return;
+  if (signedOut || !state.session?.profile) {
+    refs.activeProfile.textContent = `${t("session.profile")}: -`;
+    return;
+  }
+  refs.activeProfile.textContent = `${t("session.profile")}: ${state.session.profile}`;
 }
 
 function showAuthError(message) {
@@ -168,7 +190,7 @@ async function handleAuthSubmit(event) {
   hideAuthError();
   const profile = refs.loginProfile ? refs.loginProfile.value : "";
   if (!profile) {
-    showAuthError("Indica quem entra (Cris ou Alex).");
+    showAuthError(t("errors.pickProfile"));
     return;
   }
   await loginWithPassword(profile, refs.authPassword ? refs.authPassword.value : "");
@@ -176,7 +198,7 @@ async function handleAuthSubmit(event) {
 
 function showAuthedUi() {
   refs.authOverlay.classList.add("hidden");
-  refs.activeProfile.textContent = `Perfil: ${state.session.profile}`;
+  refreshProfileLabel();
   refs.expensePerson.value = state.session.profile;
 }
 
@@ -269,7 +291,7 @@ async function handleDocumentSubmit(event) {
 }
 
 async function handleNewCategory() {
-  const value = window.prompt("Nome da nova categoria:");
+  const value = window.prompt(t("category.prompt"));
   if (!value) return;
   const category = value.trim();
   if (!category) return;
@@ -282,14 +304,14 @@ async function handleNewCategory() {
 
 function updatePaidLabel() {
   const paid = refs.expensePaid.checked;
-  refs.statusLabel.textContent = paid ? "Pago" : "Por pagar";
+  refs.statusLabel.textContent = paid ? t("status.paid") : t("status.unpaid");
   refs.statusLabel.classList.toggle("on", paid);
   refs.statusLabel.classList.toggle("off", !paid);
 }
 
 function clearFilters() {
-  refs.filterPerson.value = "Todas";
-  refs.filterStatus.value = "Por pagar";
+  refs.filterPerson.value = "all";
+  refs.filterStatus.value = "unpaid";
   applyPeriodMonthToDateFilters();
   render();
 }
@@ -359,14 +381,14 @@ function renderPaymentPanel() {
   const pending = docs.filter((item) => !item.paid).sort((a, b) => (a.date < b.date ? 1 : -1));
   const paid = docs.filter((item) => item.paid).sort((a, b) => (a.date < b.date ? 1 : -1));
   const pendingSum = pending.reduce((sum, item) => sum + item.amount, 0);
-  refs.documentsPendingTotal.textContent = `Pendentes no mes: ${formatEUR(pendingSum)}`;
+  refs.documentsPendingTotal.textContent = `${t("payments.pendingPrefix")} ${formatEUR(pendingSum)}`;
 
   const rowHtml = (item, isPaid) => {
     const id = escapeHtml(item.id);
     const checked = isPaid ? "checked" : "";
     const spanClass = isPaid ? "on" : "off";
-    const spanText = isPaid ? "Pago" : "Por pagar";
-    const by = item.createdBy ? escapeHtml(item.createdBy) : "Sistema";
+    const spanText = isPaid ? t("status.paid") : t("status.unpaid");
+    const by = item.createdBy ? escapeHtml(item.createdBy) : t("misc.system");
     return `
       <li class="payment-row ${isPaid ? "paid-row" : ""}" data-doc-id="${id}">
         <div class="payment-row-main">
@@ -379,7 +401,7 @@ function renderPaymentPanel() {
         <div class="payment-row-amount">${formatEUR(item.amount)}</div>
         <label class="payment-switch">
           <span class="${spanClass}">${spanText}</span>
-          <input type="checkbox" data-doc-toggle="${id}" ${checked} aria-label="Estado do pagamento" />
+          <input type="checkbox" data-doc-toggle="${id}" ${checked} aria-label="${escapeHtml(t("payments.statusAria"))}" />
         </label>
       </li>
     `;
@@ -387,13 +409,13 @@ function renderPaymentPanel() {
 
   let html = "";
   if (pending.length === 0) {
-    html += '<li class="empty">Sem documentos por pagar neste mes.</li>';
+    html += `<li class="empty">${escapeHtml(t("payments.noPending"))}</li>`;
   } else {
     html += pending.map((item) => rowHtml(item, false)).join("");
   }
 
   if (paid.length > 0) {
-    html += `<li class="payments-subheading" style="list-style:none;">Pagos neste mes (podes reverter)</li>`;
+    html += `<li class="payments-subheading" style="list-style:none;">${escapeHtml(t("payments.paidThisMonth"))}</li>`;
     html += paid.map((item) => rowHtml(item, true)).join("");
   }
 
@@ -418,10 +440,8 @@ function renderActivities() {
     })
     .slice(0, 80);
   if (items.length === 0) {
-    const hint = bounds
-      ? "Sem atividade neste mes (ou ainda nao ha registos)."
-      : "Ainda nao ha atividade registada.";
-    refs.activityList.innerHTML = `<li class="empty" style="padding:16px;">${hint}</li>`;
+    const hint = bounds ? t("activity.emptyMonth") : t("activity.emptyAll");
+    refs.activityList.innerHTML = `<li class="empty" style="padding:16px;">${escapeHtml(hint)}</li>`;
     return;
   }
   refs.activityList.innerHTML = items
@@ -448,8 +468,7 @@ function renderActivities() {
 function renderTable() {
   const rows = getFilteredExpenses();
   if (rows.length === 0) {
-    refs.expenseRows.innerHTML =
-      '<tr><td colspan="6" class="empty">Sem resultados para os filtros escolhidos.</td></tr>';
+    refs.expenseRows.innerHTML = `<tr><td colspan="6" class="empty">${escapeHtml(t("table.empty"))}</td></tr>`;
     return;
   }
 
@@ -457,7 +476,7 @@ function renderTable() {
     .map((item) => {
       const id = escapeHtml(item.id);
       const spanClass = item.paid ? "on" : "off";
-      const spanText = item.paid ? "Pago" : "Por pagar";
+      const spanText = item.paid ? t("status.paid") : t("status.unpaid");
       const checked = item.paid ? "checked" : "";
       return `
       <tr>
@@ -469,7 +488,7 @@ function renderTable() {
         <td class="td-reembolso">
           <label class="payment-switch payment-switch--table">
             <span class="${spanClass}">${spanText}</span>
-            <input type="checkbox" data-expense-toggle="${id}" ${checked} aria-label="Estado do reembolso" />
+            <input type="checkbox" data-expense-toggle="${id}" ${checked} aria-label="${escapeHtml(t("expense.reimbursementAria"))}" />
           </label>
         </td>
       </tr>
@@ -491,11 +510,11 @@ function getFilteredExpenses() {
   const startDate = refs.filterStartDate.value;
   const endDate = refs.filterEndDate.value;
   return state.expenses.filter((item) => {
-    const personOk = person === "Todas" || item.person === person;
+    const personOk = person === "all" || item.person === person;
     const statusOk =
-      status === "Todos" ||
-      (status === "Pago" && item.paid) ||
-      (status === "Por pagar" && !item.paid);
+      status === "all" ||
+      (status === "paid" && item.paid) ||
+      (status === "unpaid" && !item.paid);
     const startOk = !startDate || item.date >= startDate;
     const endOk = !endDate || item.date <= endDate;
     return personOk && statusOk && startOk && endOk;
@@ -504,20 +523,20 @@ function getFilteredExpenses() {
 
 function exportExcel() {
   const rows = getFilteredExpenses().map((item) => ({
-    Data: formatDate(item.date),
-    Pessoa: item.person,
-    Categoria: item.category,
-    Descricao: item.description,
-    Valor: item.amount,
-    Reembolso: item.paid ? "Pago" : "Por pagar",
+    [t("table.date")]: formatDate(item.date),
+    [t("table.person")]: item.person,
+    [t("table.category")]: item.category,
+    [t("table.description")]: item.description,
+    [t("table.amount")]: item.amount,
+    [t("table.reimbursement")]: item.paid ? t("status.paid") : t("status.unpaid"),
   }));
   if (rows.length === 0) {
-    window.alert("Nao existem registos para exportar.");
+    window.alert(t("errors.exportEmpty"));
     return;
   }
   const worksheet = XLSX.utils.json_to_sheet(rows);
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Listagem");
+  XLSX.utils.book_append_sheet(workbook, worksheet, t("export.sheetName"));
   XLSX.writeFile(workbook, "studio9-listagem.xlsx");
 }
 
@@ -528,18 +547,27 @@ function exportPdf() {
     item.category,
     item.description,
     formatEUR(item.amount),
-    item.paid ? "Pago" : "Por pagar",
+    item.paid ? t("status.paid") : t("status.unpaid"),
   ]);
   if (rows.length === 0) {
-    window.alert("Nao existem registos para exportar.");
+    window.alert(t("errors.exportEmpty"));
     return;
   }
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: "landscape" });
   doc.setFontSize(14);
-  doc.text("Studio9 - Listagem de despesas", 14, 14);
+  doc.text(t("export.pdfTitle"), 14, 14);
   doc.autoTable({
-    head: [["Data", "Pessoa", "Categoria", "Descricao", "Valor", "Reembolso"]],
+    head: [
+      [
+        t("table.date"),
+        t("table.person"),
+        t("table.category"),
+        t("table.description"),
+        t("table.amount"),
+        t("table.reimbursement"),
+      ],
+    ],
     body: rows,
     startY: 20,
     styles: { fontSize: 9 },
@@ -581,18 +609,18 @@ function persistSessionCache() {
 }
 
 function formatEUR(value) {
-  return new Intl.NumberFormat("pt-PT", {
+  return new Intl.NumberFormat(locale(), {
     style: "currency",
     currency: "EUR",
   }).format(value || 0);
 }
 
 function formatDate(isoDate) {
-  return new Intl.DateTimeFormat("pt-PT").format(new Date(isoDate));
+  return new Intl.DateTimeFormat(locale()).format(new Date(isoDate));
 }
 
 function formatDateTime(iso) {
-  return new Intl.DateTimeFormat("pt-PT", {
+  return new Intl.DateTimeFormat(locale(), {
     dateStyle: "short",
     timeStyle: "short",
   }).format(new Date(iso));
@@ -673,7 +701,7 @@ function applyPeriodMonthToDateFilters() {
   if (!bounds || !refs.filterStartDate || !refs.filterEndDate) return;
   refs.filterStartDate.value = bounds.start;
   refs.filterEndDate.value = bounds.end;
-  if (refs.filterStatus) refs.filterStatus.value = "Por pagar";
+  if (refs.filterStatus) refs.filterStatus.value = "unpaid";
 }
 
 function renderPeriodHeader() {
@@ -684,7 +712,7 @@ function renderPeriodHeader() {
     refs.periodMonthDisplay.textContent = "";
     return;
   }
-  const label = new Intl.DateTimeFormat("pt-PT", {
+  const label = new Intl.DateTimeFormat(locale(), {
     month: "long",
     year: "numeric",
   }).format(new Date(b.year, b.month - 1, 1));

@@ -15,33 +15,42 @@
   <body>
     <div id="authOverlay" class="auth-overlay">
       <div class="auth-card">
-        <img class="brand-logo" src="/S9.png" alt="Studio9" />
-        <h2>Entrar no MoneyFlow</h2>
+        <div class="auth-card-top">
+          <img class="brand-logo" src="/S9.png" alt="Studio9" />
+          <div class="lang-switch" role="group" aria-label="Language">
+            <button type="button" class="lang-btn" data-lang="pt">PT</button>
+            <button type="button" class="lang-btn" data-lang="en">EN</button>
+          </div>
+        </div>
+        <h2 data-i18n="auth.title">Entrar no MoneyFlow</h2>
 
         <form id="authForm" class="auth-form">
-          <p class="auth-intro">
+          <p class="auth-intro" data-i18n="auth.intro">
             Uma entrada: indica quem es e a palavra-passe partilhada da equipa.
           </p>
           <label>
-            Sou
+            <span data-i18n="auth.iAm">Sou</span>
             <select id="loginProfile" required>
-              <option value="" disabled selected>Escolher…</option>
+              <option value="" disabled selected data-i18n="auth.choose">Escolher…</option>
               <option value="Cris">Cris</option>
               <option value="Alex">Alex</option>
             </select>
           </label>
           <label class="auth-pin-label">
-            Palavra-passe
+            <span data-i18n="auth.password">Palavra-passe</span>
             <input
               id="authPassword"
               type="password"
               maxlength="128"
               autocomplete="current-password"
+              data-i18n-placeholder="auth.passwordPlaceholder"
               placeholder="Password partilhada"
             />
           </label>
           <p id="authError" class="auth-error hidden" role="alert"></p>
-          <button type="submit" class="btn-primary auth-submit">Entrar</button>
+          <button type="submit" class="btn-primary auth-submit" data-i18n="auth.submit">
+            Entrar
+          </button>
         </form>
       </div>
     </div>
@@ -52,15 +61,21 @@
           <img class="brand-logo" src="/S9.png" alt="Studio9" />
           <div class="session-row">
             <span id="activeProfile">Perfil: -</span>
-            <button id="logoutBtn" class="btn-ghost">Terminar sessao</button>
+            <div class="lang-switch" role="group" aria-label="Language">
+              <button type="button" class="lang-btn" data-lang="pt">PT</button>
+              <button type="button" class="lang-btn" data-lang="en">EN</button>
+            </div>
+            <button id="logoutBtn" class="btn-ghost" data-i18n="session.logout">
+              Terminar sessao
+            </button>
           </div>
-          <h1>Gestao de Fluxo de Caixa</h1>
+          <h1 data-i18n="hero.title">Gestao de Fluxo de Caixa</h1>
           <p id="periodMonthDisplay" class="period-display" aria-live="polite"></p>
           <label class="period-field">
-            Mes de referencia
+            <span data-i18n="hero.referenceMonth">Mes de referencia</span>
             <input type="month" id="periodMonth" />
           </label>
-          <p class="subtitle">
+          <p class="subtitle" data-i18n="hero.subtitle">
             Visao mensal: os valores dos cartoes e da atividade seguem o mes de
             referencia. A listagem usa tambem «De/Ate» (pre-preenchidos ao
             mudar o mes; podes ajustar se precisares).
@@ -68,94 +83,104 @@
         </div>
         <div class="summary-grid">
           <article class="summary-item alert">
-            <span>Despesas por pagar (no mes)</span>
+            <span data-i18n="hero.unpaidExpenses">Despesas por pagar (no mes)</span>
             <strong id="totalPorPagar">EUR 0,00</strong>
           </article>
           <article class="summary-item">
-            <span>Total pago (no mes)</span>
+            <span data-i18n="hero.totalPaid">Total pago (no mes)</span>
             <strong id="totalPago">EUR 0,00</strong>
           </article>
           <article class="summary-item income">
-            <span>Entradas (no mes)</span>
+            <span data-i18n="hero.incomes">Entradas (no mes)</span>
             <strong id="totalEntradas">EUR 0,00</strong>
           </article>
           <article class="summary-item balance">
-            <span>Disponibilidade (no mes)</span>
+            <span data-i18n="hero.availability">Disponibilidade (no mes)</span>
             <strong id="disponibilidadeAtual">EUR 0,00</strong>
           </article>
         </div>
-        <p class="summary-hint">
+        <p class="summary-hint" data-i18n="hero.availabilityHint">
           Disponibilidade = entradas do mes menos reembolsos (despesas) ja pagos
           menos documentos ja pagos no painel Pagamentos.
         </p>
         <div class="legend-rg legend-rg--hero" aria-hidden="true">
-          <span class="legend-rg-item"
-            ><span class="legend-swatch legend-swatch--red"></span>Por pagar</span
-          >
-          <span class="legend-rg-item"
-            ><span class="legend-swatch legend-swatch--green"></span>Pago</span
-          >
+          <span class="legend-rg-item">
+            <span class="legend-swatch legend-swatch--red"></span>
+            <span data-i18n="status.unpaid">Por pagar</span>
+          </span>
+          <span class="legend-rg-item">
+            <span class="legend-swatch legend-swatch--green"></span>
+            <span data-i18n="status.paid">Pago</span>
+          </span>
         </div>
       </header>
 
       <section class="panel list-panel">
         <div class="panel-title">
-          <h2>Reembolsos Cris / Alex</h2>
-          <p>
+          <h2 data-i18n="list.title">Reembolsos Cris / Alex</h2>
+          <p data-i18n="list.desc">
             Por defeito esta a ver o que falta pagar neste mes. O pagamento
             faz-se aqui: interruptor vermelho (por pagar) passa a verde quando
             a Studio9 efectua o reembolso.
           </p>
           <div class="legend-rg" aria-hidden="true">
-            <span class="legend-rg-item"
-              ><span class="legend-swatch legend-swatch--red"></span>Por pagar</span
-            >
-            <span class="legend-rg-item"
-              ><span class="legend-swatch legend-swatch--green"></span>Pago</span
-            >
+            <span class="legend-rg-item">
+              <span class="legend-swatch legend-swatch--red"></span>
+              <span data-i18n="status.unpaid">Por pagar</span>
+            </span>
+            <span class="legend-rg-item">
+              <span class="legend-swatch legend-swatch--green"></span>
+              <span data-i18n="status.paid">Pago</span>
+            </span>
           </div>
         </div>
 
         <div class="filters">
           <label>
-            Pessoa
+            <span data-i18n="filter.person">Pessoa</span>
             <select id="filterPerson">
-              <option value="Todas">Todas</option>
+              <option value="all" data-i18n="filter.allPeople">Todas</option>
               <option value="Cris">Cris</option>
               <option value="Alex">Alex</option>
             </select>
           </label>
           <label>
-            Estado
+            <span data-i18n="filter.status">Estado</span>
             <select id="filterStatus">
-              <option value="Por pagar" selected>Por pagar</option>
-              <option value="Pago">Pago</option>
-              <option value="Todos">Todos</option>
+              <option value="unpaid" selected data-i18n="status.unpaid">Por pagar</option>
+              <option value="paid" data-i18n="status.paid">Pago</option>
+              <option value="all" data-i18n="filter.allStatus">Todos</option>
             </select>
           </label>
           <label>
-            De
+            <span data-i18n="filter.from">De</span>
             <input id="filterStartDate" type="date" />
           </label>
           <label>
-            Ate
+            <span data-i18n="filter.to">Ate</span>
             <input id="filterEndDate" type="date" />
           </label>
-          <button id="clearFilters" class="btn-ghost">Limpar filtros</button>
-          <button id="exportExcelBtn" class="btn-ghost">Exportar Excel</button>
-          <button id="exportPdfBtn" class="btn-ghost">Exportar PDF</button>
+          <button id="clearFilters" class="btn-ghost" data-i18n="filter.clear">
+            Limpar filtros
+          </button>
+          <button id="exportExcelBtn" class="btn-ghost" data-i18n="export.excel">
+            Exportar Excel
+          </button>
+          <button id="exportPdfBtn" class="btn-ghost" data-i18n="export.pdf">
+            Exportar PDF
+          </button>
         </div>
 
         <div class="table-wrap">
           <table class="expense-table">
             <thead>
               <tr>
-                <th>Data</th>
-                <th>Pessoa</th>
-                <th>Categoria</th>
-                <th>Descricao</th>
-                <th>Valor</th>
-                <th>Reembolso</th>
+                <th data-i18n="table.date">Data</th>
+                <th data-i18n="table.person">Pessoa</th>
+                <th data-i18n="table.category">Categoria</th>
+                <th data-i18n="table.description">Descricao</th>
+                <th data-i18n="table.amount">Valor</th>
+                <th data-i18n="table.reimbursement">Reembolso</th>
               </tr>
             </thead>
             <tbody id="expenseRows"></tbody>
@@ -165,28 +190,30 @@
 
       <section class="panel payments-panel">
         <div class="panel-title">
-          <h2>Pagamentos</h2>
-          <p>
+          <h2 data-i18n="payments.title">Pagamentos</h2>
+          <p data-i18n="payments.desc">
             Documentos da Studio9 (fornecedores, servicos, etc.). Mesmo codigo
             de cores: interruptor vermelho = por pagar; verde = pagamento
             processado (reduz a disponibilidade).
           </p>
           <div class="legend-rg" aria-hidden="true">
-            <span class="legend-rg-item"
-              ><span class="legend-swatch legend-swatch--red"></span>Por pagar</span
-            >
-            <span class="legend-rg-item"
-              ><span class="legend-swatch legend-swatch--green"></span>Pago</span
-            >
+            <span class="legend-rg-item">
+              <span class="legend-swatch legend-swatch--red"></span>
+              <span data-i18n="status.unpaid">Por pagar</span>
+            </span>
+            <span class="legend-rg-item">
+              <span class="legend-swatch legend-swatch--green"></span>
+              <span data-i18n="status.paid">Pago</span>
+            </span>
           </div>
         </div>
         <form id="documentForm" class="document-form">
           <label>
-            Data (mes)
+            <span data-i18n="payments.dateMonth">Data (mes)</span>
             <input id="documentDate" type="date" required />
           </label>
           <label>
-            Valor (EUR)
+            <span data-i18n="payments.amount">Valor (EUR)</span>
             <input
               id="documentAmount"
               type="number"
@@ -197,16 +224,19 @@
             />
           </label>
           <label class="document-form-wide">
-            Descricao / referencia
+            <span data-i18n="payments.description">Descricao / referencia</span>
             <input
               id="documentLabel"
               type="text"
               maxlength="160"
+              data-i18n-placeholder="payments.descriptionPlaceholder"
               placeholder="Ex: Fatura electricidade Abril"
               required
             />
           </label>
-          <button type="submit" class="btn-primary">Adicionar documento</button>
+          <button type="submit" class="btn-primary" data-i18n="payments.add">
+            Adicionar documento
+          </button>
         </form>
         <div class="payments-meta">
           <span id="documentsPendingTotal">Pendentes no mes: EUR 0,00</span>
@@ -217,23 +247,23 @@
       <main class="main-grid">
         <section class="panel">
           <div class="panel-title">
-            <h2>Nova despesa</h2>
-            <p>Registar compra feita por Cris ou Alex</p>
+            <h2 data-i18n="expense.new">Nova despesa</h2>
+            <p data-i18n="expense.subtitle">Registar compra feita por Cris ou Alex</p>
           </div>
           <form id="expenseForm" class="form-grid">
             <label>
-              Pessoa
+              <span data-i18n="filter.person">Pessoa</span>
               <select id="expensePerson" required>
                 <option value="Cris">Cris</option>
                 <option value="Alex">Alex</option>
               </select>
             </label>
             <label>
-              Data
+              <span data-i18n="table.date">Data</span>
               <input id="expenseDate" type="date" required />
             </label>
             <label>
-              Valor (EUR)
+              <span data-i18n="payments.amount">Valor (EUR)</span>
               <input
                 id="expenseAmount"
                 type="number"
@@ -244,37 +274,40 @@
               />
             </label>
             <label>
-              Categoria
+              <span data-i18n="table.category">Categoria</span>
               <div class="category-row">
                 <select id="expenseCategorySelect" required></select>
-                <button type="button" id="newCategoryBtn" class="btn-ghost">
+                <button type="button" id="newCategoryBtn" class="btn-ghost" data-i18n="expense.newCategory">
                   + Nova categoria
                 </button>
               </div>
             </label>
             <label class="full-width">
-              Descricao
+              <span data-i18n="expense.description">Descricao</span>
               <input
                 id="expenseDescription"
                 type="text"
                 maxlength="120"
+                data-i18n-placeholder="expense.descriptionPlaceholder"
                 placeholder="Ex: Compra de dossiers e canetas"
                 required
               />
             </label>
             <div class="full-width">
-              <span class="inline-field-label">Reembolso pela Studio9</span>
+              <span class="inline-field-label" data-i18n="expense.reimbursement"
+                >Reembolso pela Studio9</span
+              >
               <div class="switch-row switch-row--form">
                 <label class="payment-switch payment-switch--form">
                   <span class="off" id="statusLabel">Por pagar</span>
                   <input type="checkbox" id="expensePaid" />
                 </label>
-                <span class="switch-hint"
+                <span class="switch-hint" data-i18n="expense.switchHint"
                   >Vermelho = ainda por reembolsar. Verde = ja pago.</span
                 >
               </div>
             </div>
-            <button type="submit" class="btn-primary full-width">
+            <button type="submit" class="btn-primary full-width" data-i18n="expense.save">
               Guardar despesa
             </button>
           </form>
@@ -282,16 +315,16 @@
 
         <section class="panel">
           <div class="panel-title">
-            <h2>Nova entrada</h2>
-            <p>Registar dinheiro que entrou na Studio9</p>
+            <h2 data-i18n="income.new">Nova entrada</h2>
+            <p data-i18n="income.subtitle">Registar dinheiro que entrou na Studio9</p>
           </div>
           <form id="incomeForm" class="form-grid">
             <label>
-              Data
+              <span data-i18n="table.date">Data</span>
               <input id="incomeDate" type="date" required />
             </label>
             <label>
-              Valor (EUR)
+              <span data-i18n="payments.amount">Valor (EUR)</span>
               <input
                 id="incomeAmount"
                 type="number"
@@ -302,16 +335,17 @@
               />
             </label>
             <label class="full-width">
-              Origem / Nota
+              <span data-i18n="income.source">Origem / Nota</span>
               <input
                 id="incomeSource"
                 type="text"
                 maxlength="120"
+                data-i18n-placeholder="income.sourcePlaceholder"
                 placeholder="Ex: Pagamento cliente X"
                 required
               />
             </label>
-            <button type="submit" class="btn-secondary full-width">
+            <button type="submit" class="btn-secondary full-width" data-i18n="income.save">
               Guardar entrada
             </button>
           </form>
@@ -320,20 +354,20 @@
 
       <section class="panel activity-panel">
         <div class="panel-title">
-          <h2>Atividade recente</h2>
-          <p>
+          <h2 data-i18n="activity.title">Atividade recente</h2>
+          <p data-i18n="activity.desc">
             Gastos, entradas e reembolsos (quando uma despesa «por pagar» passa
             a paga).
           </p>
         </div>
         <ul id="activityList" class="activity-list"></ul>
       </section>
-
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+    <script src="/i18n.js"></script>
     <script src="/app.js"></script>
   </body>
 </html>

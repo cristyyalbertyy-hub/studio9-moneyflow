@@ -1,0 +1,280 @@
+(function () {
+  const storageKey = "studio9-lang-v1";
+
+  const messages = {
+    pt: {
+      "auth.title": "Entrar no MoneyFlow",
+      "auth.intro":
+        "Uma entrada: indica quem es e a palavra-passe partilhada da equipa.",
+      "auth.iAm": "Sou",
+      "auth.choose": "Escolher…",
+      "auth.password": "Palavra-passe",
+      "auth.passwordPlaceholder": "Password partilhada",
+      "auth.submit": "Entrar",
+      "session.profile": "Perfil",
+      "session.logout": "Terminar sessao",
+      "lang.label": "Idioma",
+      "hero.title": "Gestao de Fluxo de Caixa",
+      "hero.referenceMonth": "Mes de referencia",
+      "hero.subtitle":
+        "Visao mensal: os valores dos cartoes e da atividade seguem o mes de referencia. A listagem usa tambem «De/Ate» (pre-preenchidos ao mudar o mes; podes ajustar se precisares).",
+      "hero.unpaidExpenses": "Despesas por pagar (no mes)",
+      "hero.totalPaid": "Total pago (no mes)",
+      "hero.incomes": "Entradas (no mes)",
+      "hero.availability": "Disponibilidade (no mes)",
+      "hero.availabilityHint":
+        "Disponibilidade = entradas do mes menos reembolsos (despesas) ja pagos menos documentos ja pagos no painel Pagamentos.",
+      "status.unpaid": "Por pagar",
+      "status.paid": "Pago",
+      "list.title": "Reembolsos Cris / Alex",
+      "list.desc":
+        "Por defeito esta a ver o que falta pagar neste mes. O pagamento faz-se aqui: interruptor vermelho (por pagar) passa a verde quando a Studio9 efectua o reembolso.",
+      "filter.person": "Pessoa",
+      "filter.status": "Estado",
+      "filter.from": "De",
+      "filter.to": "Ate",
+      "filter.allPeople": "Todas",
+      "filter.allStatus": "Todos",
+      "filter.clear": "Limpar filtros",
+      "export.excel": "Exportar Excel",
+      "export.pdf": "Exportar PDF",
+      "table.date": "Data",
+      "table.person": "Pessoa",
+      "table.category": "Categoria",
+      "table.description": "Descricao",
+      "table.amount": "Valor",
+      "table.reimbursement": "Reembolso",
+      "table.empty": "Sem resultados para os filtros escolhidos.",
+      "payments.title": "Pagamentos",
+      "payments.desc":
+        "Documentos da Studio9 (fornecedores, servicos, etc.). Mesmo codigo de cores: interruptor vermelho = por pagar; verde = pagamento processado (reduz a disponibilidade).",
+      "payments.dateMonth": "Data (mes)",
+      "payments.amount": "Valor (EUR)",
+      "payments.description": "Descricao / referencia",
+      "payments.descriptionPlaceholder": "Ex: Fatura electricidade Abril",
+      "payments.add": "Adicionar documento",
+      "payments.pendingPrefix": "Pendentes no mes:",
+      "payments.noPending": "Sem documentos por pagar neste mes.",
+      "payments.paidThisMonth": "Pagos neste mes (podes reverter)",
+      "payments.statusAria": "Estado do pagamento",
+      "expense.new": "Nova despesa",
+      "expense.subtitle": "Registar compra feita por Cris ou Alex",
+      "expense.reimbursement": "Reembolso pela Studio9",
+      "expense.switchHint": "Vermelho = ainda por reembolsar. Verde = ja pago.",
+      "expense.save": "Guardar despesa",
+      "expense.newCategory": "+ Nova categoria",
+      "expense.description": "Descricao",
+      "expense.descriptionPlaceholder": "Ex: Compra de dossiers e canetas",
+      "expense.reimbursementAria": "Estado do reembolso",
+      "category.prompt": "Nome da nova categoria:",
+      "income.new": "Nova entrada",
+      "income.subtitle": "Registar dinheiro que entrou na Studio9",
+      "income.source": "Origem / Nota",
+      "income.sourcePlaceholder": "Ex: Pagamento cliente X",
+      "income.save": "Guardar entrada",
+      "activity.title": "Atividade recente",
+      "activity.desc":
+        "Gastos, entradas e reembolsos (quando uma despesa «por pagar» passa a paga).",
+      "activity.emptyMonth": "Sem atividade neste mes (ou ainda nao ha registos).",
+      "activity.emptyAll": "Ainda nao ha atividade registada.",
+      "misc.system": "Sistema",
+      "errors.boot": "Nao foi possivel iniciar a aplicacao.",
+      "errors.login": "Nao foi possivel entrar.",
+      "errors.connection": "Erro de ligacao. Tenta de novo.",
+      "errors.pickProfile": "Indica quem entra (Cris ou Alex).",
+      "errors.exportEmpty": "Nao existem registos para exportar.",
+      "export.pdfTitle": "Studio9 - Listagem de despesas",
+      "export.sheetName": "Listagem",
+      "api.wrongPassword": "Palavra-passe incorrecta.",
+      "api.missingPassword": "Palavra-passe partilhada em falta (STUDIO9_PASSWORD).",
+      "api.invalidProfile": "Perfil invalido",
+    },
+    en: {
+      "auth.title": "Sign in to MoneyFlow",
+      "auth.intro":
+        "Single sign-in: choose who you are and enter the team shared password.",
+      "auth.iAm": "I am",
+      "auth.choose": "Choose…",
+      "auth.password": "Password",
+      "auth.passwordPlaceholder": "Shared password",
+      "auth.submit": "Sign in",
+      "session.profile": "Profile",
+      "session.logout": "Sign out",
+      "lang.label": "Language",
+      "hero.title": "Cash Flow Management",
+      "hero.referenceMonth": "Reference month",
+      "hero.subtitle":
+        "Monthly view: card totals and activity follow the reference month. The list also uses From/To (pre-filled when you change month; adjust if needed).",
+      "hero.unpaidExpenses": "Unpaid expenses (this month)",
+      "hero.totalPaid": "Total paid (this month)",
+      "hero.incomes": "Income (this month)",
+      "hero.availability": "Available balance (this month)",
+      "hero.availabilityHint":
+        "Available balance = income this month minus reimbursed expenses already paid minus documents marked paid in Payments.",
+      "status.unpaid": "Unpaid",
+      "status.paid": "Paid",
+      "list.title": "Cris / Alex reimbursements",
+      "list.desc":
+        "By default you see what is still unpaid this month. Toggle red (unpaid) to green when Studio9 completes the reimbursement.",
+      "filter.person": "Person",
+      "filter.status": "Status",
+      "filter.from": "From",
+      "filter.to": "To",
+      "filter.allPeople": "All",
+      "filter.allStatus": "All",
+      "filter.clear": "Clear filters",
+      "export.excel": "Export Excel",
+      "export.pdf": "Export PDF",
+      "table.date": "Date",
+      "table.person": "Person",
+      "table.category": "Category",
+      "table.description": "Description",
+      "table.amount": "Amount",
+      "table.reimbursement": "Reimbursement",
+      "table.empty": "No results for the selected filters.",
+      "payments.title": "Payments",
+      "payments.desc":
+        "Studio9 documents (suppliers, services, etc.). Same colour code: red = unpaid; green = processed (reduces available balance).",
+      "payments.dateMonth": "Date (month)",
+      "payments.amount": "Amount (EUR)",
+      "payments.description": "Description / reference",
+      "payments.descriptionPlaceholder": "E.g. April electricity bill",
+      "payments.add": "Add document",
+      "payments.pendingPrefix": "Pending this month:",
+      "payments.noPending": "No unpaid documents this month.",
+      "payments.paidThisMonth": "Paid this month (can revert)",
+      "payments.statusAria": "Payment status",
+      "expense.new": "New expense",
+      "expense.subtitle": "Record a purchase made by Cris or Alex",
+      "expense.reimbursement": "Reimbursed by Studio9",
+      "expense.switchHint": "Red = still to reimburse. Green = already paid.",
+      "expense.save": "Save expense",
+      "expense.newCategory": "+ New category",
+      "expense.description": "Description",
+      "expense.descriptionPlaceholder": "E.g. Folders and pens purchase",
+      "expense.reimbursementAria": "Reimbursement status",
+      "category.prompt": "New category name:",
+      "income.new": "New income",
+      "income.subtitle": "Record money received by Studio9",
+      "income.source": "Source / note",
+      "income.sourcePlaceholder": "E.g. Client X payment",
+      "income.save": "Save income",
+      "activity.title": "Recent activity",
+      "activity.desc":
+        "Expenses, income and reimbursements (when an unpaid expense becomes paid).",
+      "activity.emptyMonth": "No activity this month (or no records yet).",
+      "activity.emptyAll": "No activity recorded yet.",
+      "misc.system": "System",
+      "errors.boot": "Could not start the application.",
+      "errors.login": "Could not sign in.",
+      "errors.connection": "Connection error. Please try again.",
+      "errors.pickProfile": "Choose who is signing in (Cris or Alex).",
+      "errors.exportEmpty": "There are no records to export.",
+      "export.pdfTitle": "Studio9 - Expense listing",
+      "export.sheetName": "Listing",
+      "api.wrongPassword": "Incorrect password.",
+      "api.missingPassword": "Shared password missing (STUDIO9_PASSWORD).",
+      "api.invalidProfile": "Invalid profile",
+    },
+  };
+
+  const apiErrorMap = {
+    "Palavra-passe incorrecta.": "api.wrongPassword",
+    "Palavra-passe partilhada em falta (STUDIO9_PASSWORD).": "api.missingPassword",
+    "Perfil invalido": "api.invalidProfile",
+  };
+
+  let currentLang = readLang();
+  const listeners = new Set();
+
+  function readLang() {
+    try {
+      const stored = window.localStorage.getItem(storageKey);
+      if (stored === "en" || stored === "pt") return stored;
+    } catch {
+      /* ignore */
+    }
+    const browser = (navigator.language || "pt").toLowerCase();
+    return browser.startsWith("en") ? "en" : "pt";
+  }
+
+  function persistLang(lang) {
+    try {
+      window.localStorage.setItem(storageKey, lang);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function t(key) {
+    return messages[currentLang][key] ?? messages.pt[key] ?? key;
+  }
+
+  function locale() {
+    return currentLang === "en" ? "en-GB" : "pt-PT";
+  }
+
+  function getLang() {
+    return currentLang;
+  }
+
+  function setLang(lang) {
+    if (lang !== "pt" && lang !== "en") return;
+    currentLang = lang;
+    persistLang(lang);
+    document.documentElement.lang = lang;
+    applyPageTranslations();
+    updateLangButtons();
+    listeners.forEach((fn) => fn(lang));
+  }
+
+  function onChange(fn) {
+    listeners.add(fn);
+    return () => listeners.delete(fn);
+  }
+
+  function applyPageTranslations() {
+    document.querySelectorAll("[data-i18n]").forEach((el) => {
+      el.textContent = t(el.getAttribute("data-i18n"));
+    });
+    document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+      el.placeholder = t(el.getAttribute("data-i18n-placeholder"));
+    });
+    document.querySelectorAll("[data-i18n-aria]").forEach((el) => {
+      el.setAttribute("aria-label", t(el.getAttribute("data-i18n-aria")));
+    });
+  }
+
+  function updateLangButtons() {
+    document.querySelectorAll("[data-lang]").forEach((btn) => {
+      const active = btn.getAttribute("data-lang") === currentLang;
+      btn.classList.toggle("active", active);
+      btn.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+  }
+
+  function initLangSwitchers() {
+    document.querySelectorAll("[data-lang]").forEach((btn) => {
+      btn.addEventListener("click", () => setLang(btn.getAttribute("data-lang")));
+    });
+    updateLangButtons();
+  }
+
+  function translateApiError(message) {
+    const key = apiErrorMap[String(message || "").trim()];
+    return key ? t(key) : message;
+  }
+
+  document.documentElement.lang = currentLang;
+
+  window.MoneyFlowI18n = {
+    t,
+    locale,
+    getLang,
+    setLang,
+    onChange,
+    applyPageTranslations,
+    initLangSwitchers,
+    translateApiError,
+  };
+})();
