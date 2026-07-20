@@ -6,6 +6,7 @@ create table if not exists public.categories (
 
 create table if not exists public.expenses (
   id uuid primary key default gen_random_uuid(),
+  seq_number integer unique,
   person text not null check (person in ('Cris', 'Alex')),
   date date not null,
   amount numeric(12,2) not null check (amount > 0),
@@ -18,6 +19,7 @@ create table if not exists public.expenses (
 
 create index if not exists expenses_created_at_idx on public.expenses (created_at desc);
 create index if not exists expenses_date_idx on public.expenses (date desc);
+create index if not exists expenses_seq_number_idx on public.expenses (seq_number desc);
 
 create table if not exists public.incomes (
   id uuid primary key default gen_random_uuid(),

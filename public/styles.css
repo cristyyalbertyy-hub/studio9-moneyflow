@@ -546,6 +546,22 @@ h1 {
   color: #67e8f9;
 }
 
+.summary-item--account strong.negative {
+  color: #fca5a5;
+}
+
+.field-readonly {
+  opacity: 0.85;
+  cursor: default;
+  font-variant-numeric: tabular-nums;
+}
+
+.td-seq {
+  font-variant-numeric: tabular-nums;
+  color: #94a3b8;
+  width: 3.5rem;
+}
+
 .panels-flow {
   margin-top: 20px;
   display: grid;

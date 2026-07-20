@@ -24,6 +24,9 @@
       "hero.availability": "Disponibilidade (no mes)",
       "hero.availabilityHint":
         "Disponibilidade = entradas do mes menos reembolsos (despesas) ja pagos menos documentos ja pagos no painel Pagamentos.",
+      "hero.accountBalance": "Saldo acumulado (conta)",
+      "hero.accountBalanceHint":
+        "Saldo acumulado = todas as entradas menos reembolsos e pagamentos ja efectuados, desde o inicio (como conta bancaria).",
       "status.unpaid": "Por pagar",
       "status.paid": "Pago",
       "list.title": "Reembolsos Cris / Alex",
@@ -58,6 +61,7 @@
       "payments.paidThisMonth": "Pagos neste mes (podes reverter)",
       "payments.statusAria": "Estado do pagamento",
       "expense.new": "Nova despesa",
+      "expense.seqNumber": "Numero",
       "expense.subtitle": "Registar compra feita por Cris ou Alex",
       "expense.reimbursement": "Reembolso pela Studio9",
       "expense.switchHint": "Vermelho = ainda por reembolsar. Verde = ja pago.",
@@ -129,6 +133,9 @@
       "hero.availability": "Available balance (this month)",
       "hero.availabilityHint":
         "Available balance = income this month minus reimbursed expenses already paid minus documents marked paid in Payments.",
+      "hero.accountBalance": "Running account balance",
+      "hero.accountBalanceHint":
+        "Running balance = all income minus all reimbursements and payments made, from the start (like a bank account).",
       "status.unpaid": "Unpaid",
       "status.paid": "Paid",
       "list.title": "Cris / Alex reimbursements",
@@ -163,6 +170,7 @@
       "payments.paidThisMonth": "Paid this month (can revert)",
       "payments.statusAria": "Payment status",
       "expense.new": "New expense",
+      "expense.seqNumber": "No.",
       "expense.subtitle": "Record a purchase made by Cris or Alex",
       "expense.reimbursement": "Reimbursed by Studio9",
       "expense.switchHint": "Red = still to reimburse. Green = already paid.",

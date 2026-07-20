@@ -4,6 +4,7 @@ const state = {
   documents: [],
   categories: [],
   activities: [],
+  summary: { accountBalance: 0, nextExpenseSeq: 1 },
   session: null,
   socket: null,
 };
@@ -23,6 +24,8 @@ const refs = {
   totalPago: document.getElementById("totalPago"),
   totalEntradas: document.getElementById("totalEntradas"),
   disponibilidadeAtual: document.getElementById("disponibilidadeAtual"),
+  accountBalanceTotal: document.getElementById("accountBalanceTotal"),
+  expenseSeqPreview: document.getElementById("expenseSeqPreview"),
   documentForm: document.getElementById("documentForm"),
   documentDate: document.getElementById("documentDate"),
   documentAmount: document.getElementById("documentAmount"),
@@ -330,7 +333,19 @@ function applyBootstrapPayload(response) {
   state.categories = Array.isArray(response.categories) ? response.categories : [];
   state.documents = Array.isArray(response.documents) ? response.documents : [];
   state.activities = Array.isArray(response.activities) ? response.activities : [];
+  state.summary = response.summary || { accountBalance: 0, nextExpenseSeq: 1 };
   render();
+}
+
+async function mutateAndRefresh(request) {
+  try {
+    const response = await request();
+    applyBootstrapPayload(response);
+    return true;
+  } catch (error) {
+    window.alert(parseApiErrorMessage(error));
+    return false;
+  }
 }
 
 function getSelectedCategory() {
@@ -441,17 +456,20 @@ async function handleExpenseSubmit(event) {
   const date = refs.expenseDate.value;
   if (!category || !description || !amount || !date) return;
 
-  await apiFetch("/api/expenses", {
-    method: "POST",
-    body: JSON.stringify({
-      person: refs.expensePerson.value,
-      date,
-      amount,
-      category,
-      description,
-      paid: false,
-    }),
-  });
+  const ok = await mutateAndRefresh(() =>
+    apiFetch("/api/expenses", {
+      method: "POST",
+      body: JSON.stringify({
+        person: refs.expensePerson.value,
+        date,
+        amount,
+        category,
+        description,
+        paid: false,
+      }),
+    })
+  );
+  if (!ok) return;
 
   refs.expenseForm.reset();
   refs.expenseDate.value = todayISO();
@@ -465,10 +483,13 @@ async function handleIncomeSubmit(event) {
   const source = refs.incomeSource.value.trim();
   if (!amount || !date || !source) return;
 
-  await apiFetch("/api/incomes", {
-    method: "POST",
-    body: JSON.stringify({ amount, date, source }),
-  });
+  const ok = await mutateAndRefresh(() =>
+    apiFetch("/api/incomes", {
+      method: "POST",
+      body: JSON.stringify({ amount, date, source }),
+    })
+  );
+  if (!ok) return;
 
   refs.incomeForm.reset();
   refs.incomeDate.value = todayISO();
@@ -481,10 +502,13 @@ async function handleDocumentSubmit(event) {
   const date = refs.documentDate.value;
   if (!label || !amount || !date) return;
 
-  await apiFetch("/api/documents", {
-    method: "POST",
-    body: JSON.stringify({ label, amount, date }),
-  });
+  const ok = await mutateAndRefresh(() =>
+    apiFetch("/api/documents", {
+      method: "POST",
+      body: JSON.stringify({ label, amount, date }),
+    })
+  );
+  if (!ok) return;
 
   refs.documentForm.reset();
   refs.documentDate.value = todayISO();
@@ -500,10 +524,17 @@ function clearFilters() {
 function render() {
   renderPeriodHeader();
   renderCategories();
+  renderExpenseSeqPreview();
   renderTotals();
   renderPaymentPanel();
   renderTable();
   renderActivities();
+}
+
+function renderExpenseSeqPreview() {
+  if (!refs.expenseSeqPreview) return;
+  const next = Number(state.summary?.nextExpenseSeq) || 1;
+  refs.expenseSeqPreview.value = String(next);
 }
 
 function renderCategories() {
@@ -547,6 +578,11 @@ function renderTotals() {
   refs.totalEntradas.textContent = formatEUR(totalEntradas);
   if (refs.disponibilidadeAtual) {
     refs.disponibilidadeAtual.textContent = formatEUR(disponibilidade);
+  }
+  if (refs.accountBalanceTotal) {
+    const balance = Number(state.summary?.accountBalance) || 0;
+    refs.accountBalanceTotal.textContent = formatEUR(balance);
+    refs.accountBalanceTotal.classList.toggle("negative", balance < 0);
   }
 }
 
@@ -605,7 +641,9 @@ function renderPaymentPanel() {
   refs.paymentDocsList.querySelectorAll("[data-doc-toggle]").forEach((input) => {
     input.addEventListener("change", async () => {
       const docId = input.getAttribute("data-doc-toggle");
-      await apiFetch(`/api/documents/${docId}/toggle-paid`, { method: "PATCH" });
+      await mutateAndRefresh(() =>
+        apiFetch(`/api/documents/${docId}/toggle-paid`, { method: "PATCH" })
+      );
     });
   });
 }
@@ -649,7 +687,7 @@ function renderActivities() {
 function renderTable() {
   const rows = getFilteredExpenses();
   if (rows.length === 0) {
-    refs.expenseRows.innerHTML = `<tr><td colspan="6" class="empty">${escapeHtml(t("table.empty"))}</td></tr>`;
+    refs.expenseRows.innerHTML = `<tr><td colspan="7" class="empty">${escapeHtml(t("table.empty"))}</td></tr>`;
     return;
   }
 
@@ -659,8 +697,11 @@ function renderTable() {
       const spanClass = item.paid ? "on" : "off";
       const spanText = item.paid ? t("status.paid") : t("status.unpaid");
       const checked = item.paid ? "checked" : "";
+      const seq =
+        item.seqNumber != null ? escapeHtml(String(item.seqNumber)) : "—";
       return `
       <tr>
+        <td class="td-seq">${seq}</td>
         <td>${formatDate(item.date)}</td>
         <td>${escapeHtml(item.person)}</td>
         <td>${escapeHtml(item.category)}</td>
@@ -680,7 +721,9 @@ function renderTable() {
   refs.expenseRows.querySelectorAll("[data-expense-toggle]").forEach((input) => {
     input.addEventListener("change", async () => {
       const expenseId = input.getAttribute("data-expense-toggle");
-      await apiFetch(`/api/expenses/${expenseId}/toggle`, { method: "PATCH" });
+      await mutateAndRefresh(() =>
+        apiFetch(`/api/expenses/${expenseId}/toggle`, { method: "PATCH" })
+      );
     });
   });
 }
@@ -704,6 +747,7 @@ function getFilteredExpenses() {
 
 function exportExcel() {
   const rows = getFilteredExpenses().map((item) => ({
+    [t("expense.seqNumber")]: item.seqNumber != null ? item.seqNumber : "",
     [t("table.date")]: formatDate(item.date),
     [t("table.person")]: item.person,
     [t("table.category")]: item.category,
@@ -723,6 +767,7 @@ function exportExcel() {
 
 function exportPdf() {
   const rows = getFilteredExpenses().map((item) => [
+    item.seqNumber != null ? String(item.seqNumber) : "—",
     formatDate(item.date),
     item.person,
     item.category,
@@ -741,6 +786,7 @@ function exportPdf() {
   doc.autoTable({
     head: [
       [
+        t("expense.seqNumber"),
         t("table.date"),
         t("table.person"),
         t("table.category"),

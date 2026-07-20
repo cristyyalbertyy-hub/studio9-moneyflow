@@ -98,10 +98,18 @@
             <span data-i18n="hero.availability">Disponibilidade (no mes)</span>
             <strong id="disponibilidadeAtual">EUR 0,00</strong>
           </article>
+          <article class="summary-item balance summary-item--account">
+            <span data-i18n="hero.accountBalance">Saldo acumulado (conta)</span>
+            <strong id="accountBalanceTotal">EUR 0,00</strong>
+          </article>
         </div>
         <p class="summary-hint" data-i18n="hero.availabilityHint">
           Disponibilidade = entradas do mes menos reembolsos (despesas) ja pagos
           menos documentos ja pagos no painel Pagamentos.
+        </p>
+        <p class="summary-hint" data-i18n="hero.accountBalanceHint">
+          Saldo acumulado = todas as entradas menos todos os reembolsos e pagamentos
+          ja efectuados, desde o inicio (como conta bancaria).
         </p>
         <div class="legend-rg legend-rg--hero" aria-hidden="true">
           <span class="legend-rg-item">
@@ -160,6 +168,10 @@
             <p data-i18n="expense.subtitle">Registar compra feita por Cris ou Alex</p>
           </div>
           <form id="expenseForm" class="form-grid">
+            <label>
+              <span data-i18n="expense.seqNumber">Numero</span>
+              <input id="expenseSeqPreview" type="text" class="field-readonly" readonly tabindex="-1" />
+            </label>
             <label>
               <span data-i18n="filter.person">Pessoa</span>
               <select id="expensePerson" required>
@@ -332,6 +344,7 @@
           <table class="expense-table">
             <thead>
               <tr>
+                <th data-i18n="expense.seqNumber">Numero</th>
                 <th data-i18n="table.date">Data</th>
                 <th data-i18n="table.person">Pessoa</th>
                 <th data-i18n="table.category">Categoria</th>
