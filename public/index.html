@@ -115,7 +115,262 @@
         </div>
       </header>
 
-      <section class="panel list-panel">
+      <div class="panels-flow">
+        <section class="panel income-panel">
+          <div class="panel-title">
+            <h2 data-i18n="income.new">Nova entrada</h2>
+            <p data-i18n="income.subtitle">Registar dinheiro que entrou na Studio9</p>
+          </div>
+          <form id="incomeForm" class="form-grid">
+            <label>
+              <span data-i18n="table.date">Data</span>
+              <input id="incomeDate" type="date" required />
+            </label>
+            <label>
+              <span data-i18n="payments.amount">Valor (EUR)</span>
+              <input
+                id="incomeAmount"
+                type="number"
+                min="0.01"
+                step="0.01"
+                placeholder="0.00"
+                required
+              />
+            </label>
+            <label class="full-width">
+              <span data-i18n="income.source">Origem / Nota</span>
+              <input
+                id="incomeSource"
+                type="text"
+                maxlength="120"
+                data-i18n-placeholder="income.sourcePlaceholder"
+                placeholder="Ex: Pagamento cliente X"
+                required
+              />
+            </label>
+            <button type="submit" class="btn-secondary full-width" data-i18n="income.save">
+              Guardar entrada
+            </button>
+          </form>
+        </section>
+
+        <section class="panel expense-panel">
+          <div class="panel-title">
+            <h2 data-i18n="expense.new">Nova despesa</h2>
+            <p data-i18n="expense.subtitle">Registar compra feita por Cris ou Alex</p>
+          </div>
+          <form id="expenseForm" class="form-grid">
+            <label>
+              <span data-i18n="filter.person">Pessoa</span>
+              <select id="expensePerson" required>
+                <option value="Cris">Cris</option>
+                <option value="Alex">Alex</option>
+              </select>
+            </label>
+            <label>
+              <span data-i18n="table.date">Data</span>
+              <input id="expenseDate" type="date" required />
+            </label>
+            <label>
+              <span data-i18n="payments.amount">Valor (EUR)</span>
+              <input
+                id="expenseAmount"
+                type="number"
+                min="0.01"
+                step="0.01"
+                placeholder="0.00"
+                required
+              />
+            </label>
+            <label>
+              <span data-i18n="table.category">Categoria</span>
+              <div class="category-row">
+                <select id="expenseCategorySelect" required></select>
+                <button type="button" id="newCategoryBtn" class="btn-ghost" data-i18n="expense.newCategory">
+                  + Nova categoria
+                </button>
+              </div>
+            </label>
+            <label class="full-width">
+              <span data-i18n="expense.description">Descricao</span>
+              <input
+                id="expenseDescription"
+                type="text"
+                maxlength="120"
+                data-i18n-placeholder="expense.descriptionPlaceholder"
+                placeholder="Ex: Compra de dossiers e canetas"
+                required
+              />
+            </label>
+            <div class="full-width">
+              <span class="inline-field-label" data-i18n="expense.reimbursement"
+                >Reembolso pela Studio9</span
+              >
+              <div class="switch-row switch-row--form">
+                <label class="payment-switch payment-switch--form">
+                  <span class="off" id="statusLabel">Por pagar</span>
+                  <input type="checkbox" id="expensePaid" />
+                </label>
+                <span class="switch-hint" data-i18n="expense.switchHint"
+                  >Vermelho = ainda por reembolsar. Verde = ja pago.</span
+                >
+              </div>
+            </div>
+            <button type="submit" class="btn-primary full-width" data-i18n="expense.save">
+              Guardar despesa
+            </button>
+          </form>
+        </section>
+
+        <section class="panel payments-panel">
+          <div class="panel-title">
+            <h2 data-i18n="payments.title">Pagamentos</h2>
+            <p data-i18n="payments.desc">
+              Documentos da Studio9 (fornecedores, servicos, etc.). Mesmo codigo
+              de cores: interruptor vermelho = por pagar; verde = pagamento
+              processado (reduz a disponibilidade).
+            </p>
+            <div class="legend-rg" aria-hidden="true">
+              <span class="legend-rg-item">
+                <span class="legend-swatch legend-swatch--red"></span>
+                <span data-i18n="status.unpaid">Por pagar</span>
+              </span>
+              <span class="legend-rg-item">
+                <span class="legend-swatch legend-swatch--green"></span>
+                <span data-i18n="status.paid">Pago</span>
+              </span>
+            </div>
+          </div>
+          <form id="documentForm" class="document-form">
+            <label>
+              <span data-i18n="payments.dateMonth">Data (mes)</span>
+              <input id="documentDate" type="date" required />
+            </label>
+            <label>
+              <span data-i18n="payments.amount">Valor (EUR)</span>
+              <input
+                id="documentAmount"
+                type="number"
+                min="0.01"
+                step="0.01"
+                placeholder="0.00"
+                required
+              />
+            </label>
+            <label class="document-form-wide">
+              <span data-i18n="payments.description">Descricao / referencia</span>
+              <input
+                id="documentLabel"
+                type="text"
+                maxlength="160"
+                data-i18n-placeholder="payments.descriptionPlaceholder"
+                placeholder="Ex: Fatura electricidade Abril"
+                required
+              />
+            </label>
+            <button type="submit" class="btn-primary" data-i18n="payments.add">
+              Adicionar documento
+            </button>
+          </form>
+          <div class="payments-meta">
+            <span id="documentsPendingTotal">Pendentes no mes: EUR 0,00</span>
+          </div>
+          <ul id="paymentDocsList" class="payments-list"></ul>
+        </section>
+
+        <section class="panel profit-panel">
+          <div class="panel-title">
+            <h2 data-i18n="profit.title">Distribuicao de lucro</h2>
+            <p data-i18n="profit.desc">
+              Introduz o lucro total e ajusta as percentagens. Os valores atribuidos
+              calculam-se automaticamente.
+            </p>
+          </div>
+          <label class="profit-amount-field">
+            <span data-i18n="profit.amount">Lucro a distribuir (EUR)</span>
+            <input
+              id="profitAmount"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+            />
+          </label>
+          <div class="profit-split-head" aria-hidden="true">
+            <span></span>
+            <span data-i18n="profit.percent">Percentagem</span>
+            <span data-i18n="profit.assigned">Valor atribuido</span>
+          </div>
+          <ul class="profit-split-list">
+            <li class="profit-split-row">
+              <span class="profit-split-label">Cris</span>
+              <label class="profit-pct-field">
+                <input
+                  id="profitPctCris"
+                  class="profit-pct-input"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  value="30"
+                />
+                <span>%</span>
+              </label>
+              <strong id="profitAmtCris" class="profit-split-amount">EUR 0,00</strong>
+            </li>
+            <li class="profit-split-row">
+              <span class="profit-split-label">Alex</span>
+              <label class="profit-pct-field">
+                <input
+                  id="profitPctAlex"
+                  class="profit-pct-input"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  value="30"
+                />
+                <span>%</span>
+              </label>
+              <strong id="profitAmtAlex" class="profit-split-amount">EUR 0,00</strong>
+            </li>
+            <li class="profit-split-row">
+              <span class="profit-split-label">Studio9</span>
+              <label class="profit-pct-field">
+                <input
+                  id="profitPctStudio9"
+                  class="profit-pct-input"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  value="30"
+                />
+                <span>%</span>
+              </label>
+              <strong id="profitAmtStudio9" class="profit-split-amount">EUR 0,00</strong>
+            </li>
+            <li class="profit-split-row">
+              <span class="profit-split-label" data-i18n="profit.charity">Caridade</span>
+              <label class="profit-pct-field">
+                <input
+                  id="profitPctCharity"
+                  class="profit-pct-input"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  value="10"
+                />
+                <span>%</span>
+              </label>
+              <strong id="profitAmtCharity" class="profit-split-amount">EUR 0,00</strong>
+            </li>
+          </ul>
+          <p id="profitTotalHint" class="profit-total-hint"></p>
+        </section>
+
+        <section class="panel list-panel">
         <div class="panel-title">
           <h2 data-i18n="list.title">Reembolsos Cris / Alex</h2>
           <p data-i18n="list.desc">
@@ -186,171 +441,8 @@
             <tbody id="expenseRows"></tbody>
           </table>
         </div>
-      </section>
-
-      <section class="panel payments-panel">
-        <div class="panel-title">
-          <h2 data-i18n="payments.title">Pagamentos</h2>
-          <p data-i18n="payments.desc">
-            Documentos da Studio9 (fornecedores, servicos, etc.). Mesmo codigo
-            de cores: interruptor vermelho = por pagar; verde = pagamento
-            processado (reduz a disponibilidade).
-          </p>
-          <div class="legend-rg" aria-hidden="true">
-            <span class="legend-rg-item">
-              <span class="legend-swatch legend-swatch--red"></span>
-              <span data-i18n="status.unpaid">Por pagar</span>
-            </span>
-            <span class="legend-rg-item">
-              <span class="legend-swatch legend-swatch--green"></span>
-              <span data-i18n="status.paid">Pago</span>
-            </span>
-          </div>
-        </div>
-        <form id="documentForm" class="document-form">
-          <label>
-            <span data-i18n="payments.dateMonth">Data (mes)</span>
-            <input id="documentDate" type="date" required />
-          </label>
-          <label>
-            <span data-i18n="payments.amount">Valor (EUR)</span>
-            <input
-              id="documentAmount"
-              type="number"
-              min="0.01"
-              step="0.01"
-              placeholder="0.00"
-              required
-            />
-          </label>
-          <label class="document-form-wide">
-            <span data-i18n="payments.description">Descricao / referencia</span>
-            <input
-              id="documentLabel"
-              type="text"
-              maxlength="160"
-              data-i18n-placeholder="payments.descriptionPlaceholder"
-              placeholder="Ex: Fatura electricidade Abril"
-              required
-            />
-          </label>
-          <button type="submit" class="btn-primary" data-i18n="payments.add">
-            Adicionar documento
-          </button>
-        </form>
-        <div class="payments-meta">
-          <span id="documentsPendingTotal">Pendentes no mes: EUR 0,00</span>
-        </div>
-        <ul id="paymentDocsList" class="payments-list"></ul>
-      </section>
-
-      <main class="main-grid">
-        <section class="panel">
-          <div class="panel-title">
-            <h2 data-i18n="expense.new">Nova despesa</h2>
-            <p data-i18n="expense.subtitle">Registar compra feita por Cris ou Alex</p>
-          </div>
-          <form id="expenseForm" class="form-grid">
-            <label>
-              <span data-i18n="filter.person">Pessoa</span>
-              <select id="expensePerson" required>
-                <option value="Cris">Cris</option>
-                <option value="Alex">Alex</option>
-              </select>
-            </label>
-            <label>
-              <span data-i18n="table.date">Data</span>
-              <input id="expenseDate" type="date" required />
-            </label>
-            <label>
-              <span data-i18n="payments.amount">Valor (EUR)</span>
-              <input
-                id="expenseAmount"
-                type="number"
-                min="0.01"
-                step="0.01"
-                placeholder="0.00"
-                required
-              />
-            </label>
-            <label>
-              <span data-i18n="table.category">Categoria</span>
-              <div class="category-row">
-                <select id="expenseCategorySelect" required></select>
-                <button type="button" id="newCategoryBtn" class="btn-ghost" data-i18n="expense.newCategory">
-                  + Nova categoria
-                </button>
-              </div>
-            </label>
-            <label class="full-width">
-              <span data-i18n="expense.description">Descricao</span>
-              <input
-                id="expenseDescription"
-                type="text"
-                maxlength="120"
-                data-i18n-placeholder="expense.descriptionPlaceholder"
-                placeholder="Ex: Compra de dossiers e canetas"
-                required
-              />
-            </label>
-            <div class="full-width">
-              <span class="inline-field-label" data-i18n="expense.reimbursement"
-                >Reembolso pela Studio9</span
-              >
-              <div class="switch-row switch-row--form">
-                <label class="payment-switch payment-switch--form">
-                  <span class="off" id="statusLabel">Por pagar</span>
-                  <input type="checkbox" id="expensePaid" />
-                </label>
-                <span class="switch-hint" data-i18n="expense.switchHint"
-                  >Vermelho = ainda por reembolsar. Verde = ja pago.</span
-                >
-              </div>
-            </div>
-            <button type="submit" class="btn-primary full-width" data-i18n="expense.save">
-              Guardar despesa
-            </button>
-          </form>
         </section>
-
-        <section class="panel">
-          <div class="panel-title">
-            <h2 data-i18n="income.new">Nova entrada</h2>
-            <p data-i18n="income.subtitle">Registar dinheiro que entrou na Studio9</p>
-          </div>
-          <form id="incomeForm" class="form-grid">
-            <label>
-              <span data-i18n="table.date">Data</span>
-              <input id="incomeDate" type="date" required />
-            </label>
-            <label>
-              <span data-i18n="payments.amount">Valor (EUR)</span>
-              <input
-                id="incomeAmount"
-                type="number"
-                min="0.01"
-                step="0.01"
-                placeholder="0.00"
-                required
-              />
-            </label>
-            <label class="full-width">
-              <span data-i18n="income.source">Origem / Nota</span>
-              <input
-                id="incomeSource"
-                type="text"
-                maxlength="120"
-                data-i18n-placeholder="income.sourcePlaceholder"
-                placeholder="Ex: Pagamento cliente X"
-                required
-              />
-            </label>
-            <button type="submit" class="btn-secondary full-width" data-i18n="income.save">
-              Guardar entrada
-            </button>
-          </form>
-        </section>
-      </main>
+      </div>
 
       <section class="panel activity-panel">
         <div class="panel-title">

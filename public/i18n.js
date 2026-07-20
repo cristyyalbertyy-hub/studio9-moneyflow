@@ -72,6 +72,16 @@
       "income.source": "Origem / Nota",
       "income.sourcePlaceholder": "Ex: Pagamento cliente X",
       "income.save": "Guardar entrada",
+      "profit.title": "Distribuicao de lucro",
+      "profit.desc":
+        "Introduz o lucro total e ajusta as percentagens. Os valores atribuidos calculam-se automaticamente.",
+      "profit.amount": "Lucro a distribuir (EUR)",
+      "profit.percent": "Percentagem",
+      "profit.assigned": "Valor atribuido",
+      "profit.charity": "Caridade",
+      "profit.totalLabel": "Total das percentagens:",
+      "profit.totalOk": "100% — distribuicao completa.",
+      "profit.totalWarn": "Atencao: as percentagens somam {total}%. Ajusta para 100%.",
       "activity.title": "Atividade recente",
       "activity.desc":
         "Gastos, entradas e reembolsos (quando uma despesa «por pagar» passa a paga).",
@@ -159,6 +169,16 @@
       "income.source": "Source / note",
       "income.sourcePlaceholder": "E.g. Client X payment",
       "income.save": "Save income",
+      "profit.title": "Profit distribution",
+      "profit.desc":
+        "Enter total profit and adjust the percentages. Assigned amounts are calculated automatically.",
+      "profit.amount": "Profit to distribute (EUR)",
+      "profit.percent": "Percentage",
+      "profit.assigned": "Assigned amount",
+      "profit.charity": "Charity",
+      "profit.totalLabel": "Total percentages:",
+      "profit.totalOk": "100% — full distribution.",
+      "profit.totalWarn": "Note: percentages add up to {total}%. Adjust to 100%.",
       "activity.title": "Recent activity",
       "activity.desc":
         "Expenses, income and reimbursements (when an unpaid expense becomes paid).",

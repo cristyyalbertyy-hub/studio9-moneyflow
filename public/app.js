@@ -14,6 +14,7 @@ const locale = () => i18n.locale();
 
 const sessionCacheKey = "studio9-session-v1";
 const periodStorageKey = "studio9-period-month-v1";
+const profitSplitsStorageKey = "studio9-profit-splits-v1";
 const bootstrapPollMs = 15000;
 let bootstrapPollTimer = null;
 
@@ -59,6 +60,16 @@ const refs = {
   loginProfile: document.getElementById("loginProfile"),
   authPassword: document.getElementById("authPassword"),
   authError: document.getElementById("authError"),
+  profitAmount: document.getElementById("profitAmount"),
+  profitPctCris: document.getElementById("profitPctCris"),
+  profitPctAlex: document.getElementById("profitPctAlex"),
+  profitPctStudio9: document.getElementById("profitPctStudio9"),
+  profitPctCharity: document.getElementById("profitPctCharity"),
+  profitAmtCris: document.getElementById("profitAmtCris"),
+  profitAmtAlex: document.getElementById("profitAmtAlex"),
+  profitAmtStudio9: document.getElementById("profitAmtStudio9"),
+  profitAmtCharity: document.getElementById("profitAmtCharity"),
+  profitTotalHint: document.getElementById("profitTotalHint"),
 };
 
 boot().catch((error) => {
@@ -73,8 +84,11 @@ async function boot() {
     i18n.applyPageTranslations();
     updatePaidLabel();
     refreshProfileLabel();
+    renderProfitDistribution();
     render();
   });
+
+  initProfitDistribution();
 
   const now = todayISO();
   refs.expenseDate.value = now;
@@ -723,4 +737,108 @@ function renderPeriodHeader() {
 function activityTimestampInMonth(iso, year, month) {
   const d = new Date(iso);
   return d.getFullYear() === year && d.getMonth() + 1 === month;
+}
+
+const defaultProfitSplits = {
+  cris: 30,
+  alex: 30,
+  studio9: 30,
+  charity: 10,
+};
+
+function initProfitDistribution() {
+  if (!refs.profitAmount) return;
+
+  const stored = readProfitSplits();
+  if (refs.profitPctCris) refs.profitPctCris.value = stored.cris;
+  if (refs.profitPctAlex) refs.profitPctAlex.value = stored.alex;
+  if (refs.profitPctStudio9) refs.profitPctStudio9.value = stored.studio9;
+  if (refs.profitPctCharity) refs.profitPctCharity.value = stored.charity;
+
+  const inputs = [
+    refs.profitAmount,
+    refs.profitPctCris,
+    refs.profitPctAlex,
+    refs.profitPctStudio9,
+    refs.profitPctCharity,
+  ].filter(Boolean);
+
+  inputs.forEach((input) => {
+    input.addEventListener("input", () => {
+      persistProfitSplits();
+      renderProfitDistribution();
+    });
+  });
+
+  renderProfitDistribution();
+}
+
+function readProfitSplits() {
+  try {
+    const raw = window.localStorage.getItem(profitSplitsStorageKey);
+    if (!raw) return { ...defaultProfitSplits };
+    const parsed = JSON.parse(raw);
+    return {
+      cris: clampPercent(parsed.cris, defaultProfitSplits.cris),
+      alex: clampPercent(parsed.alex, defaultProfitSplits.alex),
+      studio9: clampPercent(parsed.studio9, defaultProfitSplits.studio9),
+      charity: clampPercent(parsed.charity, defaultProfitSplits.charity),
+    };
+  } catch {
+    return { ...defaultProfitSplits };
+  }
+}
+
+function persistProfitSplits() {
+  if (!refs.profitPctCris) return;
+  const payload = {
+    cris: clampPercent(refs.profitPctCris.value, defaultProfitSplits.cris),
+    alex: clampPercent(refs.profitPctAlex.value, defaultProfitSplits.alex),
+    studio9: clampPercent(refs.profitPctStudio9.value, defaultProfitSplits.studio9),
+    charity: clampPercent(refs.profitPctCharity.value, defaultProfitSplits.charity),
+  };
+  try {
+    window.localStorage.setItem(profitSplitsStorageKey, JSON.stringify(payload));
+  } catch {
+    /* ignore */
+  }
+}
+
+function clampPercent(value, fallback) {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0) return fallback;
+  return Math.min(n, 100);
+}
+
+function renderProfitDistribution() {
+  if (!refs.profitAmount) return;
+
+  const profit = Math.max(0, Number(refs.profitAmount.value) || 0);
+  const splits = [
+    { pctEl: refs.profitPctCris, amtEl: refs.profitAmtCris },
+    { pctEl: refs.profitPctAlex, amtEl: refs.profitAmtAlex },
+    { pctEl: refs.profitPctStudio9, amtEl: refs.profitAmtStudio9 },
+    { pctEl: refs.profitPctCharity, amtEl: refs.profitAmtCharity },
+  ];
+
+  let totalPct = 0;
+  splits.forEach(({ pctEl, amtEl }) => {
+    if (!pctEl || !amtEl) return;
+    const pct = clampPercent(pctEl.value, 0);
+    totalPct += pct;
+    amtEl.textContent = formatEUR((profit * pct) / 100);
+  });
+
+  if (!refs.profitTotalHint) return;
+  const totalLabel = `${t("profit.totalLabel")} ${totalPct.toFixed(1)}%`;
+  refs.profitTotalHint.classList.remove("is-warning", "is-ok");
+
+  if (Math.abs(totalPct - 100) < 0.05) {
+    refs.profitTotalHint.textContent = `${totalLabel} — ${t("profit.totalOk")}`;
+    refs.profitTotalHint.classList.add("is-ok");
+    return;
+  }
+
+  refs.profitTotalHint.textContent = `${totalLabel} — ${t("profit.totalWarn").replace("{total}", totalPct.toFixed(1))}`;
+  refs.profitTotalHint.classList.add("is-warning");
 }
