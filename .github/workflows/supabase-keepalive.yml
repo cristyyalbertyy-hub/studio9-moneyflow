@@ -1,0 +1,22 @@
+name: Supabase keepalive
+
+on:
+  schedule:
+    # Segunda, quarta e sexta as 09:00 UTC (~10h Lisboa no inverno)
+    - cron: "0 9 * * 1,3,5"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Manter Supabase activo via API MoneyFlow
+        env:
+          APP_URL: https://studio9-moneyflow.vercel.app
+          KEEPALIVE_SECRET: ${{ secrets.KEEPALIVE_SECRET }}
+        run: |
+          if [ -z "$KEEPALIVE_SECRET" ]; then
+            echo "KEEPALIVE_SECRET em falta nos GitHub Secrets."
+            exit 1
+          fi
+          curl -fsS "${APP_URL}/api/keepalive?secret=${KEEPALIVE_SECRET}"
