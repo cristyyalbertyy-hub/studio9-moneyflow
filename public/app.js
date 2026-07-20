@@ -32,6 +32,10 @@ const refs = {
   documentLabel: document.getElementById("documentLabel"),
   paymentDocsList: document.getElementById("paymentDocsList"),
   documentsPendingTotal: document.getElementById("documentsPendingTotal"),
+  paymentsAccountBalance: document.getElementById("paymentsAccountBalance"),
+  exportPendingPdfBtn: document.getElementById("exportPendingPdfBtn"),
+  balanceAlertOverlay: document.getElementById("balanceAlertOverlay"),
+  balanceAlertOk: document.getElementById("balanceAlertOk"),
   authOverlay: document.getElementById("authOverlay"),
   activeProfile: document.getElementById("activeProfile"),
   logoutBtn: document.getElementById("logoutBtn"),
@@ -211,6 +215,13 @@ async function boot() {
   refs.logoutBtn.addEventListener("click", () => logout(true));
   refs.exportExcelBtn.addEventListener("click", exportExcel);
   refs.exportPdfBtn.addEventListener("click", exportPdf);
+  if (refs.exportPendingPdfBtn) refs.exportPendingPdfBtn.addEventListener("click", exportPendingPaymentsPdf);
+  if (refs.balanceAlertOk) refs.balanceAlertOk.addEventListener("click", hideBalanceAlert);
+  if (refs.balanceAlertOverlay) {
+    refs.balanceAlertOverlay.addEventListener("click", (event) => {
+      if (event.target === refs.balanceAlertOverlay) hideBalanceAlert();
+    });
+  }
   if (refs.authForm) refs.authForm.addEventListener("submit", handleAuthSubmit);
 
   [refs.filterPerson, refs.filterStatus, refs.filterStartDate, refs.filterEndDate].forEach(
@@ -346,6 +357,98 @@ async function mutateAndRefresh(request) {
     window.alert(parseApiErrorMessage(error));
     return false;
   }
+}
+
+function getAccountBalance() {
+  return Number(state.summary?.accountBalance) || 0;
+}
+
+function canAffordPayment(amount) {
+  return Math.round(getAccountBalance() * 100) >= Math.round(Number(amount) * 100);
+}
+
+function showBalanceAlert() {
+  if (!refs.balanceAlertOverlay) return;
+  refs.balanceAlertOverlay.classList.remove("hidden");
+}
+
+function hideBalanceAlert() {
+  if (!refs.balanceAlertOverlay) return;
+  refs.balanceAlertOverlay.classList.add("hidden");
+}
+
+function isInsufficientBalanceError(error) {
+  const msg = String(error?.message || "").trim();
+  if (!msg) return false;
+  try {
+    const parsed = JSON.parse(msg);
+    if (parsed?.error?.includes("Saldo insuficiente")) return true;
+  } catch {
+    /* not json */
+  }
+  return msg.includes("Saldo insuficiente");
+}
+
+function renderPaymentSwitch(checked, toggleAttr, toggleValue, ariaLabel, extraClass = "") {
+  const checkedAttr = checked ? "checked" : "";
+  const extra = extraClass ? ` ${extraClass}` : "";
+  return `
+    <label class="payment-switch payment-switch--rg${extra}">
+      <span class="payment-switch-side off">${escapeHtml(t("status.unpaid"))}</span>
+      <input type="checkbox" ${toggleAttr}="${escapeHtml(String(toggleValue))}" ${checkedAttr} aria-label="${escapeHtml(ariaLabel)}" />
+      <span class="payment-switch-side on">${escapeHtml(t("status.paid"))}</span>
+    </label>
+  `;
+}
+
+async function toggleDocumentPayment(docId, input) {
+  const doc = (state.documents || []).find((item) => item.id === docId);
+  if (!doc) return;
+  const paying = input.checked && !doc.paid;
+  if (paying && !canAffordPayment(doc.amount)) {
+    input.checked = false;
+    showBalanceAlert();
+    return;
+  }
+  try {
+    const response = await apiFetch(`/api/documents/${docId}/toggle-paid`, { method: "PATCH" });
+    applyBootstrapPayload(response);
+  } catch (error) {
+    input.checked = !input.checked;
+    if (isInsufficientBalanceError(error)) {
+      showBalanceAlert();
+      return;
+    }
+    window.alert(parseApiErrorMessage(error));
+  }
+}
+
+async function toggleExpensePayment(expenseId, input) {
+  const expense = state.expenses.find((item) => item.id === expenseId);
+  if (!expense) return;
+  const paying = input.checked && !expense.paid;
+  if (paying && !canAffordPayment(expense.amount)) {
+    input.checked = false;
+    showBalanceAlert();
+    return;
+  }
+  try {
+    const response = await apiFetch(`/api/expenses/${expenseId}/toggle`, { method: "PATCH" });
+    applyBootstrapPayload(response);
+  } catch (error) {
+    input.checked = !input.checked;
+    if (isInsufficientBalanceError(error)) {
+      showBalanceAlert();
+      return;
+    }
+    window.alert(parseApiErrorMessage(error));
+  }
+}
+
+function getAllPendingDocuments() {
+  return (state.documents || [])
+    .filter((item) => !item.paid)
+    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
 }
 
 function getSelectedCategory() {
@@ -594,17 +697,22 @@ function renderPaymentPanel() {
     return isoDate >= bounds.start && isoDate <= bounds.end;
   };
 
-  const docs = (state.documents || []).filter((item) => inMonth(item.date));
-  const pending = docs.filter((item) => !item.paid).sort((a, b) => (a.date < b.date ? 1 : -1));
-  const paid = docs.filter((item) => item.paid).sort((a, b) => (a.date < b.date ? 1 : -1));
-  const pendingSum = pending.reduce((sum, item) => sum + item.amount, 0);
-  refs.documentsPendingTotal.textContent = `${t("payments.pendingPrefix")} ${formatEUR(pendingSum)}`;
+  const pendingAll = getAllPendingDocuments();
+  const pendingMonth = pendingAll.filter((item) => inMonth(item.date));
+  const pendingSum = pendingAll.reduce((sum, item) => sum + item.amount, 0);
+  const pendingMonthSum = pendingMonth.reduce((sum, item) => sum + item.amount, 0);
+
+  refs.documentsPendingTotal.textContent = `${t("payments.pendingPrefix")} ${formatEUR(pendingSum)} (${pendingAll.length})`;
+  if (refs.paymentsAccountBalance) {
+    refs.paymentsAccountBalance.textContent = `${t("payments.accountBalance")} ${formatEUR(getAccountBalance())}`;
+  }
+
+  const paid = (state.documents || [])
+    .filter((item) => item.paid && inMonth(item.date))
+    .sort((a, b) => (a.date < b.date ? 1 : -1));
 
   const rowHtml = (item, isPaid) => {
     const id = escapeHtml(item.id);
-    const checked = isPaid ? "checked" : "";
-    const spanClass = isPaid ? "on" : "off";
-    const spanText = isPaid ? t("status.paid") : t("status.unpaid");
     const by = item.createdBy ? escapeHtml(item.createdBy) : t("misc.system");
     return `
       <li class="payment-row ${isPaid ? "paid-row" : ""}" data-doc-id="${id}">
@@ -616,19 +724,19 @@ function renderPaymentPanel() {
           </div>
         </div>
         <div class="payment-row-amount">${formatEUR(item.amount)}</div>
-        <label class="payment-switch">
-          <span class="${spanClass}">${spanText}</span>
-          <input type="checkbox" data-doc-toggle="${id}" ${checked} aria-label="${escapeHtml(t("payments.statusAria"))}" />
-        </label>
+        ${renderPaymentSwitch(isPaid, "data-doc-toggle", item.id, t("payments.statusAria"))}
       </li>
     `;
   };
 
   let html = "";
-  if (pending.length === 0) {
+  if (pendingAll.length === 0) {
     html += `<li class="empty">${escapeHtml(t("payments.noPending"))}</li>`;
   } else {
-    html += pending.map((item) => rowHtml(item, false)).join("");
+    if (pendingMonth.length > 0 && pendingMonth.length !== pendingAll.length) {
+      html += `<li class="payments-subheading" style="list-style:none;">${escapeHtml(t("payments.pendingMonthPrefix"))} ${formatEUR(pendingMonthSum)}</li>`;
+    }
+    html += pendingAll.map((item) => rowHtml(item, false)).join("");
   }
 
   if (paid.length > 0) {
@@ -641,9 +749,7 @@ function renderPaymentPanel() {
   refs.paymentDocsList.querySelectorAll("[data-doc-toggle]").forEach((input) => {
     input.addEventListener("change", async () => {
       const docId = input.getAttribute("data-doc-toggle");
-      await mutateAndRefresh(() =>
-        apiFetch(`/api/documents/${docId}/toggle-paid`, { method: "PATCH" })
-      );
+      await toggleDocumentPayment(docId, input);
     });
   });
 }
@@ -694,9 +800,6 @@ function renderTable() {
   refs.expenseRows.innerHTML = rows
     .map((item) => {
       const id = escapeHtml(item.id);
-      const spanClass = item.paid ? "on" : "off";
-      const spanText = item.paid ? t("status.paid") : t("status.unpaid");
-      const checked = item.paid ? "checked" : "";
       const seq =
         item.seqNumber != null ? escapeHtml(String(item.seqNumber)) : "—";
       return `
@@ -708,10 +811,7 @@ function renderTable() {
         <td>${escapeHtml(item.description)}</td>
         <td>${formatEUR(item.amount)}</td>
         <td class="td-reembolso">
-          <label class="payment-switch payment-switch--table">
-            <span class="${spanClass}">${spanText}</span>
-            <input type="checkbox" data-expense-toggle="${id}" ${checked} aria-label="${escapeHtml(t("expense.reimbursementAria"))}" />
-          </label>
+          ${renderPaymentSwitch(item.paid, "data-expense-toggle", item.id, t("expense.reimbursementAria"), "payment-switch--table")}
         </td>
       </tr>
     `;
@@ -721,9 +821,7 @@ function renderTable() {
   refs.expenseRows.querySelectorAll("[data-expense-toggle]").forEach((input) => {
     input.addEventListener("change", async () => {
       const expenseId = input.getAttribute("data-expense-toggle");
-      await mutateAndRefresh(() =>
-        apiFetch(`/api/expenses/${expenseId}/toggle`, { method: "PATCH" })
-      );
+      await toggleExpensePayment(expenseId, input);
     });
   });
 }
@@ -800,6 +898,36 @@ function exportPdf() {
     styles: { fontSize: 9 },
   });
   doc.save("studio9-listagem.pdf");
+}
+
+function exportPendingPaymentsPdf() {
+  const pending = getAllPendingDocuments();
+  if (pending.length === 0) {
+    window.alert(t("errors.exportEmpty"));
+    return;
+  }
+  const totalPending = pending.reduce((sum, item) => sum + item.amount, 0);
+  const balance = getAccountBalance();
+  const rows = pending.map((item) => [
+    formatDate(item.date),
+    item.label,
+    formatEUR(item.amount),
+    t("status.unpaid"),
+  ]);
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: "landscape" });
+  doc.setFontSize(14);
+  doc.text(t("payments.pendingPdfTitle"), 14, 14);
+  doc.setFontSize(10);
+  doc.text(`${t("payments.pendingPdfBalance")}: ${formatEUR(balance)}`, 14, 22);
+  doc.text(`${t("payments.pendingPdfTotal")}: ${formatEUR(totalPending)}`, 14, 28);
+  doc.autoTable({
+    head: [[t("table.date"), t("payments.description"), t("table.amount"), t("filter.status")]],
+    body: rows,
+    startY: 34,
+    styles: { fontSize: 9 },
+  });
+  doc.save("studio9-pagamentos-pendentes.pdf");
 }
 
 async function apiFetch(url, options = {}) {

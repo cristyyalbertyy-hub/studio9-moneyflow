@@ -280,6 +280,10 @@
           </form>
           <div class="payments-meta">
             <span id="documentsPendingTotal">Pendentes no mes: EUR 0,00</span>
+            <span id="paymentsAccountBalance" class="payments-balance"></span>
+            <button type="button" id="exportPendingPdfBtn" class="btn-ghost" data-i18n="payments.exportPendingPdf">
+              Exportar PDF pendentes
+            </button>
           </div>
           <ul id="paymentDocsList" class="payments-list"></ul>
         </section>
@@ -463,6 +467,14 @@
         </div>
         <ul id="activityList" class="activity-list"></ul>
       </section>
+    </div>
+
+    <div id="balanceAlertOverlay" class="alert-overlay hidden" role="alertdialog" aria-modal="true" aria-labelledby="balanceAlertTitle">
+      <div class="alert-card">
+        <h3 id="balanceAlertTitle" data-i18n="payments.insufficientBalanceTitle">Atencao</h3>
+        <p data-i18n="payments.insufficientBalanceMsg">Saldo inferior ao montante a pagar. O pagamento nao foi efectuado.</p>
+        <button type="button" id="balanceAlertOk" class="btn-primary" data-i18n="misc.ok">OK</button>
+      </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>

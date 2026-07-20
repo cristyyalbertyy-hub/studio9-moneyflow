@@ -313,9 +313,18 @@ body {
 }
 
 .payments-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
   margin-bottom: 10px;
   font-size: 0.9rem;
   color: #fcd34d;
+  font-weight: 600;
+}
+
+.payments-balance {
+  color: #67e8f9;
   font-weight: 600;
 }
 
@@ -443,6 +452,84 @@ body {
 
 .payment-switch input[type="checkbox"]:checked::before {
   left: 24px;
+}
+
+.payment-switch--rg {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.payment-switch-side {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  min-width: 4rem;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.payment-switch-side.off {
+  color: #fca5a5;
+}
+
+.payment-switch-side.on {
+  color: #86efac;
+}
+
+.payment-switch--rg:has(input:not(:checked)) .payment-switch-side.on {
+  opacity: 0.4;
+}
+
+.payment-switch--rg:has(input:checked) .payment-switch-side.off {
+  opacity: 0.4;
+}
+
+.payment-switch--table.payment-switch--rg {
+  gap: 6px;
+}
+
+.payment-switch--table.payment-switch--rg .payment-switch-side {
+  font-size: 0.62rem;
+  min-width: 3rem;
+}
+
+.alert-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(2, 6, 23, 0.78);
+}
+
+.alert-card {
+  width: min(100%, 380px);
+  padding: 22px 24px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 0.98) 100%);
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+  text-align: center;
+}
+
+.alert-card h3 {
+  margin: 0 0 10px;
+  color: #fca5a5;
+  font-size: 1.15rem;
+}
+
+.alert-card p {
+  margin: 0 0 18px;
+  color: #cbd5e1;
+  line-height: 1.5;
+}
+
+.alert-card .btn-primary {
+  min-width: 120px;
 }
 
 .payments-subheading {
