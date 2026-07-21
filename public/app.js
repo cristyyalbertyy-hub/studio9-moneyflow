@@ -1071,15 +1071,22 @@ async function handleExpenseSubmit(event) {
   const description = refs.expenseDescription.value.trim();
   const amount = Number(refs.expenseAmount.value);
   const date = refs.expenseDate.value;
+  const payer = refs.expensePayer ? refs.expensePayer.value : "";
+  const currency = refs.expenseCurrency ? refs.expenseCurrency.value : DEFAULT_CURRENCY;
   if (!category || !description || !amount || !date) return;
+
+  if (payer === "Studio9" && !canAffordPayment(amount, currency)) {
+    showBalanceAlert();
+    return;
+  }
 
   const ok = await mutateAndRefresh(() =>
     apiFetch("/api/expenses", {
       method: "POST",
       body: JSON.stringify({
         person: refs.expensePerson.value,
-        payer: refs.expensePayer.value,
-        currency: refs.expenseCurrency ? refs.expenseCurrency.value : DEFAULT_CURRENCY,
+        payer,
+        currency,
         date,
         amount,
         category,
