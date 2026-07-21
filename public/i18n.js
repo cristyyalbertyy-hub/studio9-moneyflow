@@ -114,6 +114,21 @@
         "Gastos, entradas e reembolsos (quando uma despesa «por pagar» passa a paga).",
       "activity.emptyMonth": "Sem atividade neste mes (ou ainda nao ha registos).",
       "activity.emptyAll": "Ainda nao ha atividade registada.",
+      "admin.experimental.title": "Fase experimental",
+      "admin.experimental.desc":
+        "Durante os testes podes apagar todos os registos e comecar de novo. Esta accao e irreversivel.",
+      "admin.experimental.button": "Repor dados experimentais",
+      "admin.reset.title": "Repor dados experimentais",
+      "admin.reset.warning":
+        "Isto apaga despesas, entradas, pagamentos, documentos e actividade. Categorias e clientes voltam ao estado inicial. Nao ha forma de recuperar os dados.",
+      "admin.reset.confirmLabel": "Escreve REPOS para confirmar",
+      "admin.reset.passwordLabel": "Palavra-passe",
+      "admin.reset.cancel": "Cancelar",
+      "admin.reset.submit": "Repor tudo",
+      "admin.reset.invalidPhrase": "Escreve REPOS (maiusculas) para confirmar.",
+      "admin.reset.finalConfirm":
+        "Ultima confirmacao: tens a certeza absoluta que queres apagar todos os dados?",
+      "admin.reset.success": "Dados repostos. Podes comecar de novo.",
       "misc.system": "Sistema",
       "misc.ok": "OK",
       "errors.boot": "Nao foi possivel iniciar a aplicacao.",
@@ -249,6 +264,21 @@
         "Expenses, income and reimbursements (when an unpaid expense becomes paid).",
       "activity.emptyMonth": "No activity this month (or no records yet).",
       "activity.emptyAll": "No activity recorded yet.",
+      "admin.experimental.title": "Experimental phase",
+      "admin.experimental.desc":
+        "During testing you can wipe all records and start again. This action is irreversible.",
+      "admin.experimental.button": "Reset experimental data",
+      "admin.reset.title": "Reset experimental data",
+      "admin.reset.warning":
+        "This deletes expenses, income, payments, documents and activity. Categories and clients return to defaults. Data cannot be recovered.",
+      "admin.reset.confirmLabel": "Type REPOS to confirm",
+      "admin.reset.passwordLabel": "Password",
+      "admin.reset.cancel": "Cancel",
+      "admin.reset.submit": "Reset everything",
+      "admin.reset.invalidPhrase": "Type REPOS (uppercase) to confirm.",
+      "admin.reset.finalConfirm":
+        "Final confirmation: are you absolutely sure you want to delete all data?",
+      "admin.reset.success": "Data reset. You can start fresh.",
       "misc.system": "System",
       "misc.ok": "OK",
       "errors.boot": "Could not start the application.",

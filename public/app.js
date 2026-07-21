@@ -41,6 +41,13 @@ const refs = {
   exportPendingPdfBtn: document.getElementById("exportPendingPdfBtn"),
   balanceAlertOverlay: document.getElementById("balanceAlertOverlay"),
   balanceAlertOk: document.getElementById("balanceAlertOk"),
+  resetExperimentalBtn: document.getElementById("resetExperimentalBtn"),
+  resetExperimentalOverlay: document.getElementById("resetExperimentalOverlay"),
+  resetExperimentalForm: document.getElementById("resetExperimentalForm"),
+  resetConfirmPhrase: document.getElementById("resetConfirmPhrase"),
+  resetConfirmPassword: document.getElementById("resetConfirmPassword"),
+  resetExperimentalError: document.getElementById("resetExperimentalError"),
+  resetExperimentalCancel: document.getElementById("resetExperimentalCancel"),
   authOverlay: document.getElementById("authOverlay"),
   activeProfile: document.getElementById("activeProfile"),
   logoutBtn: document.getElementById("logoutBtn"),
@@ -235,6 +242,20 @@ async function boot() {
     refs.balanceAlertOverlay.addEventListener("click", (event) => {
       if (event.target === refs.balanceAlertOverlay) hideBalanceAlert();
     });
+  }
+  if (refs.resetExperimentalBtn) {
+    refs.resetExperimentalBtn.addEventListener("click", showResetExperimentalModal);
+  }
+  if (refs.resetExperimentalCancel) {
+    refs.resetExperimentalCancel.addEventListener("click", hideResetExperimentalModal);
+  }
+  if (refs.resetExperimentalOverlay) {
+    refs.resetExperimentalOverlay.addEventListener("click", (event) => {
+      if (event.target === refs.resetExperimentalOverlay) hideResetExperimentalModal();
+    });
+  }
+  if (refs.resetExperimentalForm) {
+    refs.resetExperimentalForm.addEventListener("submit", handleResetExperimentalSubmit);
   }
   if (refs.authForm) refs.authForm.addEventListener("submit", handleAuthSubmit);
 
@@ -455,6 +476,76 @@ function showBalanceAlert() {
 function hideBalanceAlert() {
   if (!refs.balanceAlertOverlay) return;
   refs.balanceAlertOverlay.classList.add("hidden");
+}
+
+function showResetExperimentalModal() {
+  if (!refs.resetExperimentalOverlay) return;
+  if (refs.resetExperimentalForm) refs.resetExperimentalForm.reset();
+  if (refs.resetExperimentalError) {
+    refs.resetExperimentalError.textContent = "";
+    refs.resetExperimentalError.classList.add("hidden");
+  }
+  refs.resetExperimentalOverlay.classList.remove("hidden");
+  if (refs.resetConfirmPhrase) refs.resetConfirmPhrase.focus();
+}
+
+function hideResetExperimentalModal() {
+  if (!refs.resetExperimentalOverlay) return;
+  refs.resetExperimentalOverlay.classList.add("hidden");
+  if (refs.resetExperimentalForm) refs.resetExperimentalForm.reset();
+  if (refs.resetExperimentalError) {
+    refs.resetExperimentalError.textContent = "";
+    refs.resetExperimentalError.classList.add("hidden");
+  }
+}
+
+function resetLocalPreferences() {
+  try {
+    window.localStorage.removeItem(profitSplitsStorageKey);
+  } catch {
+    /* ignore */
+  }
+  if (refs.profitPctCris) refs.profitPctCris.value = defaultProfitSplits.cris;
+  if (refs.profitPctAlex) refs.profitPctAlex.value = defaultProfitSplits.alex;
+  if (refs.profitPctStudio9) refs.profitPctStudio9.value = defaultProfitSplits.studio9;
+  if (refs.profitPctCharity) refs.profitPctCharity.value = defaultProfitSplits.charity;
+  if (refs.profitAmount) refs.profitAmount.value = "";
+  renderProfitDistribution();
+}
+
+async function handleResetExperimentalSubmit(event) {
+  event.preventDefault();
+  if (!refs.resetConfirmPhrase || !refs.resetConfirmPassword) return;
+
+  const confirmPhrase = refs.resetConfirmPhrase.value.trim();
+  const password = refs.resetConfirmPassword.value;
+  if (confirmPhrase.toUpperCase() !== "REPOS") {
+    if (refs.resetExperimentalError) {
+      refs.resetExperimentalError.textContent = t("admin.reset.invalidPhrase");
+      refs.resetExperimentalError.classList.remove("hidden");
+    }
+    return;
+  }
+
+  const secondConfirm = window.confirm(t("admin.reset.finalConfirm"));
+  if (!secondConfirm) return;
+
+  if (refs.resetExperimentalError) {
+    refs.resetExperimentalError.textContent = "";
+    refs.resetExperimentalError.classList.add("hidden");
+  }
+
+  const ok = await mutateAndRefresh(() =>
+    apiFetch("/api/admin/reset-data", {
+      method: "POST",
+      body: JSON.stringify({ confirmPhrase, password }),
+    })
+  );
+  if (!ok) return;
+
+  resetLocalPreferences();
+  hideResetExperimentalModal();
+  window.alert(t("admin.reset.success"));
 }
 
 function isInsufficientBalanceError(error) {

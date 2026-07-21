@@ -516,6 +516,64 @@
         </div>
         <ul id="activityList" class="activity-list"></ul>
       </section>
+      <section class="panel admin-panel">
+        <div class="panel-title">
+          <h2 data-i18n="admin.experimental.title">Fase experimental</h2>
+          <p data-i18n="admin.experimental.desc">
+            Durante os testes podes apagar todos os registos e comecar de novo. Esta accao e
+            irreversivel.
+          </p>
+        </div>
+        <button
+          type="button"
+          id="resetExperimentalBtn"
+          class="btn-ghost btn-ghost--danger"
+          data-i18n="admin.experimental.button"
+        >
+          Repor dados experimentais
+        </button>
+      </section>
+    </div>
+
+    <div
+      id="resetExperimentalOverlay"
+      class="alert-overlay hidden"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="resetExperimentalTitle"
+    >
+      <div class="alert-card alert-card--danger">
+        <h3 id="resetExperimentalTitle" data-i18n="admin.reset.title">Repor dados experimentais</h3>
+        <p data-i18n="admin.reset.warning">
+          Isto apaga despesas, entradas, pagamentos, documentos e actividade. Categorias e clientes
+          voltam ao estado inicial. Nao ha forma de recuperar os dados.
+        </p>
+        <form id="resetExperimentalForm" class="reset-form">
+          <label>
+            <span data-i18n="admin.reset.confirmLabel">Escreve REPOS para confirmar</span>
+            <input
+              id="resetConfirmPhrase"
+              type="text"
+              autocomplete="off"
+              spellcheck="false"
+              required
+            />
+          </label>
+          <label>
+            <span data-i18n="admin.reset.passwordLabel">Palavra-passe</span>
+            <input id="resetConfirmPassword" type="password" autocomplete="current-password" required />
+          </label>
+          <p id="resetExperimentalError" class="auth-error hidden" role="alert"></p>
+          <div class="reset-form-actions">
+            <button type="button" id="resetExperimentalCancel" class="btn-ghost" data-i18n="admin.reset.cancel">
+              Cancelar
+            </button>
+            <button type="submit" id="resetExperimentalSubmit" class="btn-primary btn-primary--danger" data-i18n="admin.reset.submit">
+              Repor tudo
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
 
     <div id="balanceAlertOverlay" class="alert-overlay hidden" role="alertdialog" aria-modal="true" aria-labelledby="balanceAlertTitle">
