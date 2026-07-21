@@ -31,6 +31,10 @@ const refs = {
   documentDate: document.getElementById("documentDate"),
   documentAmount: document.getElementById("documentAmount"),
   documentLabel: document.getElementById("documentLabel"),
+  documentSubmitBtn: document.getElementById("documentSubmitBtn"),
+  clearPaymentFormBtn: document.getElementById("clearPaymentFormBtn"),
+  paymentFormStatus: document.getElementById("paymentFormStatus"),
+  paymentsPanel: document.querySelector(".payments-panel"),
   paymentRows: document.getElementById("paymentRows"),
   paymentFilterStartDate: document.getElementById("paymentFilterStartDate"),
   paymentFilterEndDate: document.getElementById("paymentFilterEndDate"),
@@ -121,6 +125,7 @@ const CURRENCY_CODES = ["EUR", "USD", "QAR"];
 const DEFAULT_CURRENCY = "EUR";
 
 let listManageState = null;
+let paymentFormStudio9Locked = false;
 
 function initProfitDistribution() {
   if (!refs.profitAmount) return;
@@ -250,6 +255,8 @@ async function boot() {
   refs.expenseForm.addEventListener("submit", handleExpenseSubmit);
   refs.incomeForm.addEventListener("submit", handleIncomeSubmit);
   if (refs.documentForm) refs.documentForm.addEventListener("submit", handleDocumentSubmit);
+  if (refs.clearPaymentFormBtn) refs.clearPaymentFormBtn.addEventListener("click", clearPaymentForm);
+  initExpensePaymentSync();
   refs.clearFilters.addEventListener("click", clearFilters);
   refs.logoutBtn.addEventListener("click", () => logout(true));
   refs.exportExcelBtn.addEventListener("click", exportExcel);
@@ -519,6 +526,113 @@ function getFilteredPaymentItems() {
 
 function getPaymentItemsInRange(startDate, endDate) {
   return filterPaymentItemsByDate(buildPaymentItems(), startDate, endDate);
+}
+
+function buildExpensePaymentLabel(category, description) {
+  const cat = String(category || "").trim();
+  const desc = String(description || "").trim();
+  if (cat && desc) return `${cat} — ${desc}`;
+  return desc || cat;
+}
+
+function isStudio9PayerSelected() {
+  return Boolean(refs.expensePayer && refs.expensePayer.value === "Studio9");
+}
+
+function setPaymentFormReadonly(readonly) {
+  [refs.documentDate, refs.documentAmount, refs.documentLabel].forEach((el) => {
+    if (el) el.readOnly = readonly;
+  });
+  if (refs.documentForm) refs.documentForm.classList.toggle("payment-form--readonly", readonly);
+}
+
+function showPaymentFormStatus(message, mode = "completed") {
+  if (!refs.paymentFormStatus) return;
+  refs.paymentFormStatus.textContent = message;
+  refs.paymentFormStatus.classList.remove("hidden", "preview", "completed");
+  refs.paymentFormStatus.classList.add(mode === "preview" ? "preview" : "completed");
+}
+
+function hidePaymentFormStatus() {
+  if (!refs.paymentFormStatus) refs.paymentFormStatus.classList.add("hidden");
+}
+
+function fillPaymentFormFromExpense({ date, amount, category, description, currency }, options = {}) {
+  const { readonly = false, completed = false } = options;
+  if (refs.documentDate) refs.documentDate.value = date || "";
+  if (refs.documentAmount) refs.documentAmount.value = amount != null && amount !== "" ? String(amount) : "";
+  if (refs.documentLabel) refs.documentLabel.value = buildExpensePaymentLabel(category, description);
+
+  setPaymentFormReadonly(readonly);
+
+  if (refs.documentSubmitBtn) refs.documentSubmitBtn.classList.toggle("hidden", readonly);
+  if (refs.clearPaymentFormBtn) refs.clearPaymentFormBtn.classList.toggle("hidden", !completed);
+
+  if (completed) {
+    showPaymentFormStatus(
+      t("payments.studio9Completed").replace("{amount}", formatMoney(amount, currency || DEFAULT_CURRENCY)),
+      "completed"
+    );
+  } else if (readonly) {
+    const money = amount ? formatMoney(amount, currency || DEFAULT_CURRENCY) : "";
+    const preview = money
+      ? t("payments.studio9PreviewAmount").replace("{amount}", money)
+      : t("payments.studio9Preview");
+    showPaymentFormStatus(preview, "preview");
+  } else {
+    hidePaymentFormStatus();
+  }
+}
+
+function resetPaymentFormEditable() {
+  setPaymentFormReadonly(false);
+  if (refs.documentSubmitBtn) refs.documentSubmitBtn.classList.remove("hidden");
+  if (refs.clearPaymentFormBtn) refs.clearPaymentFormBtn.classList.add("hidden");
+  hidePaymentFormStatus();
+}
+
+function clearPaymentForm() {
+  paymentFormStudio9Locked = false;
+  if (refs.documentForm) refs.documentForm.reset();
+  if (refs.documentDate) refs.documentDate.value = todayISO();
+  resetPaymentFormEditable();
+}
+
+function syncPaymentFormFromExpenseForm() {
+  if (paymentFormStudio9Locked) return;
+  if (!isStudio9PayerSelected()) {
+    resetPaymentFormEditable();
+    return;
+  }
+  fillPaymentFormFromExpense(
+    {
+      date: refs.expenseDate ? refs.expenseDate.value : "",
+      amount: refs.expenseAmount ? refs.expenseAmount.value : "",
+      category: refs.expenseCategorySelect ? refs.expenseCategorySelect.value : "",
+      description: refs.expenseDescription ? refs.expenseDescription.value : "",
+      currency: refs.expenseCurrency ? refs.expenseCurrency.value : DEFAULT_CURRENCY,
+    },
+    { readonly: true, completed: false }
+  );
+}
+
+function ensurePaymentDateFilterIncludes(isoDate) {
+  if (!isoDate || !refs.paymentFilterStartDate || !refs.paymentFilterEndDate) return;
+  const start = refs.paymentFilterStartDate.value;
+  const end = refs.paymentFilterEndDate.value;
+  if (!start || isoDate < start) refs.paymentFilterStartDate.value = isoDate;
+  if (!end || isoDate > end) refs.paymentFilterEndDate.value = isoDate;
+}
+
+function initExpensePaymentSync() {
+  if (refs.expensePayer) refs.expensePayer.addEventListener("change", syncPaymentFormFromExpenseForm);
+  if (refs.expenseCategorySelect) {
+    refs.expenseCategorySelect.addEventListener("change", syncPaymentFormFromExpenseForm);
+  }
+  [refs.expenseDate, refs.expenseAmount, refs.expenseDescription].filter(Boolean).forEach((el) => {
+    el.addEventListener("input", syncPaymentFormFromExpenseForm);
+  });
+  if (refs.expenseCurrency) refs.expenseCurrency.addEventListener("change", syncPaymentFormFromExpenseForm);
 }
 
 async function fetchBootstrap() {
@@ -1090,6 +1204,18 @@ async function handleExpenseSubmit(event) {
   );
   if (!ok) return;
 
+  if (payer === "Studio9") {
+    paymentFormStudio9Locked = true;
+    fillPaymentFormFromExpense(
+      { date, amount, category, description, currency },
+      { readonly: true, completed: true }
+    );
+    ensurePaymentDateFilterIncludes(date);
+    if (refs.paymentsPanel) {
+      refs.paymentsPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }
+
   refs.expenseForm.reset();
   refs.expenseDate.value = todayISO();
   if (refs.expensePerson) refs.expensePerson.value = state.session.profile;
@@ -1121,6 +1247,7 @@ async function handleIncomeSubmit(event) {
 
 async function handleDocumentSubmit(event) {
   event.preventDefault();
+  if (refs.documentDate?.readOnly) return;
   const label = refs.documentLabel.value.trim();
   const amount = Number(refs.documentAmount.value);
   const date = refs.documentDate.value;
@@ -1139,8 +1266,7 @@ async function handleDocumentSubmit(event) {
   );
   if (!ok) return;
 
-  refs.documentForm.reset();
-  refs.documentDate.value = todayISO();
+  clearPaymentForm();
 }
 
 function clearFilters() {

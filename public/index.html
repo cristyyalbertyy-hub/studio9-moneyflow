@@ -256,12 +256,13 @@
             </p>
           </div>
           <form id="documentForm" class="document-form">
+            <p id="paymentFormStatus" class="payment-form-status hidden" role="status"></p>
             <label>
               <span data-i18n="payments.dateMonth">Data (mes)</span>
               <input id="documentDate" type="date" required />
             </label>
             <label>
-              <span data-i18n="payments.amount">Valor (EUR)</span>
+              <span data-i18n="payments.amount">Valor</span>
               <input
                 id="documentAmount"
                 type="number"
@@ -282,9 +283,14 @@
                 required
               />
             </label>
-            <button type="submit" class="btn-primary" data-i18n="payments.add">
-              Adicionar documento
-            </button>
+            <div class="document-form-actions">
+              <button type="submit" id="documentSubmitBtn" class="btn-primary" data-i18n="payments.add">
+                Adicionar documento
+              </button>
+              <button type="button" id="clearPaymentFormBtn" class="btn-ghost hidden" data-i18n="payments.clearForm">
+                Novo pagamento
+              </button>
+            </div>
           </form>
           <div class="payments-meta">
             <span id="documentsPendingTotal">Total no periodo: EUR 0,00</span>
