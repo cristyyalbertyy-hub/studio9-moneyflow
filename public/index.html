@@ -279,13 +279,48 @@
             </button>
           </form>
           <div class="payments-meta">
-            <span id="documentsPendingTotal">Pendentes no mes: EUR 0,00</span>
+            <span id="documentsPendingTotal">Pendentes no periodo: EUR 0,00</span>
             <span id="paymentsAccountBalance" class="payments-balance"></span>
+          </div>
+
+          <div class="filters">
+            <label>
+              <span data-i18n="filter.status">Estado</span>
+              <select id="paymentFilterStatus">
+                <option value="unpaid" selected data-i18n="status.unpaid">Por pagar</option>
+                <option value="paid" data-i18n="status.paid">Pago</option>
+                <option value="all" data-i18n="filter.allStatus">Todos</option>
+              </select>
+            </label>
+            <label>
+              <span data-i18n="filter.from">De</span>
+              <input id="paymentFilterStartDate" type="date" />
+            </label>
+            <label>
+              <span data-i18n="filter.to">Ate</span>
+              <input id="paymentFilterEndDate" type="date" />
+            </label>
+            <button id="paymentClearFilters" class="btn-ghost" data-i18n="filter.clear">
+              Limpar filtros
+            </button>
             <button type="button" id="exportPendingPdfBtn" class="btn-ghost" data-i18n="payments.exportPendingPdf">
               Exportar PDF pendentes
             </button>
           </div>
-          <ul id="paymentDocsList" class="payments-list"></ul>
+
+          <div class="table-wrap">
+            <table class="expense-table">
+              <thead>
+                <tr>
+                  <th data-i18n="table.date">Data</th>
+                  <th data-i18n="payments.description">Descricao / referencia</th>
+                  <th data-i18n="table.amount">Valor</th>
+                  <th data-i18n="payments.paymentColumn">Pagamento</th>
+                </tr>
+              </thead>
+              <tbody id="paymentRows"></tbody>
+            </table>
+          </div>
         </section>
 
         <section class="panel list-panel">

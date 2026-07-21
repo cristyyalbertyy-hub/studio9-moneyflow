@@ -348,8 +348,14 @@ body {
   border: 1px solid rgba(148, 163, 184, 0.2);
 }
 
-.payment-row.paid-row {
-  opacity: 0.85;
+.payment-table-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.expense-table tr.paid-row {
+  opacity: 0.88;
 }
 
 .payment-row-main {

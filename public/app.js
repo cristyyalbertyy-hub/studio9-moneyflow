@@ -30,7 +30,11 @@ const refs = {
   documentDate: document.getElementById("documentDate"),
   documentAmount: document.getElementById("documentAmount"),
   documentLabel: document.getElementById("documentLabel"),
-  paymentDocsList: document.getElementById("paymentDocsList"),
+  paymentRows: document.getElementById("paymentRows"),
+  paymentFilterStatus: document.getElementById("paymentFilterStatus"),
+  paymentFilterStartDate: document.getElementById("paymentFilterStartDate"),
+  paymentFilterEndDate: document.getElementById("paymentFilterEndDate"),
+  paymentClearFilters: document.getElementById("paymentClearFilters"),
   documentsPendingTotal: document.getElementById("documentsPendingTotal"),
   paymentsAccountBalance: document.getElementById("paymentsAccountBalance"),
   exportPendingPdfBtn: document.getElementById("exportPendingPdfBtn"),
@@ -227,6 +231,14 @@ async function boot() {
   [refs.filterPerson, refs.filterStatus, refs.filterStartDate, refs.filterEndDate].forEach(
     (el) => el.addEventListener("change", render)
   );
+  [
+    refs.paymentFilterStatus,
+    refs.paymentFilterStartDate,
+    refs.paymentFilterEndDate,
+  ]
+    .filter(Boolean)
+    .forEach((el) => el.addEventListener("change", render));
+  if (refs.paymentClearFilters) refs.paymentClearFilters.addEventListener("click", clearPaymentFilters);
 
   if (refs.periodMonth) {
     refs.periodMonth.addEventListener("change", () => {
@@ -445,10 +457,28 @@ async function toggleExpensePayment(expenseId, input) {
   }
 }
 
-function getAllPendingDocuments() {
-  return (state.documents || [])
-    .filter((item) => !item.paid)
-    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+function getFilteredDocuments() {
+  const status = refs.paymentFilterStatus ? refs.paymentFilterStatus.value : "unpaid";
+  const startDate = refs.paymentFilterStartDate ? refs.paymentFilterStartDate.value : "";
+  const endDate = refs.paymentFilterEndDate ? refs.paymentFilterEndDate.value : "";
+  return (state.documents || []).filter((item) => {
+    const statusOk =
+      status === "all" ||
+      (status === "paid" && item.paid) ||
+      (status === "unpaid" && !item.paid);
+    const startOk = !startDate || item.date >= startDate;
+    const endOk = !endDate || item.date <= endDate;
+    return statusOk && startOk && endOk;
+  });
+}
+
+function getPendingDocumentsInRange(startDate, endDate) {
+  return (state.documents || []).filter((item) => {
+    if (item.paid) return false;
+    const startOk = !startDate || item.date >= startDate;
+    const endOk = !endDate || item.date <= endDate;
+    return startOk && endOk;
+  });
 }
 
 function getSelectedCategory() {
@@ -624,6 +654,12 @@ function clearFilters() {
   render();
 }
 
+function clearPaymentFilters() {
+  if (refs.paymentFilterStatus) refs.paymentFilterStatus.value = "unpaid";
+  applyPeriodMonthToDateFilters();
+  render();
+}
+
 function render() {
   renderPeriodHeader();
   renderCategories();
@@ -690,63 +726,44 @@ function renderTotals() {
 }
 
 function renderPaymentPanel() {
-  if (!refs.paymentDocsList || !refs.documentsPendingTotal) return;
-  const bounds = getSelectedMonthBounds();
-  const inMonth = (isoDate) => {
-    if (!bounds || !isoDate) return false;
-    return isoDate >= bounds.start && isoDate <= bounds.end;
-  };
+  if (!refs.paymentRows || !refs.documentsPendingTotal) return;
 
-  const pendingAll = getAllPendingDocuments();
-  const pendingMonth = pendingAll.filter((item) => inMonth(item.date));
-  const pendingSum = pendingAll.reduce((sum, item) => sum + item.amount, 0);
-  const pendingMonthSum = pendingMonth.reduce((sum, item) => sum + item.amount, 0);
+  const startDate = refs.paymentFilterStartDate ? refs.paymentFilterStartDate.value : "";
+  const endDate = refs.paymentFilterEndDate ? refs.paymentFilterEndDate.value : "";
+  const pendingInRange = getPendingDocumentsInRange(startDate, endDate);
+  const pendingSum = pendingInRange.reduce((sum, item) => sum + item.amount, 0);
 
-  refs.documentsPendingTotal.textContent = `${t("payments.pendingPrefix")} ${formatEUR(pendingSum)} (${pendingAll.length})`;
+  refs.documentsPendingTotal.textContent = `${t("payments.pendingPrefix")} ${formatEUR(pendingSum)} (${pendingInRange.length})`;
   if (refs.paymentsAccountBalance) {
     refs.paymentsAccountBalance.textContent = `${t("payments.accountBalance")} ${formatEUR(getAccountBalance())}`;
   }
 
-  const paid = (state.documents || [])
-    .filter((item) => item.paid && inMonth(item.date))
-    .sort((a, b) => (a.date < b.date ? 1 : -1));
+  const rows = getFilteredDocuments();
+  if (rows.length === 0) {
+    refs.paymentRows.innerHTML = `<tr><td colspan="4" class="empty">${escapeHtml(t("table.empty"))}</td></tr>`;
+    return;
+  }
 
-  const rowHtml = (item, isPaid) => {
-    const id = escapeHtml(item.id);
-    const by = item.createdBy ? escapeHtml(item.createdBy) : t("misc.system");
-    return `
-      <li class="payment-row ${isPaid ? "paid-row" : ""}" data-doc-id="${id}">
-        <div class="payment-row-main">
-          <div class="payment-row-date">${formatDate(item.date)}</div>
-          <p class="payment-row-title">${escapeHtml(item.label)}</p>
-          <div class="owner-badge-row">
-            <span class="owner-badge">${by}</span>
-          </div>
-        </div>
-        <div class="payment-row-amount">${formatEUR(item.amount)}</div>
-        ${renderPaymentSwitch(isPaid, "data-doc-toggle", item.id, t("payments.statusAria"))}
-      </li>
+  refs.paymentRows.innerHTML = rows
+    .map((item) => {
+      const by = item.createdBy ? escapeHtml(item.createdBy) : t("misc.system");
+      return `
+      <tr class="${item.paid ? "paid-row" : ""}">
+        <td>${formatDate(item.date)}</td>
+        <td>
+          <span class="payment-table-label">${escapeHtml(item.label)}</span>
+          <span class="owner-badge owner-badge--small">${by}</span>
+        </td>
+        <td>${formatEUR(item.amount)}</td>
+        <td class="td-reembolso">
+          ${renderPaymentSwitch(item.paid, "data-doc-toggle", item.id, t("payments.statusAria"), "payment-switch--table")}
+        </td>
+      </tr>
     `;
-  };
+    })
+    .join("");
 
-  let html = "";
-  if (pendingAll.length === 0) {
-    html += `<li class="empty">${escapeHtml(t("payments.noPending"))}</li>`;
-  } else {
-    if (pendingMonth.length > 0 && pendingMonth.length !== pendingAll.length) {
-      html += `<li class="payments-subheading" style="list-style:none;">${escapeHtml(t("payments.pendingMonthPrefix"))} ${formatEUR(pendingMonthSum)}</li>`;
-    }
-    html += pendingAll.map((item) => rowHtml(item, false)).join("");
-  }
-
-  if (paid.length > 0) {
-    html += `<li class="payments-subheading" style="list-style:none;">${escapeHtml(t("payments.paidThisMonth"))}</li>`;
-    html += paid.map((item) => rowHtml(item, true)).join("");
-  }
-
-  refs.paymentDocsList.innerHTML = html;
-
-  refs.paymentDocsList.querySelectorAll("[data-doc-toggle]").forEach((input) => {
+  refs.paymentRows.querySelectorAll("[data-doc-toggle]").forEach((input) => {
     input.addEventListener("change", async () => {
       const docId = input.getAttribute("data-doc-toggle");
       await toggleDocumentPayment(docId, input);
@@ -901,7 +918,9 @@ function exportPdf() {
 }
 
 function exportPendingPaymentsPdf() {
-  const pending = getAllPendingDocuments();
+  const startDate = refs.paymentFilterStartDate ? refs.paymentFilterStartDate.value : "";
+  const endDate = refs.paymentFilterEndDate ? refs.paymentFilterEndDate.value : "";
+  const pending = getPendingDocumentsInRange(startDate, endDate);
   if (pending.length === 0) {
     window.alert(t("errors.exportEmpty"));
     return;
@@ -1053,10 +1072,17 @@ function getSelectedYearMonth() {
 
 function applyPeriodMonthToDateFilters() {
   const bounds = getSelectedMonthBounds();
-  if (!bounds || !refs.filterStartDate || !refs.filterEndDate) return;
-  refs.filterStartDate.value = bounds.start;
-  refs.filterEndDate.value = bounds.end;
+  if (!bounds) return;
+  if (refs.filterStartDate && refs.filterEndDate) {
+    refs.filterStartDate.value = bounds.start;
+    refs.filterEndDate.value = bounds.end;
+  }
   if (refs.filterStatus) refs.filterStatus.value = "unpaid";
+  if (refs.paymentFilterStartDate && refs.paymentFilterEndDate) {
+    refs.paymentFilterStartDate.value = bounds.start;
+    refs.paymentFilterEndDate.value = bounds.end;
+  }
+  if (refs.paymentFilterStatus) refs.paymentFilterStatus.value = "unpaid";
 }
 
 function renderPeriodHeader() {
