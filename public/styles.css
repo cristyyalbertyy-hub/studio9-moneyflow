@@ -206,12 +206,6 @@ body {
   color: #e2e8f0;
 }
 
-.legend-rg--hero {
-  margin-top: 4px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(148, 163, 184, 0.2);
-}
-
 .legend-rg-item {
   display: inline-flex;
   align-items: center;
