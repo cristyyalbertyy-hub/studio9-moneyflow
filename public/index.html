@@ -104,8 +104,8 @@
           </article>
         </div>
         <p class="summary-hint" data-i18n="hero.availabilityHint">
-          Disponibilidade = entradas do mes menos reembolsos (despesas) ja pagos
-          menos documentos ja pagos no painel Pagamentos.
+          Disponibilidade = entradas do mes menos reembolsos pagos menos pagamentos
+          registados no painel Pagamentos.
         </p>
         <p class="summary-hint" data-i18n="hero.accountBalanceHint">
           Saldo acumulado por moeda = entradas menos reembolsos e pagamentos ja efectuados
@@ -252,20 +252,8 @@
           <div class="panel-title">
             <h2 data-i18n="payments.title">Pagamentos</h2>
             <p data-i18n="payments.desc">
-              Documentos da Studio9 (fornecedores, servicos, etc.). Mesmo codigo
-              de cores: interruptor vermelho = por pagar; verde = pagamento
-              processado (reduz a disponibilidade).
+              Pagamentos efectuados pela Studio9. O registo so e aceite se houver saldo disponivel.
             </p>
-            <div class="legend-rg" aria-hidden="true">
-              <span class="legend-rg-item">
-                <span class="legend-swatch legend-swatch--red"></span>
-                <span data-i18n="status.unpaid">Por pagar</span>
-              </span>
-              <span class="legend-rg-item">
-                <span class="legend-swatch legend-swatch--green"></span>
-                <span data-i18n="status.paid">Pago</span>
-              </span>
-            </div>
           </div>
           <form id="documentForm" class="document-form">
             <label>
@@ -299,19 +287,11 @@
             </button>
           </form>
           <div class="payments-meta">
-            <span id="documentsPendingTotal">Pendentes no periodo: EUR 0,00</span>
+            <span id="documentsPendingTotal">Total no periodo: EUR 0,00</span>
             <span id="paymentsAccountBalance" class="payments-balance"></span>
           </div>
 
           <div class="filters">
-            <label>
-              <span data-i18n="filter.status">Estado</span>
-              <select id="paymentFilterStatus">
-                <option value="unpaid" selected data-i18n="status.unpaid">Por pagar</option>
-                <option value="paid" data-i18n="status.paid">Pago</option>
-                <option value="all" data-i18n="filter.allStatus">Todos</option>
-              </select>
-            </label>
             <label>
               <span data-i18n="filter.from">De</span>
               <input id="paymentFilterStartDate" type="date" />
@@ -323,8 +303,8 @@
             <button id="paymentClearFilters" class="btn-ghost" data-i18n="filter.clear">
               Limpar filtros
             </button>
-            <button type="button" id="exportPendingPdfBtn" class="btn-ghost" data-i18n="payments.exportPendingPdf">
-              Exportar PDF pendentes
+            <button type="button" id="exportPendingPdfBtn" class="btn-ghost" data-i18n="payments.exportPdf">
+              Exportar PDF
             </button>
           </div>
 
@@ -335,7 +315,6 @@
                   <th data-i18n="table.date">Data</th>
                   <th data-i18n="payments.description">Descricao / referencia</th>
                   <th data-i18n="table.amount">Valor</th>
-                  <th data-i18n="payments.paymentColumn">Pagamento</th>
                 </tr>
               </thead>
               <tbody id="paymentRows"></tbody>

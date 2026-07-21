@@ -23,7 +23,7 @@
       "hero.incomes": "Entradas (no mes)",
       "hero.availability": "Disponibilidade (no mes)",
       "hero.availabilityHint":
-        "Disponibilidade = entradas do mes menos reembolsos (despesas) ja pagos menos documentos ja pagos no painel Pagamentos.",
+        "Disponibilidade = entradas do mes menos reembolsos pagos menos pagamentos registados no painel Pagamentos.",
       "hero.accountBalance": "Saldo acumulado (conta)",
       "hero.accountBalanceHint":
         "Saldo acumulado por moeda = entradas menos reembolsos e pagamentos ja efectuados (documentos em euros). Cada moeda tem saldo independente.",
@@ -54,7 +54,10 @@
       "table.empty": "Sem resultados para os filtros escolhidos.",
       "payments.title": "Pagamentos",
       "payments.desc":
-        "Documentos e despesas pagas directamente pela Studio9. Filtra por estado e datas. Ao marcar como pago verifica-se o saldo disponivel.",
+        "Pagamentos efectuados pela Studio9. O registo so e aceite se houver saldo disponivel.",
+      "payments.periodPrefix": "Total no periodo:",
+      "payments.exportPdf": "Exportar PDF",
+      "payments.pdfTitle": "Studio9 - Pagamentos",
       "payments.dateMonth": "Data (mes)",
       "payments.amount": "Valor",
       "payments.description": "Descricao / referencia",
@@ -191,7 +194,7 @@
       "hero.incomes": "Income (this month)",
       "hero.availability": "Available balance (this month)",
       "hero.availabilityHint":
-        "Available balance = income this month minus reimbursed expenses already paid minus documents marked paid in Payments.",
+        "Available balance = income this month minus reimbursements paid minus payments recorded in the Payments panel.",
       "hero.accountBalance": "Running account balance",
       "hero.accountBalanceHint":
         "Running balance per currency = income minus reimbursements and payments made (documents in euros). Each currency has an independent balance.",
@@ -222,7 +225,10 @@
       "table.empty": "No results for the selected filters.",
       "payments.title": "Payments",
       "payments.desc":
-        "Documents and expenses paid directly by Studio9. Filter by status and dates. Marking as paid checks available balance.",
+        "Payments made by Studio9. Registration is only accepted when sufficient balance is available.",
+      "payments.periodPrefix": "Total in period:",
+      "payments.exportPdf": "Export PDF",
+      "payments.pdfTitle": "Studio9 - Payments",
       "payments.dateMonth": "Date (month)",
       "payments.amount": "Amount",
       "payments.description": "Description / reference",
