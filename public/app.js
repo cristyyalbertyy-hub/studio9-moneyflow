@@ -5,7 +5,7 @@ const state = {
   categories: [],
   clients: [],
   activities: [],
-  summary: { accountBalance: 0, nextExpenseSeq: 1 },
+  summary: { accountBalance: 0, accountBalances: { EUR: 0, USD: 0, QAR: 0 }, nextExpenseSeq: 1 },
   session: null,
   socket: null,
 };
@@ -76,10 +76,12 @@ const refs = {
   expensePayer: document.getElementById("expensePayer"),
   expenseDate: document.getElementById("expenseDate"),
   expenseAmount: document.getElementById("expenseAmount"),
+  expenseCurrency: document.getElementById("expenseCurrency"),
   expenseDescription: document.getElementById("expenseDescription"),
   incomeForm: document.getElementById("incomeForm"),
   incomeDate: document.getElementById("incomeDate"),
   incomeAmount: document.getElementById("incomeAmount"),
+  incomeCurrency: document.getElementById("incomeCurrency"),
   incomeClientSelect: document.getElementById("incomeClientSelect"),
   newClientBtn: document.getElementById("newClientBtn"),
   editClientBtn: document.getElementById("editClientBtn"),
@@ -116,6 +118,8 @@ const defaultProfitSplits = {
 };
 
 const defaultIncomeClient = "Lemon Squeezy";
+const CURRENCY_CODES = ["EUR", "USD", "QAR"];
+const DEFAULT_CURRENCY = "EUR";
 
 let listManageState = null;
 
@@ -402,6 +406,68 @@ function showAuthedUi() {
   refreshProfileLabel();
   if (refs.expensePerson) refs.expensePerson.value = state.session.profile;
   if (refs.expensePayer) refs.expensePayer.value = state.session.profile;
+  if (refs.expenseCurrency) refs.expenseCurrency.value = DEFAULT_CURRENCY;
+  if (refs.incomeCurrency) refs.incomeCurrency.value = DEFAULT_CURRENCY;
+}
+
+function resolveCurrency(item) {
+  const currency = String(item?.currency || DEFAULT_CURRENCY).trim().toUpperCase();
+  return CURRENCY_CODES.includes(currency) ? currency : DEFAULT_CURRENCY;
+}
+
+function emptyCurrencyBalances() {
+  return { EUR: 0, USD: 0, QAR: 0 };
+}
+
+function sumAmountsByCurrency(items, predicate) {
+  const sums = emptyCurrencyBalances();
+  for (const item of items) {
+    if (!predicate(item)) continue;
+    sums[resolveCurrency(item)] += Number(item.amount || 0);
+  }
+  return sums;
+}
+
+function subtractCurrencyBalances(minuend, subtrahend) {
+  const out = emptyCurrencyBalances();
+  for (const code of CURRENCY_CODES) {
+    out[code] = (minuend[code] || 0) - (subtrahend[code] || 0);
+  }
+  return out;
+}
+
+function getAccountBalances() {
+  const raw = state.summary?.accountBalances;
+  if (raw && typeof raw === "object") {
+    return {
+      EUR: Number(raw.EUR) || 0,
+      USD: Number(raw.USD) || 0,
+      QAR: Number(raw.QAR) || 0,
+    };
+  }
+  return { EUR: Number(state.summary?.accountBalance) || 0, USD: 0, QAR: 0 };
+}
+
+function renderCurrencySummary(el, sums, options = {}) {
+  if (!el) return;
+  const hideZero = Boolean(options.hideZero);
+  const codes = hideZero ? CURRENCY_CODES.filter((code) => (sums[code] || 0) !== 0) : CURRENCY_CODES;
+  const displayCodes = codes.length > 0 ? codes : [DEFAULT_CURRENCY];
+  el.innerHTML = displayCodes
+    .map((code) => {
+      const value = sums[code] || 0;
+      const negative = value < 0 ? " negative" : "";
+      return `<span class="summary-currency-line${negative}">${escapeHtml(formatMoney(value, code))}</span>`;
+    })
+    .join("");
+}
+
+function formatPendingByCurrency(items) {
+  const sums = sumAmountsByCurrency(items, () => true);
+  const parts = CURRENCY_CODES.filter((code) => sums[code] > 0).map((code) =>
+    formatMoney(sums[code], code)
+  );
+  return parts.length > 0 ? parts.join(" · ") : formatMoney(0, DEFAULT_CURRENCY);
 }
 
 function resolveExpensePayer(expense) {
@@ -422,6 +488,7 @@ function buildPaymentItems() {
     date: item.date,
     label: item.label,
     amount: item.amount,
+    currency: DEFAULT_CURRENCY,
     paid: item.paid,
   }));
   const studio9 = (state.expenses || [])
@@ -432,6 +499,7 @@ function buildPaymentItems() {
       date: item.date,
       label: `${item.category} — ${item.description}`,
       amount: item.amount,
+      currency: resolveCurrency(item),
       paid: item.paid,
     }));
   return [...docs, ...studio9];
@@ -472,7 +540,18 @@ function applyBootstrapPayload(response) {
   state.clients = Array.isArray(response.clients) ? response.clients : [];
   state.documents = Array.isArray(response.documents) ? response.documents : [];
   state.activities = Array.isArray(response.activities) ? response.activities : [];
-  state.summary = response.summary || { accountBalance: 0, nextExpenseSeq: 1 };
+  state.summary = response.summary || {
+    accountBalance: 0,
+    accountBalances: emptyCurrencyBalances(),
+    nextExpenseSeq: 1,
+  };
+  const balances = state.summary.accountBalances || {};
+  state.summary.accountBalances = {
+    EUR: Number(balances.EUR) || 0,
+    USD: Number(balances.USD) || 0,
+    QAR: Number(balances.QAR) || 0,
+  };
+  state.summary.accountBalance = Number(state.summary.accountBalances.EUR) || 0;
   render();
 }
 
@@ -488,11 +567,13 @@ async function mutateAndRefresh(request) {
 }
 
 function getAccountBalance() {
-  return Number(state.summary?.accountBalance) || 0;
+  return getAccountBalances().EUR;
 }
 
-function canAffordPayment(amount) {
-  return Math.round(getAccountBalance() * 100) >= Math.round(Number(amount) * 100);
+function canAffordPayment(amount, currency = DEFAULT_CURRENCY) {
+  const code = resolveCurrency({ currency });
+  const balance = getAccountBalances()[code] || 0;
+  return Math.round(balance * 100) >= Math.round(Number(amount) * 100);
 }
 
 function showBalanceAlert() {
@@ -625,7 +706,7 @@ async function toggleExpensePayment(expenseId, input) {
   const expense = state.expenses.find((item) => item.id === expenseId);
   if (!expense) return;
   const paying = input.checked && !expense.paid;
-  if (paying && !canAffordPayment(expense.amount)) {
+  if (paying && !canAffordPayment(expense.amount, resolveCurrency(expense))) {
     input.checked = false;
     showBalanceAlert();
     return;
@@ -998,6 +1079,7 @@ async function handleExpenseSubmit(event) {
       body: JSON.stringify({
         person: refs.expensePerson.value,
         payer: refs.expensePayer.value,
+        currency: refs.expenseCurrency ? refs.expenseCurrency.value : DEFAULT_CURRENCY,
         date,
         amount,
         category,
@@ -1012,6 +1094,7 @@ async function handleExpenseSubmit(event) {
   refs.expenseDate.value = todayISO();
   if (refs.expensePerson) refs.expensePerson.value = state.session.profile;
   if (refs.expensePayer) refs.expensePayer.value = state.session.profile;
+  if (refs.expenseCurrency) refs.expenseCurrency.value = DEFAULT_CURRENCY;
 }
 
 async function handleIncomeSubmit(event) {
@@ -1019,18 +1102,20 @@ async function handleIncomeSubmit(event) {
   const amount = Number(refs.incomeAmount.value);
   const date = refs.incomeDate.value;
   const client = getSelectedClient();
+  const currency = refs.incomeCurrency ? refs.incomeCurrency.value : DEFAULT_CURRENCY;
   if (!amount || !date || !client) return;
 
   const ok = await mutateAndRefresh(() =>
     apiFetch("/api/incomes", {
       method: "POST",
-      body: JSON.stringify({ amount, date, client }),
+      body: JSON.stringify({ amount, date, client, currency }),
     })
   );
   if (!ok) return;
 
   refs.incomeForm.reset();
   refs.incomeDate.value = todayISO();
+  if (refs.incomeCurrency) refs.incomeCurrency.value = DEFAULT_CURRENCY;
   selectDefaultIncomeClient();
 }
 
@@ -1128,34 +1213,34 @@ function renderTotals() {
     return isoDate >= bounds.start && isoDate <= bounds.end;
   };
 
-  const totalPorPagar = state.expenses
-    .filter((item) => isReimbursementExpense(item) && !item.paid && inMonth(item.date))
-    .reduce((sum, item) => sum + item.amount, 0);
-  const totalPago = state.expenses
-    .filter((item) => isReimbursementExpense(item) && item.paid && inMonth(item.date))
-    .reduce((sum, item) => sum + item.amount, 0);
-  const totalEntradas = state.incomes
-    .filter((item) => inMonth(item.date))
-    .reduce((sum, item) => sum + item.amount, 0);
-  const totalExpensesPaid = state.expenses
-    .filter((item) => item.paid && inMonth(item.date))
-    .reduce((sum, item) => sum + item.amount, 0);
-  const totalDocsPagos = (state.documents || [])
-    .filter((item) => item.paid && inMonth(item.date))
-    .reduce((sum, item) => sum + item.amount, 0);
-  const disponibilidade = totalEntradas - totalExpensesPaid - totalDocsPagos;
+  const totalPorPagar = sumAmountsByCurrency(
+    state.expenses,
+    (item) => isReimbursementExpense(item) && !item.paid && inMonth(item.date)
+  );
+  const totalPago = sumAmountsByCurrency(
+    state.expenses,
+    (item) => isReimbursementExpense(item) && item.paid && inMonth(item.date)
+  );
+  const totalEntradas = sumAmountsByCurrency(state.incomes, (item) => inMonth(item.date));
+  const totalExpensesPaid = sumAmountsByCurrency(
+    state.expenses,
+    (item) => item.paid && inMonth(item.date)
+  );
+  const docsAsEur = (state.documents || []).map((item) => ({ ...item, currency: DEFAULT_CURRENCY }));
+  const totalDocsPagos = sumAmountsByCurrency(
+    docsAsEur,
+    (item) => item.paid && inMonth(item.date)
+  );
+  const disponibilidade = subtractCurrencyBalances(
+    subtractCurrencyBalances(totalEntradas, totalExpensesPaid),
+    totalDocsPagos
+  );
 
-  refs.totalPorPagar.textContent = formatEUR(totalPorPagar);
-  refs.totalPago.textContent = formatEUR(totalPago);
-  refs.totalEntradas.textContent = formatEUR(totalEntradas);
-  if (refs.disponibilidadeAtual) {
-    refs.disponibilidadeAtual.textContent = formatEUR(disponibilidade);
-  }
-  if (refs.accountBalanceTotal) {
-    const balance = Number(state.summary?.accountBalance) || 0;
-    refs.accountBalanceTotal.textContent = formatEUR(balance);
-    refs.accountBalanceTotal.classList.toggle("negative", balance < 0);
-  }
+  renderCurrencySummary(refs.totalPorPagar, totalPorPagar, { hideZero: true });
+  renderCurrencySummary(refs.totalPago, totalPago, { hideZero: true });
+  renderCurrencySummary(refs.totalEntradas, totalEntradas, { hideZero: true });
+  renderCurrencySummary(refs.disponibilidadeAtual, disponibilidade);
+  renderCurrencySummary(refs.accountBalanceTotal, getAccountBalances());
 }
 
 function renderPaymentPanel() {
@@ -1164,11 +1249,11 @@ function renderPaymentPanel() {
   const startDate = refs.paymentFilterStartDate ? refs.paymentFilterStartDate.value : "";
   const endDate = refs.paymentFilterEndDate ? refs.paymentFilterEndDate.value : "";
   const pendingInRange = getPendingDocumentsInRange(startDate, endDate);
-  const pendingSum = pendingInRange.reduce((sum, item) => sum + item.amount, 0);
 
-  refs.documentsPendingTotal.textContent = `${t("payments.pendingPrefix")} ${formatEUR(pendingSum)} (${pendingInRange.length})`;
+  refs.documentsPendingTotal.textContent = `${t("payments.pendingPrefix")} ${formatPendingByCurrency(pendingInRange)} (${pendingInRange.length})`;
   if (refs.paymentsAccountBalance) {
-    refs.paymentsAccountBalance.textContent = `${t("payments.accountBalance")} ${formatEUR(getAccountBalance())}`;
+    const balances = CURRENCY_CODES.map((code) => formatMoney(getAccountBalances()[code], code)).join(" · ");
+    refs.paymentsAccountBalance.textContent = `${t("payments.accountBalance")} ${balances}`;
   }
 
   const rows = getFilteredPaymentItems();
@@ -1192,7 +1277,7 @@ function renderPaymentPanel() {
           <span class="payment-table-label">${escapeHtml(item.label)}</span>
           ${typeBadge}
         </td>
-        <td>${formatEUR(item.amount)}</td>
+        <td>${formatMoney(item.amount, item.currency)}</td>
         <td class="td-reembolso">
           ${renderPaymentSwitch(item.paid, toggleAttr, item.id, t("payments.statusAria"), "payment-switch--table")}
         </td>
@@ -1271,7 +1356,7 @@ function renderTable() {
         <td>${payer}</td>
         <td>${escapeHtml(item.category)}</td>
         <td>${escapeHtml(item.description)}</td>
-        <td>${formatEUR(item.amount)}</td>
+        <td>${formatMoney(item.amount, item.currency)}</td>
         <td class="td-reembolso">
           ${renderPaymentSwitch(item.paid, "data-expense-toggle", item.id, t("expense.reimbursementAria"), "payment-switch--table")}
         </td>
@@ -1313,6 +1398,7 @@ function exportExcel() {
     [t("expense.payer")]: resolveExpensePayer(item),
     [t("table.category")]: item.category,
     [t("table.description")]: item.description,
+    [t("currency.label")]: resolveCurrency(item),
     [t("table.amount")]: item.amount,
     [t("table.reimbursement")]: item.paid ? t("status.paid") : t("status.unpaid"),
   }));
@@ -1333,7 +1419,7 @@ function exportPdf() {
     resolveExpensePayer(item),
     item.category,
     item.description,
-    formatEUR(item.amount),
+    formatMoney(item.amount, resolveCurrency(item)),
     item.paid ? t("status.paid") : t("status.unpaid"),
   ]);
   if (rows.length === 0) {
@@ -1371,12 +1457,12 @@ function exportPendingPaymentsPdf() {
     window.alert(t("errors.exportEmpty"));
     return;
   }
-  const totalPending = pending.reduce((sum, item) => sum + item.amount, 0);
-  const balance = getAccountBalance();
+  const totalPending = formatPendingByCurrency(pending);
+  const balances = CURRENCY_CODES.map((code) => `${code}: ${formatMoney(getAccountBalances()[code], code)}`).join("  ");
   const rows = pending.map((item) => [
     formatDate(item.date),
     item.label,
-    formatEUR(item.amount),
+    formatMoney(item.amount, item.currency),
     t("status.unpaid"),
   ]);
   const { jsPDF } = window.jspdf;
@@ -1384,8 +1470,8 @@ function exportPendingPaymentsPdf() {
   doc.setFontSize(14);
   doc.text(t("payments.pendingPdfTitle"), 14, 14);
   doc.setFontSize(10);
-  doc.text(`${t("payments.pendingPdfBalance")}: ${formatEUR(balance)}`, 14, 22);
-  doc.text(`${t("payments.pendingPdfTotal")}: ${formatEUR(totalPending)}`, 14, 28);
+  doc.text(`${t("payments.pendingPdfBalance")}: ${balances}`, 14, 22);
+  doc.text(`${t("payments.pendingPdfTotal")}: ${totalPending}`, 14, 28);
   doc.autoTable({
     head: [[t("table.date"), t("payments.description"), t("table.amount"), t("filter.status")]],
     body: rows,
@@ -1428,11 +1514,15 @@ function persistSessionCache() {
   window.localStorage.setItem(sessionCacheKey, JSON.stringify(state.session));
 }
 
-function formatEUR(value) {
+function formatMoney(value, currency = DEFAULT_CURRENCY) {
   return new Intl.NumberFormat(locale(), {
     style: "currency",
-    currency: "EUR",
+    currency: resolveCurrency({ currency }),
   }).format(value || 0);
+}
+
+function formatEUR(value) {
+  return formatMoney(value, DEFAULT_CURRENCY);
 }
 
 function formatDate(isoDate) {

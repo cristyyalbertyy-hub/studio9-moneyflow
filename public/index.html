@@ -84,23 +84,23 @@
         <div class="summary-grid">
           <article class="summary-item alert">
             <span data-i18n="hero.unpaidExpenses">Despesas por pagar (no mes)</span>
-            <strong id="totalPorPagar">EUR 0,00</strong>
+            <strong id="totalPorPagar" class="summary-multi"></strong>
           </article>
           <article class="summary-item">
             <span data-i18n="hero.totalPaid">Total pago (no mes)</span>
-            <strong id="totalPago">EUR 0,00</strong>
+            <strong id="totalPago" class="summary-multi"></strong>
           </article>
           <article class="summary-item income">
             <span data-i18n="hero.incomes">Entradas (no mes)</span>
-            <strong id="totalEntradas">EUR 0,00</strong>
+            <strong id="totalEntradas" class="summary-multi"></strong>
           </article>
           <article class="summary-item balance">
             <span data-i18n="hero.availability">Disponibilidade (no mes)</span>
-            <strong id="disponibilidadeAtual">EUR 0,00</strong>
+            <strong id="disponibilidadeAtual" class="summary-multi"></strong>
           </article>
           <article class="summary-item balance summary-item--account">
             <span data-i18n="hero.accountBalance">Saldo acumulado (conta)</span>
-            <strong id="accountBalanceTotal">EUR 0,00</strong>
+            <strong id="accountBalanceTotal" class="summary-multi"></strong>
           </article>
         </div>
         <p class="summary-hint" data-i18n="hero.availabilityHint">
@@ -108,8 +108,8 @@
           menos documentos ja pagos no painel Pagamentos.
         </p>
         <p class="summary-hint" data-i18n="hero.accountBalanceHint">
-          Saldo acumulado = todas as entradas menos todos os reembolsos e pagamentos
-          ja efectuados, desde o inicio (como conta bancaria).
+          Saldo acumulado por moeda = entradas menos reembolsos e pagamentos ja efectuados
+          (documentos em euros). Cada moeda tem saldo independente.
         </p>
         <div class="legend-rg legend-rg--hero" aria-hidden="true">
           <span class="legend-rg-item">
@@ -135,7 +135,15 @@
               <input id="incomeDate" type="date" required />
             </label>
             <label>
-              <span data-i18n="payments.amount">Valor (EUR)</span>
+              <span data-i18n="currency.label">Moeda</span>
+              <select id="incomeCurrency" required>
+                <option value="EUR" data-i18n="currency.EUR">Euro (EUR)</option>
+                <option value="USD" data-i18n="currency.USD">Dolar (USD)</option>
+                <option value="QAR" data-i18n="currency.QAR">Dirham Qatar (QAR)</option>
+              </select>
+            </label>
+            <label>
+              <span data-i18n="payments.amount">Valor</span>
               <input
                 id="incomeAmount"
                 type="number"
@@ -198,7 +206,15 @@
               <input id="expenseDate" type="date" required />
             </label>
             <label>
-              <span data-i18n="payments.amount">Valor (EUR)</span>
+              <span data-i18n="currency.label">Moeda</span>
+              <select id="expenseCurrency" required>
+                <option value="EUR" data-i18n="currency.EUR">Euro (EUR)</option>
+                <option value="USD" data-i18n="currency.USD">Dolar (USD)</option>
+                <option value="QAR" data-i18n="currency.QAR">Dirham Qatar (QAR)</option>
+              </select>
+            </label>
+            <label>
+              <span data-i18n="payments.amount">Valor</span>
               <input
                 id="expenseAmount"
                 type="number"

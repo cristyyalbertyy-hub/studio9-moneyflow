@@ -26,7 +26,11 @@
         "Disponibilidade = entradas do mes menos reembolsos (despesas) ja pagos menos documentos ja pagos no painel Pagamentos.",
       "hero.accountBalance": "Saldo acumulado (conta)",
       "hero.accountBalanceHint":
-        "Saldo acumulado = todas as entradas menos reembolsos e pagamentos ja efectuados, desde o inicio (como conta bancaria).",
+        "Saldo acumulado por moeda = entradas menos reembolsos e pagamentos ja efectuados (documentos em euros). Cada moeda tem saldo independente.",
+      "currency.label": "Moeda",
+      "currency.EUR": "Euro (EUR)",
+      "currency.USD": "Dolar (USD)",
+      "currency.QAR": "Dirham Qatar (QAR)",
       "status.unpaid": "Por pagar",
       "status.paid": "Pago",
       "list.title": "Reembolsos Cris / Alex",
@@ -52,7 +56,7 @@
       "payments.desc":
         "Documentos e despesas pagas directamente pela Studio9. Filtra por estado e datas. Ao marcar como pago verifica-se o saldo disponivel.",
       "payments.dateMonth": "Data (mes)",
-      "payments.amount": "Valor (EUR)",
+      "payments.amount": "Valor",
       "payments.description": "Descricao / referencia",
       "payments.descriptionPlaceholder": "Ex: Fatura electricidade Abril",
       "payments.add": "Adicionar documento",
@@ -164,6 +168,7 @@
       "api.clientRequired": "Cliente obrigatorio",
       "api.clientsTableMissing":
         "Tabela de clientes em falta. Abre o Supabase SQL Editor e corre migration_clients.sql.",
+      "api.invalidCurrency": "Moeda invalida",
     },
     en: {
       "auth.title": "Sign in to MoneyFlow",
@@ -189,7 +194,11 @@
         "Available balance = income this month minus reimbursed expenses already paid minus documents marked paid in Payments.",
       "hero.accountBalance": "Running account balance",
       "hero.accountBalanceHint":
-        "Running balance = all income minus all reimbursements and payments made, from the start (like a bank account).",
+        "Running balance per currency = income minus reimbursements and payments made (documents in euros). Each currency has an independent balance.",
+      "currency.label": "Currency",
+      "currency.EUR": "Euro (EUR)",
+      "currency.USD": "US Dollar (USD)",
+      "currency.QAR": "Qatar Dirham (QAR)",
       "status.unpaid": "Unpaid",
       "status.paid": "Paid",
       "list.title": "Cris / Alex reimbursements",
@@ -215,7 +224,7 @@
       "payments.desc":
         "Documents and expenses paid directly by Studio9. Filter by status and dates. Marking as paid checks available balance.",
       "payments.dateMonth": "Date (month)",
-      "payments.amount": "Amount (EUR)",
+      "payments.amount": "Amount",
       "payments.description": "Description / reference",
       "payments.descriptionPlaceholder": "E.g. April electricity bill",
       "payments.add": "Add document",
@@ -327,6 +336,7 @@
       "api.clientRequired": "Client is required",
       "api.clientsTableMissing":
         "Clients table is missing. Open the Supabase SQL Editor and run migration_clients.sql.",
+      "api.invalidCurrency": "Invalid currency",
     },
   };
 
@@ -342,6 +352,7 @@
     "Cliente em uso em entradas existentes": "api.clientInUse",
     "Cliente nao encontrado": "api.clientNotFound",
     "Cliente obrigatorio": "api.clientRequired",
+    "Moeda invalida": "api.invalidCurrency",
     "Tabela de clientes em falta. Corre migration_clients.sql no Supabase SQL Editor.":
       "api.clientsTableMissing",
   };

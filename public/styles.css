@@ -604,6 +604,22 @@ body {
   filter: brightness(1.05);
 }
 
+.summary-multi {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: clamp(1rem, 1.6vw, 1.35rem);
+  line-height: 1.25;
+}
+
+.summary-currency-line {
+  display: block;
+}
+
+.summary-currency-line.negative {
+  color: #fca5a5;
+}
+
 .admin-panel {
   border-color: rgba(148, 163, 184, 0.18);
 }
