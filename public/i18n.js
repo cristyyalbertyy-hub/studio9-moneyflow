@@ -93,7 +93,9 @@
       "expense.reimbursementAria": "Estado do reembolso",
       "expense.listTitle": "Despesas registadas",
       "expense.listDesc":
-        "Listagem filtrada por pagador, categoria e periodo. Por defeito segue o mes de referencia.",
+        "Todas as despesas e pagamentos Studio9. Usa «So Studio9» para ver apenas saidas da conta.",
+      "expense.studio9Only": "So Studio9",
+      "expense.legacyDocument": "Documento (legado)",
       "expense.exportPdf": "Exportar PDF",
       "expense.pdfTitle": "Studio9 - Despesas registadas",
       "expense.studio9ConfirmTitle": "Confirmar pagamento Studio9",
@@ -285,7 +287,9 @@
       "expense.reimbursementAria": "Reimbursement status",
       "expense.listTitle": "Recorded expenses",
       "expense.listDesc":
-        "List filtered by payer, category and period. Defaults to the reference month.",
+        "All expenses and Studio9 payments. Use «Studio9 only» to see account outflows.",
+      "expense.studio9Only": "Studio9 only",
+      "expense.legacyDocument": "Document (legacy)",
       "expense.exportPdf": "Export PDF",
       "expense.pdfTitle": "Studio9 - Recorded expenses",
       "expense.studio9ConfirmTitle": "Confirm Studio9 payment",

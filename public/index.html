@@ -294,8 +294,13 @@
             <div class="panel-title panel-title--sub">
               <h3 data-i18n="expense.listTitle">Despesas registadas</h3>
               <p data-i18n="expense.listDesc">
-                Listagem filtrada por pagador, categoria e periodo. Por defeito segue o mes de referencia.
+                Todas as despesas e pagamentos Studio9. Usa «So Studio9» para ver apenas saidas da conta.
               </p>
+            </div>
+
+            <div class="expense-register-meta">
+              <span id="expenseRegisterPeriodTotal">Total no periodo: EUR 0,00</span>
+              <span id="expenseRegisterAccountBalance" class="expense-register-balance"></span>
             </div>
 
             <div class="filters expense-filters">
@@ -322,6 +327,9 @@
                 <span data-i18n="filter.to">Ate</span>
                 <input id="expenseRegisterFilterEndDate" type="date" />
               </label>
+              <button type="button" id="expenseRegisterStudio9Btn" class="btn-ghost" data-i18n="expense.studio9Only">
+                So Studio9
+              </button>
               <button type="button" id="expenseRegisterClearFilters" class="btn-ghost" data-i18n="filter.clear">
                 Limpar filtros
               </button>
@@ -347,49 +355,6 @@
                 <tbody id="expenseRegisterRows"></tbody>
               </table>
             </div>
-          </div>
-        </section>
-
-        <section class="panel payments-panel">
-          <div class="panel-title">
-            <h2 data-i18n="payments.title">Pagamentos</h2>
-            <p data-i18n="payments.desc">
-              Pagamentos efectuados pela Studio9. Registam-se ao guardar uma despesa com pagador Studio9.
-            </p>
-          </div>
-          <div class="payments-meta">
-            <span id="documentsPendingTotal">Total no periodo: EUR 0,00</span>
-            <span id="paymentsAccountBalance" class="payments-balance"></span>
-          </div>
-
-          <div class="filters">
-            <label>
-              <span data-i18n="filter.from">De</span>
-              <input id="paymentFilterStartDate" type="date" />
-            </label>
-            <label>
-              <span data-i18n="filter.to">Ate</span>
-              <input id="paymentFilterEndDate" type="date" />
-            </label>
-            <button id="paymentClearFilters" class="btn-ghost" data-i18n="filter.clear">
-              Limpar filtros
-            </button>
-            <button type="button" id="exportPendingPdfBtn" class="btn-ghost" data-i18n="payments.exportPdf">
-              Exportar PDF
-            </button>
-          </div>
-
-          <div class="table-wrap">
-            <table class="expense-table">
-              <thead>
-                <tr>
-                  <th data-i18n="table.date">Data</th>
-                  <th data-i18n="payments.description">Descricao / referencia</th>
-                  <th data-i18n="table.amount">Valor</th>
-                </tr>
-              </thead>
-              <tbody id="paymentRows"></tbody>
-            </table>
           </div>
         </section>
 

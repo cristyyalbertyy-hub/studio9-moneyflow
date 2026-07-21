@@ -27,14 +27,6 @@ const refs = {
   monthTotalOutflow: document.getElementById("monthTotalOutflow"),
   accountBalanceTotal: document.getElementById("accountBalanceTotal"),
   expenseSeqPreview: document.getElementById("expenseSeqPreview"),
-  paymentsPanel: document.querySelector(".payments-panel"),
-  paymentRows: document.getElementById("paymentRows"),
-  paymentFilterStartDate: document.getElementById("paymentFilterStartDate"),
-  paymentFilterEndDate: document.getElementById("paymentFilterEndDate"),
-  paymentClearFilters: document.getElementById("paymentClearFilters"),
-  documentsPendingTotal: document.getElementById("documentsPendingTotal"),
-  paymentsAccountBalance: document.getElementById("paymentsAccountBalance"),
-  exportPendingPdfBtn: document.getElementById("exportPendingPdfBtn"),
   balanceAlertOverlay: document.getElementById("balanceAlertOverlay"),
   balanceAlertOk: document.getElementById("balanceAlertOk"),
   studio9PaymentConfirmOverlay: document.getElementById("studio9PaymentConfirmOverlay"),
@@ -83,6 +75,9 @@ const refs = {
   expenseRegisterFilterCategory: document.getElementById("expenseRegisterFilterCategory"),
   expenseRegisterFilterStartDate: document.getElementById("expenseRegisterFilterStartDate"),
   expenseRegisterFilterEndDate: document.getElementById("expenseRegisterFilterEndDate"),
+  expenseRegisterStudio9Btn: document.getElementById("expenseRegisterStudio9Btn"),
+  expenseRegisterPeriodTotal: document.getElementById("expenseRegisterPeriodTotal"),
+  expenseRegisterAccountBalance: document.getElementById("expenseRegisterAccountBalance"),
   expenseRegisterClearFilters: document.getElementById("expenseRegisterClearFilters"),
   exportExpenseRegisterPdfBtn: document.getElementById("exportExpenseRegisterPdfBtn"),
   expenseRegisterRows: document.getElementById("expenseRegisterRows"),
@@ -268,10 +263,12 @@ async function boot() {
   refs.logoutBtn.addEventListener("click", () => logout(true));
   refs.exportExcelBtn.addEventListener("click", exportExcel);
   refs.exportPdfBtn.addEventListener("click", exportPdf);
-  if (refs.exportPendingPdfBtn) refs.exportPendingPdfBtn.addEventListener("click", exportPendingPaymentsPdf);
   if (refs.exportIncomePdfBtn) refs.exportIncomePdfBtn.addEventListener("click", exportIncomePdf);
   if (refs.exportExpenseRegisterPdfBtn) {
     refs.exportExpenseRegisterPdfBtn.addEventListener("click", exportExpenseRegisterPdf);
+  }
+  if (refs.expenseRegisterStudio9Btn) {
+    refs.expenseRegisterStudio9Btn.addEventListener("click", filterExpenseRegisterStudio9);
   }
   if (refs.balanceAlertOk) refs.balanceAlertOk.addEventListener("click", hideBalanceAlert);
   if (refs.balanceAlertOverlay) {
@@ -321,13 +318,6 @@ async function boot() {
   [refs.filterPerson, refs.filterStatus, refs.filterStartDate, refs.filterEndDate].forEach(
     (el) => el.addEventListener("change", render)
   );
-  [
-    refs.paymentFilterStartDate,
-    refs.paymentFilterEndDate,
-  ]
-    .filter(Boolean)
-    .forEach((el) => el.addEventListener("change", render));
-  if (refs.paymentClearFilters) refs.paymentClearFilters.addEventListener("click", clearPaymentFilters);
   if (refs.incomeClearFilters) refs.incomeClearFilters.addEventListener("click", clearIncomeFilters);
   [
     refs.incomeFilterClient,
@@ -542,48 +532,6 @@ function isReimbursementExpense(expense) {
   return payer === "Cris" || payer === "Alex";
 }
 
-function buildPaymentItems() {
-  const docs = (state.documents || [])
-    .filter((item) => item.paid)
-    .map((item) => ({
-      kind: "document",
-      id: item.id,
-      date: item.date,
-      label: item.label,
-      amount: item.amount,
-      currency: DEFAULT_CURRENCY,
-    }));
-  const studio9 = (state.expenses || [])
-    .filter((item) => resolveExpensePayer(item) === "Studio9" && item.paid)
-    .map((item) => ({
-      kind: "expense",
-      id: item.id,
-      date: resolveExpensePaidAt(item) || item.date,
-      label: `${item.category} — ${item.description}`,
-      amount: item.amount,
-      currency: resolveCurrency(item),
-    }));
-  return [...docs, ...studio9];
-}
-
-function filterPaymentItemsByDate(items, startDate, endDate) {
-  return items.filter((item) => {
-    const startOk = !startDate || item.date >= startDate;
-    const endOk = !endDate || item.date <= endDate;
-    return startOk && endOk;
-  });
-}
-
-function getFilteredPaymentItems() {
-  const startDate = refs.paymentFilterStartDate ? refs.paymentFilterStartDate.value : "";
-  const endDate = refs.paymentFilterEndDate ? refs.paymentFilterEndDate.value : "";
-  return filterPaymentItemsByDate(buildPaymentItems(), startDate, endDate);
-}
-
-function getPaymentItemsInRange(startDate, endDate) {
-  return filterPaymentItemsByDate(buildPaymentItems(), startDate, endDate);
-}
-
 function buildExpensePaymentLabel(category, description) {
   const cat = String(category || "").trim();
   const desc = String(description || "").trim();
@@ -591,12 +539,34 @@ function buildExpensePaymentLabel(category, description) {
   return desc || cat;
 }
 
-function ensurePaymentDateFilterIncludes(isoDate) {
-  if (!isoDate || !refs.paymentFilterStartDate || !refs.paymentFilterEndDate) return;
-  const start = refs.paymentFilterStartDate.value;
-  const end = refs.paymentFilterEndDate.value;
-  if (!start || isoDate < start) refs.paymentFilterStartDate.value = isoDate;
-  if (!end || isoDate > end) refs.paymentFilterEndDate.value = isoDate;
+function expenseRegisterFilterDate(item) {
+  const paidAt = resolveExpensePaidAt(item);
+  if (paidAt) return paidAt;
+  return item.date;
+}
+
+function mapLegacyDocumentToRegisterRow(doc) {
+  return {
+    kind: "document",
+    id: doc.id,
+    seqNumber: null,
+    date: doc.date,
+    payer: "Studio9",
+    category: t("expense.legacyDocument"),
+    description: doc.label,
+    amount: doc.amount,
+    currency: DEFAULT_CURRENCY,
+    paid: true,
+    paidAt: doc.date,
+  };
+}
+
+function ensureExpenseRegisterDateFilterIncludes(isoDate) {
+  if (!isoDate || !refs.expenseRegisterFilterStartDate || !refs.expenseRegisterFilterEndDate) return;
+  const start = refs.expenseRegisterFilterStartDate.value;
+  const end = refs.expenseRegisterFilterEndDate.value;
+  if (!start || isoDate < start) refs.expenseRegisterFilterStartDate.value = isoDate;
+  if (!end || isoDate > end) refs.expenseRegisterFilterEndDate.value = isoDate;
 }
 
 async function fetchBootstrap() {
@@ -706,7 +676,7 @@ async function confirmStudio9Payment() {
   hideStudio9PaymentConfirm();
   const ok = await submitExpenseRecord(payload);
   if (!ok) return;
-  ensurePaymentDateFilterIncludes(payload.date);
+  ensureExpenseRegisterDateFilterIncludes(payload.date);
   resetExpenseFormAfterSave();
 }
 
@@ -804,28 +774,6 @@ function renderPaymentSwitch(checked, toggleAttr, toggleValue, ariaLabel, extraC
   `;
 }
 
-async function toggleDocumentPayment(docId, input) {
-  const doc = (state.documents || []).find((item) => item.id === docId);
-  if (!doc) return;
-  const paying = input.checked && !doc.paid;
-  if (paying && !canAffordPayment(doc.amount)) {
-    input.checked = false;
-    showBalanceAlert();
-    return;
-  }
-  try {
-    const response = await apiFetch(`/api/documents/${docId}/toggle-paid`, { method: "PATCH" });
-    applyBootstrapPayload(response);
-  } catch (error) {
-    input.checked = !input.checked;
-    if (isInsufficientBalanceError(error)) {
-      showBalanceAlert();
-      return;
-    }
-    window.alert(parseApiErrorMessage(error));
-  }
-}
-
 async function toggleExpensePayment(expenseId, input) {
   const expense = state.expenses.find((item) => item.id === expenseId);
   if (!expense) return;
@@ -846,14 +794,6 @@ async function toggleExpensePayment(expenseId, input) {
     }
     window.alert(parseApiErrorMessage(error));
   }
-}
-
-function getFilteredDocuments() {
-  return getFilteredPaymentItems().filter((item) => item.kind === "document");
-}
-
-function getPendingDocumentsInRange(startDate, endDate) {
-  return getPaymentItemsInRange(startDate, endDate);
 }
 
 function getSelectedCategory() {
@@ -1252,11 +1192,6 @@ function clearFilters() {
   render();
 }
 
-function clearPaymentFilters() {
-  applyPeriodMonthToDateFilters();
-  render();
-}
-
 function clearIncomeFilters() {
   const bounds = getSelectedMonthBounds();
   if (bounds && refs.incomeFilterStartDate && refs.incomeFilterEndDate) {
@@ -1278,13 +1213,23 @@ function clearExpenseRegisterFilters() {
   render();
 }
 
+function filterExpenseRegisterStudio9() {
+  const bounds = getSelectedMonthBounds();
+  if (bounds && refs.expenseRegisterFilterStartDate && refs.expenseRegisterFilterEndDate) {
+    refs.expenseRegisterFilterStartDate.value = bounds.start;
+    refs.expenseRegisterFilterEndDate.value = bounds.end;
+  }
+  if (refs.expenseRegisterFilterPayer) refs.expenseRegisterFilterPayer.value = "Studio9";
+  if (refs.expenseRegisterFilterCategory) refs.expenseRegisterFilterCategory.value = "all";
+  render();
+}
+
 function render() {
   renderPeriodHeader();
   renderCategories();
   renderClients();
   renderExpenseSeqPreview();
   renderTotals();
-  renderPaymentPanel();
   renderIncomeTable();
   renderExpenseRegisterTable();
   renderTable();
@@ -1337,17 +1282,49 @@ function getFilteredExpenseRegisterList() {
   const category = refs.expenseRegisterFilterCategory ? refs.expenseRegisterFilterCategory.value : "all";
   const startDate = refs.expenseRegisterFilterStartDate ? refs.expenseRegisterFilterStartDate.value : "";
   const endDate = refs.expenseRegisterFilterEndDate ? refs.expenseRegisterFilterEndDate.value : "";
-  return state.expenses.filter((item) => {
+
+  const expenseRows = state.expenses.filter((item) => {
     const payerOk = payer === "all" || resolveExpensePayer(item) === payer;
     const categoryOk = category === "all" || item.category === category;
-    const startOk = !startDate || item.date >= startDate;
-    const endOk = !endDate || item.date <= endDate;
+    const filterDate = expenseRegisterFilterDate(item);
+    const startOk = !startDate || filterDate >= startDate;
+    const endOk = !endDate || filterDate <= endDate;
     return payerOk && categoryOk && startOk && endOk;
   });
+
+  let documentRows = [];
+  if ((payer === "all" || payer === "Studio9") && category === "all") {
+    documentRows = (state.documents || [])
+      .filter((item) => item.paid)
+      .filter((item) => {
+        const startOk = !startDate || item.date >= startDate;
+        const endOk = !endDate || item.date <= endDate;
+        return startOk && endOk;
+      })
+      .map(mapLegacyDocumentToRegisterRow);
+  }
+
+  return [...expenseRows, ...documentRows].sort((a, b) => {
+    const dateA = expenseRegisterFilterDate(a);
+    const dateB = expenseRegisterFilterDate(b);
+    return dateB.localeCompare(dateA);
+  });
+}
+
+function renderExpenseRegisterMeta() {
+  const items = getFilteredExpenseRegisterList();
+  if (refs.expenseRegisterPeriodTotal) {
+    refs.expenseRegisterPeriodTotal.textContent = `${t("payments.periodPrefix")} ${formatPendingByCurrency(items)} (${items.length})`;
+  }
+  if (refs.expenseRegisterAccountBalance) {
+    const balances = CURRENCY_CODES.map((code) => formatMoney(getAccountBalances()[code], code)).join(" · ");
+    refs.expenseRegisterAccountBalance.textContent = `${t("payments.accountBalance")} ${balances}`;
+  }
 }
 
 function renderExpenseRegisterTable() {
   if (!refs.expenseRegisterRows) return;
+  renderExpenseRegisterMeta();
   const rows = getFilteredExpenseRegisterList();
   if (rows.length === 0) {
     refs.expenseRegisterRows.innerHTML = `<tr><td colspan="8" class="empty">${escapeHtml(t("table.empty"))}</td></tr>`;
@@ -1485,45 +1462,6 @@ function renderTotals() {
   renderCurrencySummary(refs.monthReimbursements, pagamentosReembolsar, { hideZero: true });
   renderCurrencySummary(refs.monthTotalOutflow, totalSaida, { hideZero: true });
   renderCurrencySummary(refs.accountBalanceTotal, getAccountBalances());
-}
-
-function renderPaymentPanel() {
-  if (!refs.paymentRows || !refs.documentsPendingTotal) return;
-
-  const startDate = refs.paymentFilterStartDate ? refs.paymentFilterStartDate.value : "";
-  const endDate = refs.paymentFilterEndDate ? refs.paymentFilterEndDate.value : "";
-  const itemsInRange = getPaymentItemsInRange(startDate, endDate);
-
-  refs.documentsPendingTotal.textContent = `${t("payments.periodPrefix")} ${formatPendingByCurrency(itemsInRange)} (${itemsInRange.length})`;
-  if (refs.paymentsAccountBalance) {
-    const balances = CURRENCY_CODES.map((code) => formatMoney(getAccountBalances()[code], code)).join(" · ");
-    refs.paymentsAccountBalance.textContent = `${t("payments.accountBalance")} ${balances}`;
-  }
-
-  const rows = getFilteredPaymentItems();
-  if (rows.length === 0) {
-    refs.paymentRows.innerHTML = `<tr><td colspan="3" class="empty">${escapeHtml(t("table.empty"))}</td></tr>`;
-    return;
-  }
-
-  refs.paymentRows.innerHTML = rows
-    .map((item) => {
-      const typeBadge =
-        item.kind === "expense"
-          ? `<span class="owner-badge owner-badge--small">Studio9</span>`
-          : "";
-      return `
-      <tr>
-        <td>${formatDate(item.date)}</td>
-        <td>
-          <span class="payment-table-label">${escapeHtml(item.label)}</span>
-          ${typeBadge}
-        </td>
-        <td>${formatMoney(item.amount, item.currency)}</td>
-      </tr>
-    `;
-    })
-    .join("");
 }
 
 function renderActivities() {
@@ -1748,37 +1686,6 @@ function exportExpenseRegisterPdf() {
   doc.save("studio9-despesas.pdf");
 }
 
-function exportPendingPaymentsPdf() {
-  const startDate = refs.paymentFilterStartDate ? refs.paymentFilterStartDate.value : "";
-  const endDate = refs.paymentFilterEndDate ? refs.paymentFilterEndDate.value : "";
-  const items = getPaymentItemsInRange(startDate, endDate);
-  if (items.length === 0) {
-    window.alert(t("errors.exportEmpty"));
-    return;
-  }
-  const total = formatPendingByCurrency(items);
-  const balances = CURRENCY_CODES.map((code) => `${code}: ${formatMoney(getAccountBalances()[code], code)}`).join("  ");
-  const rows = items.map((item) => [
-    formatDate(item.date),
-    item.label,
-    formatMoney(item.amount, item.currency),
-  ]);
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation: "landscape" });
-  doc.setFontSize(14);
-  doc.text(t("payments.pdfTitle"), 14, 14);
-  doc.setFontSize(10);
-  doc.text(`${t("payments.pendingPdfBalance")}: ${balances}`, 14, 22);
-  doc.text(`${t("payments.periodPrefix")} ${total}`, 14, 28);
-  doc.autoTable({
-    head: [[t("table.date"), t("payments.description"), t("table.amount")]],
-    body: rows,
-    startY: 34,
-    styles: { fontSize: 9 },
-  });
-  doc.save("studio9-pagamentos.pdf");
-}
-
 async function apiFetch(url, options = {}) {
   if (!state.session?.token) throw new Error("Sessao invalida");
   const headers = {
@@ -1912,10 +1819,6 @@ function applyPeriodMonthToDateFilters() {
     refs.filterEndDate.value = bounds.end;
   }
   if (refs.filterStatus) refs.filterStatus.value = "unpaid";
-  if (refs.paymentFilterStartDate && refs.paymentFilterEndDate) {
-    refs.paymentFilterStartDate.value = bounds.start;
-    refs.paymentFilterEndDate.value = bounds.end;
-  }
   if (refs.incomeFilterStartDate && refs.incomeFilterEndDate) {
     refs.incomeFilterStartDate.value = bounds.start;
     refs.incomeFilterEndDate.value = bounds.end;
