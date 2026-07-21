@@ -4,6 +4,10 @@ create table if not exists public.categories (
   name text primary key
 );
 
+create table if not exists public.clients (
+  name text primary key
+);
+
 create table if not exists public.expenses (
   id uuid primary key default gen_random_uuid(),
   seq_number integer unique,
@@ -25,7 +29,8 @@ create table if not exists public.incomes (
   id uuid primary key default gen_random_uuid(),
   date date not null,
   amount numeric(12,2) not null check (amount > 0),
-  source text not null,
+  client text not null,
+  source text,
   created_by text not null check (created_by in ('Cris', 'Alex')),
   created_at timestamptz not null default now()
 );
@@ -63,4 +68,8 @@ values
   ('Transporte'),
   ('Almoco'),
   ('Software')
+on conflict do nothing;
+
+insert into public.clients(name)
+values ('Lemon Squeezy')
 on conflict do nothing;

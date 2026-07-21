@@ -146,15 +146,21 @@
               />
             </label>
             <label class="full-width">
-              <span data-i18n="income.source">Origem / Nota</span>
-              <input
-                id="incomeSource"
-                type="text"
-                maxlength="120"
-                data-i18n-placeholder="income.sourcePlaceholder"
-                placeholder="Ex: Pagamento cliente X"
-                required
-              />
+              <span data-i18n="income.client">Cliente</span>
+              <div class="category-row">
+                <select id="incomeClientSelect" required></select>
+                <div class="category-actions">
+                  <button type="button" id="newClientBtn" class="btn-ghost" data-i18n="client.newBtn">
+                    + Novo cliente
+                  </button>
+                  <button type="button" id="editClientBtn" class="btn-ghost" data-i18n="client.editBtn">
+                    Editar cliente
+                  </button>
+                  <button type="button" id="deleteClientBtn" class="btn-ghost btn-ghost--danger" data-i18n="client.deleteBtn">
+                    Apagar cliente
+                  </button>
+                </div>
+              </div>
             </label>
             <button type="submit" class="btn-secondary full-width" data-i18n="income.save">
               Guardar entrada

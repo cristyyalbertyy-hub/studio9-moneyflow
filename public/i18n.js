@@ -88,9 +88,15 @@
       "category.noneSelected": "Escolhe uma categoria primeiro.",
       "income.new": "Nova entrada",
       "income.subtitle": "Registar dinheiro que entrou na Studio9",
-      "income.source": "Origem / Nota",
-      "income.sourcePlaceholder": "Ex: Pagamento cliente X",
+      "income.client": "Cliente",
       "income.save": "Guardar entrada",
+      "client.newBtn": "+ Novo cliente",
+      "client.editBtn": "Editar cliente",
+      "client.deleteBtn": "Apagar cliente",
+      "client.prompt": "Nome do novo cliente:",
+      "client.editPrompt": "Novo nome do cliente:",
+      "client.deleteConfirm": "Apagar o cliente «{name}»?",
+      "client.noneSelected": "Escolhe um cliente primeiro.",
       "profit.title": "Distribuicao de lucro",
       "profit.desc":
         "Introduz o lucro total e ajusta as percentagens. Os valores atribuidos calculam-se automaticamente.",
@@ -122,6 +128,10 @@
       "api.categoryInUse": "Categoria em uso em despesas existentes",
       "api.categoryNotFound": "Categoria nao encontrada",
       "api.insufficientBalance": "Saldo insuficiente para efectuar este pagamento.",
+      "api.clientExists": "Cliente ja existe",
+      "api.clientInUse": "Cliente em uso em entradas existentes",
+      "api.clientNotFound": "Cliente nao encontrado",
+      "api.clientRequired": "Cliente obrigatorio",
     },
     en: {
       "auth.title": "Sign in to MoneyFlow",
@@ -209,9 +219,15 @@
       "category.noneSelected": "Choose a category first.",
       "income.new": "New income",
       "income.subtitle": "Record money received by Studio9",
-      "income.source": "Source / note",
-      "income.sourcePlaceholder": "E.g. Client X payment",
+      "income.client": "Client",
       "income.save": "Save income",
+      "client.newBtn": "+ New client",
+      "client.editBtn": "Edit client",
+      "client.deleteBtn": "Delete client",
+      "client.prompt": "New client name:",
+      "client.editPrompt": "New client name:",
+      "client.deleteConfirm": "Delete client «{name}»?",
+      "client.noneSelected": "Choose a client first.",
       "profit.title": "Profit distribution",
       "profit.desc":
         "Enter total profit and adjust the percentages. Assigned amounts are calculated automatically.",
@@ -243,6 +259,10 @@
       "api.categoryInUse": "Category is used by existing expenses",
       "api.categoryNotFound": "Category not found",
       "api.insufficientBalance": "Insufficient balance to process this payment.",
+      "api.clientExists": "Client already exists",
+      "api.clientInUse": "Client is used by existing income records",
+      "api.clientNotFound": "Client not found",
+      "api.clientRequired": "Client is required",
     },
   };
 
@@ -254,6 +274,10 @@
     "Categoria em uso em despesas existentes": "api.categoryInUse",
     "Categoria nao encontrada": "api.categoryNotFound",
     "Saldo insuficiente para efectuar este pagamento.": "api.insufficientBalance",
+    "Cliente ja existe": "api.clientExists",
+    "Cliente em uso em entradas existentes": "api.clientInUse",
+    "Cliente nao encontrado": "api.clientNotFound",
+    "Cliente obrigatorio": "api.clientRequired",
   };
 
   let currentLang = readLang();

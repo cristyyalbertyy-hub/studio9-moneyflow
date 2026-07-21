@@ -3,6 +3,7 @@ const state = {
   incomes: [],
   documents: [],
   categories: [],
+  clients: [],
   activities: [],
   summary: { accountBalance: 0, nextExpenseSeq: 1 },
   session: null,
@@ -58,7 +59,10 @@ const refs = {
   incomeForm: document.getElementById("incomeForm"),
   incomeDate: document.getElementById("incomeDate"),
   incomeAmount: document.getElementById("incomeAmount"),
-  incomeSource: document.getElementById("incomeSource"),
+  incomeClientSelect: document.getElementById("incomeClientSelect"),
+  newClientBtn: document.getElementById("newClientBtn"),
+  editClientBtn: document.getElementById("editClientBtn"),
+  deleteClientBtn: document.getElementById("deleteClientBtn"),
   filterPerson: document.getElementById("filterPerson"),
   filterStatus: document.getElementById("filterStatus"),
   filterStartDate: document.getElementById("filterStartDate"),
@@ -89,6 +93,8 @@ const defaultProfitSplits = {
   studio9: 30,
   charity: 10,
 };
+
+const defaultIncomeClient = "Lemon Squeezy";
 
 function initProfitDistribution() {
   if (!refs.profitAmount) return;
@@ -212,6 +218,9 @@ async function boot() {
   refs.newCategoryBtn.addEventListener("click", handleNewCategory);
   if (refs.editCategoryBtn) refs.editCategoryBtn.addEventListener("click", handleEditCategory);
   if (refs.deleteCategoryBtn) refs.deleteCategoryBtn.addEventListener("click", handleDeleteCategory);
+  if (refs.newClientBtn) refs.newClientBtn.addEventListener("click", handleNewClient);
+  if (refs.editClientBtn) refs.editClientBtn.addEventListener("click", handleEditClient);
+  if (refs.deleteClientBtn) refs.deleteClientBtn.addEventListener("click", handleDeleteClient);
   refs.expenseForm.addEventListener("submit", handleExpenseSubmit);
   refs.incomeForm.addEventListener("submit", handleIncomeSubmit);
   if (refs.documentForm) refs.documentForm.addEventListener("submit", handleDocumentSubmit);
@@ -354,6 +363,7 @@ function applyBootstrapPayload(response) {
   state.expenses = Array.isArray(response.expenses) ? response.expenses : [];
   state.incomes = Array.isArray(response.incomes) ? response.incomes : [];
   state.categories = Array.isArray(response.categories) ? response.categories : [];
+  state.clients = Array.isArray(response.clients) ? response.clients : [];
   state.documents = Array.isArray(response.documents) ? response.documents : [];
   state.activities = Array.isArray(response.activities) ? response.activities : [];
   state.summary = response.summary || { accountBalance: 0, nextExpenseSeq: 1 };
@@ -485,6 +495,10 @@ function getSelectedCategory() {
   return refs.expenseCategorySelect ? refs.expenseCategorySelect.value.trim() : "";
 }
 
+function getSelectedClient() {
+  return refs.incomeClientSelect ? refs.incomeClientSelect.value.trim() : "";
+}
+
 async function runCategoryMutation(request, selectedAfter) {
   try {
     const response = await request();
@@ -562,6 +576,71 @@ async function handleDeleteCategory() {
   );
 }
 
+async function runClientMutation(request, selectedAfter) {
+  try {
+    const response = await request();
+    applyBootstrapPayload(response);
+    if (selectedAfter && refs.incomeClientSelect && state.clients.includes(selectedAfter)) {
+      refs.incomeClientSelect.value = selectedAfter;
+    }
+  } catch (error) {
+    window.alert(parseApiErrorMessage(error));
+  }
+}
+
+async function handleNewClient() {
+  const value = window.prompt(t("client.prompt"));
+  if (!value) return;
+  const client = value.trim();
+  if (!client) return;
+  await runClientMutation(
+    () =>
+      apiFetch("/api/clients", {
+        method: "POST",
+        body: JSON.stringify({ client }),
+      }),
+    client
+  );
+}
+
+async function handleEditClient() {
+  const current = getSelectedClient();
+  if (!current) {
+    window.alert(t("client.noneSelected"));
+    return;
+  }
+  const value = window.prompt(t("client.editPrompt"), current);
+  if (!value) return;
+  const next = value.trim();
+  if (!next || next === current) return;
+  await runClientMutation(
+    () =>
+      apiFetch("/api/clients", {
+        method: "PATCH",
+        body: JSON.stringify({ oldName: current, newName: next }),
+      }),
+    next
+  );
+}
+
+async function handleDeleteClient() {
+  const current = getSelectedClient();
+  if (!current) {
+    window.alert(t("client.noneSelected"));
+    return;
+  }
+  const confirmed = window.confirm(t("client.deleteConfirm").replace("{name}", current));
+  if (!confirmed) return;
+  await runClientMutation(
+    () =>
+      apiFetch("/api/clients", {
+        method: "DELETE",
+        body: JSON.stringify({ client: current }),
+      }),
+    null
+  );
+}
+
 function ensureBootstrapPolling() {
   stopBootstrapPolling();
   bootstrapPollTimer = window.setInterval(async () => {
@@ -613,19 +692,20 @@ async function handleIncomeSubmit(event) {
   event.preventDefault();
   const amount = Number(refs.incomeAmount.value);
   const date = refs.incomeDate.value;
-  const source = refs.incomeSource.value.trim();
-  if (!amount || !date || !source) return;
+  const client = getSelectedClient();
+  if (!amount || !date || !client) return;
 
   const ok = await mutateAndRefresh(() =>
     apiFetch("/api/incomes", {
       method: "POST",
-      body: JSON.stringify({ amount, date, source }),
+      body: JSON.stringify({ amount, date, client }),
     })
   );
   if (!ok) return;
 
   refs.incomeForm.reset();
   refs.incomeDate.value = todayISO();
+  selectDefaultIncomeClient();
 }
 
 async function handleDocumentSubmit(event) {
@@ -663,6 +743,7 @@ function clearPaymentFilters() {
 function render() {
   renderPeriodHeader();
   renderCategories();
+  renderClients();
   renderExpenseSeqPreview();
   renderTotals();
   renderPaymentPanel();
@@ -689,6 +770,29 @@ function renderCategories() {
   if (state.categories.length > 0) {
     refs.expenseCategorySelect.value = state.categories[0];
   }
+}
+
+function selectDefaultIncomeClient() {
+  if (!refs.incomeClientSelect || state.clients.length === 0) return;
+  if (state.clients.includes(defaultIncomeClient)) {
+    refs.incomeClientSelect.value = defaultIncomeClient;
+    return;
+  }
+  refs.incomeClientSelect.value = state.clients[0];
+}
+
+function renderClients() {
+  if (!refs.incomeClientSelect) return;
+  const current = refs.incomeClientSelect.value;
+  refs.incomeClientSelect.innerHTML = state.clients
+    .map((client) => `<option value="${escapeHtml(client)}">${escapeHtml(client)}</option>`)
+    .join("");
+
+  if (current && state.clients.includes(current)) {
+    refs.incomeClientSelect.value = current;
+    return;
+  }
+  selectDefaultIncomeClient();
 }
 
 function renderTotals() {
