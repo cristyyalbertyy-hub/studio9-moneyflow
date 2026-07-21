@@ -576,6 +576,36 @@
       </div>
     </div>
 
+    <div
+      id="listManageOverlay"
+      class="alert-overlay hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="listManageTitle"
+    >
+      <div class="alert-card alert-card--form">
+        <h3 id="listManageTitle"></h3>
+        <p id="listManageMessage" class="list-manage-message hidden"></p>
+        <form id="listManageForm" class="reset-form">
+          <label id="listManageSelectWrap">
+            <span id="listManageSelectLabel"></span>
+            <select id="listManageSelect"></select>
+          </label>
+          <label id="listManageInputWrap">
+            <span id="listManageInputLabel"></span>
+            <input id="listManageInput" type="text" autocomplete="off" spellcheck="false" />
+          </label>
+          <p id="listManageError" class="auth-error hidden" role="alert"></p>
+          <div class="reset-form-actions">
+            <button type="button" id="listManageCancel" class="btn-ghost" data-i18n="admin.reset.cancel">
+              Cancelar
+            </button>
+            <button type="submit" id="listManageSubmit" class="btn-primary">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <div id="balanceAlertOverlay" class="alert-overlay hidden" role="alertdialog" aria-modal="true" aria-labelledby="balanceAlertTitle">
       <div class="alert-card">
         <h3 id="balanceAlertTitle" data-i18n="payments.insufficientBalanceTitle">Atencao</h3>

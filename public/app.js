@@ -48,6 +48,19 @@ const refs = {
   resetConfirmPassword: document.getElementById("resetConfirmPassword"),
   resetExperimentalError: document.getElementById("resetExperimentalError"),
   resetExperimentalCancel: document.getElementById("resetExperimentalCancel"),
+  listManageOverlay: document.getElementById("listManageOverlay"),
+  listManageTitle: document.getElementById("listManageTitle"),
+  listManageMessage: document.getElementById("listManageMessage"),
+  listManageForm: document.getElementById("listManageForm"),
+  listManageSelectWrap: document.getElementById("listManageSelectWrap"),
+  listManageSelectLabel: document.getElementById("listManageSelectLabel"),
+  listManageSelect: document.getElementById("listManageSelect"),
+  listManageInputWrap: document.getElementById("listManageInputWrap"),
+  listManageInputLabel: document.getElementById("listManageInputLabel"),
+  listManageInput: document.getElementById("listManageInput"),
+  listManageError: document.getElementById("listManageError"),
+  listManageCancel: document.getElementById("listManageCancel"),
+  listManageSubmit: document.getElementById("listManageSubmit"),
   authOverlay: document.getElementById("authOverlay"),
   activeProfile: document.getElementById("activeProfile"),
   logoutBtn: document.getElementById("logoutBtn"),
@@ -103,6 +116,8 @@ const defaultProfitSplits = {
 };
 
 const defaultIncomeClient = "Lemon Squeezy";
+
+let listManageState = null;
 
 function initProfitDistribution() {
   if (!refs.profitAmount) return;
@@ -256,6 +271,18 @@ async function boot() {
   }
   if (refs.resetExperimentalForm) {
     refs.resetExperimentalForm.addEventListener("submit", handleResetExperimentalSubmit);
+  }
+  if (refs.listManageCancel) refs.listManageCancel.addEventListener("click", closeListManageModal);
+  if (refs.listManageOverlay) {
+    refs.listManageOverlay.addEventListener("click", (event) => {
+      if (event.target === refs.listManageOverlay) closeListManageModal();
+    });
+  }
+  if (refs.listManageSelect) {
+    refs.listManageSelect.addEventListener("change", syncListManageFromSelect);
+  }
+  if (refs.listManageForm) {
+    refs.listManageForm.addEventListener("submit", handleListManageSubmit);
   }
   if (refs.authForm) refs.authForm.addEventListener("submit", handleAuthSubmit);
 
@@ -632,15 +659,257 @@ function getSelectedClient() {
   return refs.incomeClientSelect ? refs.incomeClientSelect.value.trim() : "";
 }
 
-async function runCategoryMutation(request, selectedAfter) {
+function getListManageItems(kind) {
+  return kind === "client" ? [...state.clients] : [...state.categories];
+}
+
+function getListManageSelection(kind) {
+  const current = kind === "client" ? getSelectedClient() : getSelectedCategory();
+  const items = getListManageItems(kind);
+  if (current && items.includes(current)) return current;
+  return items[0] || "";
+}
+
+function setListManageError(message) {
+  if (!refs.listManageError) return;
+  if (!message) {
+    refs.listManageError.textContent = "";
+    refs.listManageError.classList.add("hidden");
+    return;
+  }
+  refs.listManageError.textContent = message;
+  refs.listManageError.classList.remove("hidden");
+}
+
+function updateListManageDeleteMessage() {
+  if (!listManageState || listManageState.action !== "delete" || !refs.listManageMessage) return;
+  const selected = refs.listManageSelect ? refs.listManageSelect.value : "";
+  const key = listManageState.kind === "client" ? "client.deleteConfirm" : "category.deleteConfirm";
+  refs.listManageMessage.textContent = t(key).replace("{name}", selected);
+}
+
+function syncListManageFromSelect() {
+  if (!listManageState || !refs.listManageSelect) return;
+  const selected = refs.listManageSelect.value;
+  if (listManageState.action === "edit" && refs.listManageInput) {
+    refs.listManageInput.value = selected;
+  }
+  if (listManageState.action === "delete") {
+    updateListManageDeleteMessage();
+  }
+}
+
+function closeListManageModal() {
+  if (!refs.listManageOverlay) return;
+  refs.listManageOverlay.classList.add("hidden");
+  listManageState = null;
+  if (refs.listManageForm) refs.listManageForm.reset();
+  setListManageError("");
+  if (refs.listManageMessage) refs.listManageMessage.classList.add("hidden");
+}
+
+function openListManageModal(kind, action) {
+  if (!refs.listManageOverlay) return;
+  const items = getListManageItems(kind);
+  listManageState = { kind, action };
+
+  const titleKey =
+    kind === "client"
+      ? { new: "manage.newClientTitle", edit: "manage.editClientTitle", delete: "manage.deleteClientTitle" }
+      : { new: "manage.newCategoryTitle", edit: "manage.editCategoryTitle", delete: "manage.deleteCategoryTitle" };
+  if (refs.listManageTitle) refs.listManageTitle.textContent = t(titleKey[action]);
+
+  const emptyKey = kind === "client" ? "manage.emptyClients" : "manage.emptyCategories";
+  const needsItems = action === "edit" || action === "delete";
+  if (needsItems && items.length === 0) {
+    if (refs.listManageSelectWrap) refs.listManageSelectWrap.classList.add("hidden");
+    if (refs.listManageInputWrap) refs.listManageInputWrap.classList.add("hidden");
+    if (refs.listManageMessage) {
+      refs.listManageMessage.textContent = t(emptyKey);
+      refs.listManageMessage.classList.remove("hidden");
+    }
+    if (refs.listManageSubmit) {
+      refs.listManageSubmit.disabled = true;
+      refs.listManageSubmit.classList.remove("btn-primary--danger");
+      refs.listManageSubmit.classList.add("btn-primary");
+      refs.listManageSubmit.textContent = t("manage.save");
+    }
+    setListManageError("");
+    refs.listManageOverlay.classList.remove("hidden");
+    return;
+  }
+
+  if (refs.listManageSelectWrap) {
+    refs.listManageSelectWrap.classList.toggle("hidden", action === "new");
+  }
+  if (refs.listManageInputWrap) {
+    refs.listManageInputWrap.classList.toggle("hidden", action === "delete");
+  }
+  if (refs.listManageMessage) {
+    refs.listManageMessage.classList.toggle("hidden", action !== "delete");
+  }
+
+  if (refs.listManageSelectLabel) {
+    refs.listManageSelectLabel.textContent =
+      kind === "client" ? t("manage.selectClient") : t("manage.selectCategory");
+  }
+  if (refs.listManageInputLabel) {
+    refs.listManageInputLabel.textContent = t("manage.name");
+  }
+
+  if (refs.listManageSelect && action !== "new") {
+    refs.listManageSelect.innerHTML = items
+      .map((item) => `<option value="${escapeHtml(item)}">${escapeHtml(item)}</option>`)
+      .join("");
+    refs.listManageSelect.value = getListManageSelection(kind);
+  }
+
+  if (refs.listManageInput) {
+    if (action === "new") {
+      refs.listManageInput.value = "";
+    } else if (action === "edit") {
+      refs.listManageInput.value = refs.listManageSelect ? refs.listManageSelect.value : "";
+    }
+  }
+
+  if (action === "delete") {
+    updateListManageDeleteMessage();
+  }
+
+  if (refs.listManageSubmit) {
+    refs.listManageSubmit.disabled = false;
+    const isDelete = action === "delete";
+    refs.listManageSubmit.textContent = isDelete ? t("manage.deleteAction") : t("manage.save");
+    refs.listManageSubmit.classList.toggle("btn-primary--danger", isDelete);
+    refs.listManageSubmit.classList.toggle("btn-primary", !isDelete);
+  }
+
+  setListManageError("");
+  refs.listManageOverlay.classList.remove("hidden");
+  if (action === "new" && refs.listManageInput) {
+    refs.listManageInput.focus();
+  } else if (action === "edit" && refs.listManageInput) {
+    refs.listManageInput.focus();
+    refs.listManageInput.select();
+  } else if (refs.listManageSelect) {
+    refs.listManageSelect.focus();
+  }
+}
+
+async function handleListManageSubmit(event) {
+  event.preventDefault();
+  if (!listManageState) return;
+
+  const { kind, action } = listManageState;
+  const items = getListManageItems(kind);
+  setListManageError("");
+
+  if ((action === "edit" || action === "delete") && items.length === 0) {
+    closeListManageModal();
+    return;
+  }
+
+  if (action === "new") {
+    const value = refs.listManageInput ? refs.listManageInput.value.trim() : "";
+    if (!value) return;
+    let ok = false;
+    if (kind === "client") {
+      ok = await runClientMutation(
+        () =>
+          apiFetch("/api/clients", {
+            method: "POST",
+            body: JSON.stringify({ client: value }),
+          }),
+        value,
+        setListManageError
+      );
+    } else {
+      ok = await runCategoryMutation(
+        () =>
+          apiFetch("/api/categories", {
+            method: "POST",
+            body: JSON.stringify({ category: value }),
+          }),
+        value,
+        setListManageError
+      );
+    }
+    if (ok) closeListManageModal();
+    return;
+  }
+
+  const current = refs.listManageSelect ? refs.listManageSelect.value.trim() : "";
+  if (!current) return;
+
+  if (action === "edit") {
+    const next = refs.listManageInput ? refs.listManageInput.value.trim() : "";
+    if (!next || next === current) return;
+    let ok = false;
+    if (kind === "client") {
+      ok = await runClientMutation(
+        () =>
+          apiFetch("/api/clients", {
+            method: "PATCH",
+            body: JSON.stringify({ oldName: current, newName: next }),
+          }),
+        next,
+        setListManageError
+      );
+    } else {
+      ok = await runCategoryMutation(
+        () =>
+          apiFetch("/api/categories", {
+            method: "PATCH",
+            body: JSON.stringify({ oldName: current, newName: next }),
+          }),
+        next,
+        setListManageError
+      );
+    }
+    if (ok) closeListManageModal();
+    return;
+  }
+
+  if (action === "delete") {
+    let ok = false;
+    if (kind === "client") {
+      ok = await runClientMutation(
+        () =>
+          apiFetch("/api/clients", {
+            method: "DELETE",
+            body: JSON.stringify({ client: current }),
+          }),
+        null,
+        setListManageError
+      );
+    } else {
+      ok = await runCategoryMutation(
+        () =>
+          apiFetch("/api/categories", {
+            method: "DELETE",
+            body: JSON.stringify({ category: current }),
+          }),
+        null,
+        setListManageError
+      );
+    }
+    if (ok) closeListManageModal();
+  }
+}
+
+async function runCategoryMutation(request, selectedAfter, onError) {
   try {
     const response = await request();
     applyBootstrapPayload(response);
     if (selectedAfter && refs.expenseCategorySelect && state.categories.includes(selectedAfter)) {
       refs.expenseCategorySelect.value = selectedAfter;
     }
+    return true;
   } catch (error) {
-    window.alert(parseApiErrorMessage(error));
+    const message = parseApiErrorMessage(error);
+    if (onError) onError(message);
+    else window.alert(message);
+    return false;
   }
 }
 
@@ -657,121 +926,43 @@ function parseApiErrorMessage(error) {
 }
 
 async function handleNewCategory() {
-  const value = window.prompt(t("category.prompt"));
-  if (!value) return;
-  const category = value.trim();
-  if (!category) return;
-  await runCategoryMutation(
-    () =>
-      apiFetch("/api/categories", {
-        method: "POST",
-        body: JSON.stringify({ category }),
-      }),
-    category
-  );
+  openListManageModal("category", "new");
 }
 
 async function handleEditCategory() {
-  const current = getSelectedCategory();
-  if (!current) {
-    window.alert(t("category.noneSelected"));
-    return;
-  }
-  const value = window.prompt(t("category.editPrompt"), current);
-  if (!value) return;
-  const next = value.trim();
-  if (!next || next === current) return;
-  await runCategoryMutation(
-    () =>
-      apiFetch("/api/categories", {
-        method: "PATCH",
-        body: JSON.stringify({ oldName: current, newName: next }),
-      }),
-    next
-  );
+  openListManageModal("category", "edit");
 }
 
 async function handleDeleteCategory() {
-  const current = getSelectedCategory();
-  if (!current) {
-    window.alert(t("category.noneSelected"));
-    return;
-  }
-  const confirmed = window.confirm(t("category.deleteConfirm").replace("{name}", current));
-  if (!confirmed) return;
-  await runCategoryMutation(
-    () =>
-      apiFetch("/api/categories", {
-        method: "DELETE",
-        body: JSON.stringify({ category: current }),
-      }),
-    null
-  );
+  openListManageModal("category", "delete");
 }
 
-async function runClientMutation(request, selectedAfter) {
+async function runClientMutation(request, selectedAfter, onError) {
   try {
     const response = await request();
     applyBootstrapPayload(response);
     if (selectedAfter && refs.incomeClientSelect && state.clients.includes(selectedAfter)) {
       refs.incomeClientSelect.value = selectedAfter;
     }
+    return true;
   } catch (error) {
-    window.alert(parseApiErrorMessage(error));
+    const message = parseApiErrorMessage(error);
+    if (onError) onError(message);
+    else window.alert(message);
+    return false;
   }
 }
 
 async function handleNewClient() {
-  const value = window.prompt(t("client.prompt"));
-  if (!value) return;
-  const client = value.trim();
-  if (!client) return;
-  await runClientMutation(
-    () =>
-      apiFetch("/api/clients", {
-        method: "POST",
-        body: JSON.stringify({ client }),
-      }),
-    client
-  );
+  openListManageModal("client", "new");
 }
 
 async function handleEditClient() {
-  const current = getSelectedClient();
-  if (!current) {
-    window.alert(t("client.noneSelected"));
-    return;
-  }
-  const value = window.prompt(t("client.editPrompt"), current);
-  if (!value) return;
-  const next = value.trim();
-  if (!next || next === current) return;
-  await runClientMutation(
-    () =>
-      apiFetch("/api/clients", {
-        method: "PATCH",
-        body: JSON.stringify({ oldName: current, newName: next }),
-      }),
-    next
-  );
+  openListManageModal("client", "edit");
 }
 
 async function handleDeleteClient() {
-  const current = getSelectedClient();
-  if (!current) {
-    window.alert(t("client.noneSelected"));
-    return;
-  }
-  const confirmed = window.confirm(t("client.deleteConfirm").replace("{name}", current));
-  if (!confirmed) return;
-  await runClientMutation(
-    () =>
-      apiFetch("/api/clients", {
-        method: "DELETE",
-        body: JSON.stringify({ client: current }),
-      }),
-    null
-  );
+  openListManageModal("client", "delete");
 }
 
 function ensureBootstrapPolling() {

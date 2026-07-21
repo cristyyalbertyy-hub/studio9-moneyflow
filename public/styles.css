@@ -544,6 +544,25 @@ body {
   border-color: rgba(248, 113, 113, 0.55);
 }
 
+.alert-card--form {
+  width: min(100%, 420px);
+  text-align: left;
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+.alert-card--form h3,
+.alert-card--danger h3 {
+  text-align: center;
+  margin-bottom: 14px;
+}
+
+.list-manage-message {
+  margin: 0 0 14px;
+  color: #fca5a5;
+  line-height: 1.45;
+  font-size: 0.92rem;
+}
+
 .alert-card--danger h3 {
   text-align: center;
 }
