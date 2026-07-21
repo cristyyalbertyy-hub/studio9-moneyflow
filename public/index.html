@@ -57,29 +57,35 @@
 
     <div class="app-shell">
       <header class="hero-card">
-        <div>
-          <img class="brand-logo" src="/studio9-logo.png?v=2" alt="Studio9" />
-          <div class="session-row">
-            <span id="activeProfile">Perfil: -</span>
-            <div class="lang-switch" role="group" aria-label="Language">
-              <button type="button" class="lang-btn" data-lang="pt">PT</button>
-              <button type="button" class="lang-btn" data-lang="en">EN</button>
+        <div class="hero-header-row">
+          <div class="hero-intro">
+            <img class="brand-logo" src="/studio9-logo.png?v=2" alt="Studio9" />
+            <div class="session-row">
+              <span id="activeProfile">Perfil: -</span>
+              <div class="lang-switch" role="group" aria-label="Language">
+                <button type="button" class="lang-btn" data-lang="pt">PT</button>
+                <button type="button" class="lang-btn" data-lang="en">EN</button>
+              </div>
+              <button id="logoutBtn" class="btn-ghost" data-i18n="session.logout">
+                Terminar sessao
+              </button>
             </div>
-            <button id="logoutBtn" class="btn-ghost" data-i18n="session.logout">
-              Terminar sessao
-            </button>
+            <h1 data-i18n="hero.title">Gestao de Fluxo de Caixa</h1>
+            <p id="periodMonthDisplay" class="period-display" aria-live="polite"></p>
+            <label class="period-field">
+              <span data-i18n="hero.referenceMonth">Mes de referencia</span>
+              <input type="month" id="periodMonth" />
+            </label>
+            <p class="subtitle" data-i18n="hero.subtitle">
+              Visao mensal: os valores dos cartoes e da atividade seguem o mes de
+              referencia. A listagem usa tambem «De/Ate» (pre-preenchidos ao
+              mudar o mes; podes ajustar se precisares).
+            </p>
           </div>
-          <h1 data-i18n="hero.title">Gestao de Fluxo de Caixa</h1>
-          <p id="periodMonthDisplay" class="period-display" aria-live="polite"></p>
-          <label class="period-field">
-            <span data-i18n="hero.referenceMonth">Mes de referencia</span>
-            <input type="month" id="periodMonth" />
-          </label>
-          <p class="subtitle" data-i18n="hero.subtitle">
-            Visao mensal: os valores dos cartoes e da atividade seguem o mes de
-            referencia. A listagem usa tambem «De/Ate» (pre-preenchidos ao
-            mudar o mes; podes ajustar se precisares).
-          </p>
+          <article class="hero-balance-card" aria-label="Saldo acumulado">
+            <span data-i18n="hero.accountBalance">Saldo acumulado (conta)</span>
+            <strong id="accountBalanceTotal" class="summary-multi"></strong>
+          </article>
         </div>
         <div class="summary-grid">
           <article class="summary-item alert">
@@ -97,10 +103,6 @@
           <article class="summary-item balance">
             <span data-i18n="hero.availability">Disponibilidade (no mes)</span>
             <strong id="disponibilidadeAtual" class="summary-multi"></strong>
-          </article>
-          <article class="summary-item balance summary-item--account">
-            <span data-i18n="hero.accountBalance">Saldo acumulado (conta)</span>
-            <strong id="accountBalanceTotal" class="summary-multi"></strong>
           </article>
         </div>
         <p class="summary-hint" data-i18n="hero.availabilityHint">
