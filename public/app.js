@@ -53,6 +53,7 @@ const refs = {
   expenseRows: document.getElementById("expenseRows"),
   expenseForm: document.getElementById("expenseForm"),
   expensePerson: document.getElementById("expensePerson"),
+  expensePayer: document.getElementById("expensePayer"),
   expenseDate: document.getElementById("expenseDate"),
   expenseAmount: document.getElementById("expenseAmount"),
   expenseDescription: document.getElementById("expenseDescription"),
@@ -351,7 +352,64 @@ async function handleAuthSubmit(event) {
 function showAuthedUi() {
   refs.authOverlay.classList.add("hidden");
   refreshProfileLabel();
-  refs.expensePerson.value = state.session.profile;
+  if (refs.expensePerson) refs.expensePerson.value = state.session.profile;
+  if (refs.expensePayer) refs.expensePayer.value = state.session.profile;
+}
+
+function resolveExpensePayer(expense) {
+  const payer = String(expense?.payer || "").trim();
+  if (payer === "Cris" || payer === "Alex" || payer === "Studio9") return payer;
+  return expense?.person === "Alex" ? "Alex" : "Cris";
+}
+
+function isReimbursementExpense(expense) {
+  const payer = resolveExpensePayer(expense);
+  return payer === "Cris" || payer === "Alex";
+}
+
+function buildPaymentItems() {
+  const docs = (state.documents || []).map((item) => ({
+    kind: "document",
+    id: item.id,
+    date: item.date,
+    label: item.label,
+    amount: item.amount,
+    paid: item.paid,
+  }));
+  const studio9 = (state.expenses || [])
+    .filter((item) => resolveExpensePayer(item) === "Studio9")
+    .map((item) => ({
+      kind: "expense",
+      id: item.id,
+      date: item.date,
+      label: `${item.category} — ${item.description}`,
+      amount: item.amount,
+      paid: item.paid,
+    }));
+  return [...docs, ...studio9];
+}
+
+function filterPaymentItems(items, status, startDate, endDate) {
+  return items.filter((item) => {
+    const statusOk =
+      status === "all" ||
+      (status === "paid" && item.paid) ||
+      (status === "unpaid" && !item.paid);
+    const startOk = !startDate || item.date >= startDate;
+    const endOk = !endDate || item.date <= endDate;
+    return statusOk && startOk && endOk;
+  });
+}
+
+function getFilteredPaymentItems() {
+  const status = refs.paymentFilterStatus ? refs.paymentFilterStatus.value : "unpaid";
+  const startDate = refs.paymentFilterStartDate ? refs.paymentFilterStartDate.value : "";
+  const endDate = refs.paymentFilterEndDate ? refs.paymentFilterEndDate.value : "";
+  return filterPaymentItems(buildPaymentItems(), status, startDate, endDate);
+}
+
+function getPendingPaymentItemsInRange(startDate, endDate) {
+  return filterPaymentItems(buildPaymentItems(), "unpaid", startDate, endDate);
 }
 
 async function fetchBootstrap() {
@@ -468,27 +526,11 @@ async function toggleExpensePayment(expenseId, input) {
 }
 
 function getFilteredDocuments() {
-  const status = refs.paymentFilterStatus ? refs.paymentFilterStatus.value : "unpaid";
-  const startDate = refs.paymentFilterStartDate ? refs.paymentFilterStartDate.value : "";
-  const endDate = refs.paymentFilterEndDate ? refs.paymentFilterEndDate.value : "";
-  return (state.documents || []).filter((item) => {
-    const statusOk =
-      status === "all" ||
-      (status === "paid" && item.paid) ||
-      (status === "unpaid" && !item.paid);
-    const startOk = !startDate || item.date >= startDate;
-    const endOk = !endDate || item.date <= endDate;
-    return statusOk && startOk && endOk;
-  });
+  return getFilteredPaymentItems().filter((item) => item.kind === "document");
 }
 
 function getPendingDocumentsInRange(startDate, endDate) {
-  return (state.documents || []).filter((item) => {
-    if (item.paid) return false;
-    const startOk = !startDate || item.date >= startDate;
-    const endOk = !endDate || item.date <= endDate;
-    return startOk && endOk;
-  });
+  return getPendingPaymentItemsInRange(startDate, endDate);
 }
 
 function getSelectedCategory() {
@@ -673,6 +715,7 @@ async function handleExpenseSubmit(event) {
       method: "POST",
       body: JSON.stringify({
         person: refs.expensePerson.value,
+        payer: refs.expensePayer.value,
         date,
         amount,
         category,
@@ -685,7 +728,8 @@ async function handleExpenseSubmit(event) {
 
   refs.expenseForm.reset();
   refs.expenseDate.value = todayISO();
-  refs.expensePerson.value = state.session.profile;
+  if (refs.expensePerson) refs.expensePerson.value = state.session.profile;
+  if (refs.expensePayer) refs.expensePayer.value = state.session.profile;
 }
 
 async function handleIncomeSubmit(event) {
@@ -803,18 +847,21 @@ function renderTotals() {
   };
 
   const totalPorPagar = state.expenses
-    .filter((item) => !item.paid && inMonth(item.date))
+    .filter((item) => isReimbursementExpense(item) && !item.paid && inMonth(item.date))
     .reduce((sum, item) => sum + item.amount, 0);
   const totalPago = state.expenses
-    .filter((item) => item.paid && inMonth(item.date))
+    .filter((item) => isReimbursementExpense(item) && item.paid && inMonth(item.date))
     .reduce((sum, item) => sum + item.amount, 0);
   const totalEntradas = state.incomes
     .filter((item) => inMonth(item.date))
     .reduce((sum, item) => sum + item.amount, 0);
+  const totalExpensesPaid = state.expenses
+    .filter((item) => item.paid && inMonth(item.date))
+    .reduce((sum, item) => sum + item.amount, 0);
   const totalDocsPagos = (state.documents || [])
     .filter((item) => item.paid && inMonth(item.date))
     .reduce((sum, item) => sum + item.amount, 0);
-  const disponibilidade = totalEntradas - totalPago - totalDocsPagos;
+  const disponibilidade = totalEntradas - totalExpensesPaid - totalDocsPagos;
 
   refs.totalPorPagar.textContent = formatEUR(totalPorPagar);
   refs.totalPago.textContent = formatEUR(totalPago);
@@ -842,7 +889,7 @@ function renderPaymentPanel() {
     refs.paymentsAccountBalance.textContent = `${t("payments.accountBalance")} ${formatEUR(getAccountBalance())}`;
   }
 
-  const rows = getFilteredDocuments();
+  const rows = getFilteredPaymentItems();
   if (rows.length === 0) {
     refs.paymentRows.innerHTML = `<tr><td colspan="4" class="empty">${escapeHtml(t("table.empty"))}</td></tr>`;
     return;
@@ -850,17 +897,22 @@ function renderPaymentPanel() {
 
   refs.paymentRows.innerHTML = rows
     .map((item) => {
-      const by = item.createdBy ? escapeHtml(item.createdBy) : t("misc.system");
+      const toggleAttr =
+        item.kind === "expense" ? "data-expense-toggle" : "data-doc-toggle";
+      const typeBadge =
+        item.kind === "expense"
+          ? `<span class="owner-badge owner-badge--small">Studio9</span>`
+          : "";
       return `
       <tr class="${item.paid ? "paid-row" : ""}">
         <td>${formatDate(item.date)}</td>
         <td>
           <span class="payment-table-label">${escapeHtml(item.label)}</span>
-          <span class="owner-badge owner-badge--small">${by}</span>
+          ${typeBadge}
         </td>
         <td>${formatEUR(item.amount)}</td>
         <td class="td-reembolso">
-          ${renderPaymentSwitch(item.paid, "data-doc-toggle", item.id, t("payments.statusAria"), "payment-switch--table")}
+          ${renderPaymentSwitch(item.paid, toggleAttr, item.id, t("payments.statusAria"), "payment-switch--table")}
         </td>
       </tr>
     `;
@@ -871,6 +923,12 @@ function renderPaymentPanel() {
     input.addEventListener("change", async () => {
       const docId = input.getAttribute("data-doc-toggle");
       await toggleDocumentPayment(docId, input);
+    });
+  });
+  refs.paymentRows.querySelectorAll("[data-expense-toggle]").forEach((input) => {
+    input.addEventListener("change", async () => {
+      const expenseId = input.getAttribute("data-expense-toggle");
+      await toggleExpensePayment(expenseId, input);
     });
   });
 }
@@ -923,11 +981,12 @@ function renderTable() {
       const id = escapeHtml(item.id);
       const seq =
         item.seqNumber != null ? escapeHtml(String(item.seqNumber)) : "—";
+      const payer = escapeHtml(resolveExpensePayer(item));
       return `
       <tr>
         <td class="td-seq">${seq}</td>
         <td>${formatDate(item.date)}</td>
-        <td>${escapeHtml(item.person)}</td>
+        <td>${payer}</td>
         <td>${escapeHtml(item.category)}</td>
         <td>${escapeHtml(item.description)}</td>
         <td>${formatEUR(item.amount)}</td>
@@ -953,7 +1012,8 @@ function getFilteredExpenses() {
   const startDate = refs.filterStartDate.value;
   const endDate = refs.filterEndDate.value;
   return state.expenses.filter((item) => {
-    const personOk = person === "all" || item.person === person;
+    if (!isReimbursementExpense(item)) return false;
+    const personOk = person === "all" || resolveExpensePayer(item) === person;
     const statusOk =
       status === "all" ||
       (status === "paid" && item.paid) ||
@@ -968,7 +1028,7 @@ function exportExcel() {
   const rows = getFilteredExpenses().map((item) => ({
     [t("expense.seqNumber")]: item.seqNumber != null ? item.seqNumber : "",
     [t("table.date")]: formatDate(item.date),
-    [t("table.person")]: item.person,
+    [t("expense.payer")]: resolveExpensePayer(item),
     [t("table.category")]: item.category,
     [t("table.description")]: item.description,
     [t("table.amount")]: item.amount,
@@ -988,7 +1048,7 @@ function exportPdf() {
   const rows = getFilteredExpenses().map((item) => [
     item.seqNumber != null ? String(item.seqNumber) : "—",
     formatDate(item.date),
-    item.person,
+    resolveExpensePayer(item),
     item.category,
     item.description,
     formatEUR(item.amount),
@@ -1007,7 +1067,7 @@ function exportPdf() {
       [
         t("expense.seqNumber"),
         t("table.date"),
-        t("table.person"),
+        t("expense.payer"),
         t("table.category"),
         t("table.description"),
         t("table.amount"),
@@ -1024,7 +1084,7 @@ function exportPdf() {
 function exportPendingPaymentsPdf() {
   const startDate = refs.paymentFilterStartDate ? refs.paymentFilterStartDate.value : "";
   const endDate = refs.paymentFilterEndDate ? refs.paymentFilterEndDate.value : "";
-  const pending = getPendingDocumentsInRange(startDate, endDate);
+  const pending = getPendingPaymentItemsInRange(startDate, endDate);
   if (pending.length === 0) {
     window.alert(t("errors.exportEmpty"));
     return;

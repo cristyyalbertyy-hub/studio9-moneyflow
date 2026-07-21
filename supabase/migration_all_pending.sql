@@ -48,3 +48,15 @@ select distinct client
 from public.incomes
 where client is not null and trim(client) <> ''
 on conflict do nothing;
+
+-- 3) Quem paga a despesa (Cris / Alex = reembolso, Studio9 = pagamento directo)
+alter table public.expenses
+  add column if not exists payer text;
+
+update public.expenses
+set payer = person
+where payer is null or trim(payer) = '';
+
+update public.expenses
+set payer = 'Cris'
+where payer is null or payer not in ('Cris', 'Alex', 'Studio9');

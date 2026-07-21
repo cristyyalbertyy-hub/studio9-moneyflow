@@ -12,6 +12,7 @@ create table if not exists public.expenses (
   id uuid primary key default gen_random_uuid(),
   seq_number integer unique,
   person text not null check (person in ('Cris', 'Alex')),
+  payer text not null check (payer in ('Cris', 'Alex', 'Studio9')) default 'Cris',
   date date not null,
   amount numeric(12,2) not null check (amount > 0),
   category text not null,
