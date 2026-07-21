@@ -289,6 +289,64 @@
               Guardar despesa
             </button>
           </form>
+
+          <div class="expense-list-section">
+            <div class="panel-title panel-title--sub">
+              <h3 data-i18n="expense.listTitle">Despesas registadas</h3>
+              <p data-i18n="expense.listDesc">
+                Listagem filtrada por pagador, categoria e periodo. Por defeito segue o mes de referencia.
+              </p>
+            </div>
+
+            <div class="filters expense-filters">
+              <label>
+                <span data-i18n="expense.payer">Quem paga</span>
+                <select id="expenseRegisterFilterPayer">
+                  <option value="all" data-i18n="filter.allPeople">Todas</option>
+                  <option value="Cris">Cris</option>
+                  <option value="Alex">Alex</option>
+                  <option value="Studio9">Studio9</option>
+                </select>
+              </label>
+              <label>
+                <span data-i18n="table.category">Categoria</span>
+                <select id="expenseRegisterFilterCategory">
+                  <option value="all" data-i18n="filter.allCategories">Todas</option>
+                </select>
+              </label>
+              <label>
+                <span data-i18n="filter.from">De</span>
+                <input id="expenseRegisterFilterStartDate" type="date" />
+              </label>
+              <label>
+                <span data-i18n="filter.to">Ate</span>
+                <input id="expenseRegisterFilterEndDate" type="date" />
+              </label>
+              <button type="button" id="expenseRegisterClearFilters" class="btn-ghost" data-i18n="filter.clear">
+                Limpar filtros
+              </button>
+              <button type="button" id="exportExpenseRegisterPdfBtn" class="btn-ghost" data-i18n="expense.exportPdf">
+                Exportar PDF
+              </button>
+            </div>
+
+            <div class="table-wrap">
+              <table class="expense-table">
+                <thead>
+                  <tr>
+                    <th data-i18n="expense.seqNumber">Numero</th>
+                    <th data-i18n="table.date">Data</th>
+                    <th data-i18n="expense.payer">Quem paga</th>
+                    <th data-i18n="table.category">Categoria</th>
+                    <th data-i18n="table.description">Descricao</th>
+                    <th data-i18n="table.amount">Valor</th>
+                    <th data-i18n="filter.status">Estado</th>
+                  </tr>
+                </thead>
+                <tbody id="expenseRegisterRows"></tbody>
+              </table>
+            </div>
+          </div>
         </section>
 
         <section class="panel payments-panel">

@@ -81,6 +81,13 @@ const refs = {
   expenseAmount: document.getElementById("expenseAmount"),
   expenseCurrency: document.getElementById("expenseCurrency"),
   expenseDescription: document.getElementById("expenseDescription"),
+  expenseRegisterFilterPayer: document.getElementById("expenseRegisterFilterPayer"),
+  expenseRegisterFilterCategory: document.getElementById("expenseRegisterFilterCategory"),
+  expenseRegisterFilterStartDate: document.getElementById("expenseRegisterFilterStartDate"),
+  expenseRegisterFilterEndDate: document.getElementById("expenseRegisterFilterEndDate"),
+  expenseRegisterClearFilters: document.getElementById("expenseRegisterClearFilters"),
+  exportExpenseRegisterPdfBtn: document.getElementById("exportExpenseRegisterPdfBtn"),
+  expenseRegisterRows: document.getElementById("expenseRegisterRows"),
   incomeForm: document.getElementById("incomeForm"),
   incomeDate: document.getElementById("incomeDate"),
   incomeAmount: document.getElementById("incomeAmount"),
@@ -269,6 +276,9 @@ async function boot() {
   refs.exportPdfBtn.addEventListener("click", exportPdf);
   if (refs.exportPendingPdfBtn) refs.exportPendingPdfBtn.addEventListener("click", exportPendingPaymentsPdf);
   if (refs.exportIncomePdfBtn) refs.exportIncomePdfBtn.addEventListener("click", exportIncomePdf);
+  if (refs.exportExpenseRegisterPdfBtn) {
+    refs.exportExpenseRegisterPdfBtn.addEventListener("click", exportExpenseRegisterPdf);
+  }
   if (refs.balanceAlertOk) refs.balanceAlertOk.addEventListener("click", hideBalanceAlert);
   if (refs.balanceAlertOverlay) {
     refs.balanceAlertOverlay.addEventListener("click", (event) => {
@@ -318,6 +328,17 @@ async function boot() {
     refs.incomeFilterClient,
     refs.incomeFilterStartDate,
     refs.incomeFilterEndDate,
+  ]
+    .filter(Boolean)
+    .forEach((el) => el.addEventListener("change", render));
+  if (refs.expenseRegisterClearFilters) {
+    refs.expenseRegisterClearFilters.addEventListener("click", clearExpenseRegisterFilters);
+  }
+  [
+    refs.expenseRegisterFilterPayer,
+    refs.expenseRegisterFilterCategory,
+    refs.expenseRegisterFilterStartDate,
+    refs.expenseRegisterFilterEndDate,
   ]
     .filter(Boolean)
     .forEach((el) => el.addEventListener("change", render));
@@ -1306,6 +1327,17 @@ function clearIncomeFilters() {
   render();
 }
 
+function clearExpenseRegisterFilters() {
+  const bounds = getSelectedMonthBounds();
+  if (bounds && refs.expenseRegisterFilterStartDate && refs.expenseRegisterFilterEndDate) {
+    refs.expenseRegisterFilterStartDate.value = bounds.start;
+    refs.expenseRegisterFilterEndDate.value = bounds.end;
+  }
+  if (refs.expenseRegisterFilterPayer) refs.expenseRegisterFilterPayer.value = "all";
+  if (refs.expenseRegisterFilterCategory) refs.expenseRegisterFilterCategory.value = "all";
+  render();
+}
+
 function render() {
   renderPeriodHeader();
   renderCategories();
@@ -1314,6 +1346,7 @@ function render() {
   renderTotals();
   renderPaymentPanel();
   renderIncomeTable();
+  renderExpenseRegisterTable();
   renderTable();
   renderActivities();
 }
@@ -1332,11 +1365,74 @@ function renderCategories() {
 
   if (current && state.categories.includes(current)) {
     refs.expenseCategorySelect.value = current;
-    return;
-  }
-  if (state.categories.length > 0) {
+  } else if (state.categories.length > 0) {
     refs.expenseCategorySelect.value = state.categories[0];
   }
+  renderExpenseCategoryFilter();
+}
+
+function renderExpenseCategoryFilter() {
+  if (!refs.expenseRegisterFilterCategory) return;
+  const current = refs.expenseRegisterFilterCategory.value;
+  refs.expenseRegisterFilterCategory.innerHTML = [
+    `<option value="all">${escapeHtml(t("filter.allCategories"))}</option>`,
+    ...state.categories.map(
+      (category) => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`
+    ),
+  ].join("");
+  if (current === "all" || state.categories.includes(current)) {
+    refs.expenseRegisterFilterCategory.value = current;
+    return;
+  }
+  refs.expenseRegisterFilterCategory.value = "all";
+}
+
+function resolveExpenseRegisterStatus(expense) {
+  if (resolveExpensePayer(expense) === "Studio9") return t("status.paid");
+  return expense.paid ? t("status.paid") : t("status.unpaid");
+}
+
+function getFilteredExpenseRegisterList() {
+  const payer = refs.expenseRegisterFilterPayer ? refs.expenseRegisterFilterPayer.value : "all";
+  const category = refs.expenseRegisterFilterCategory ? refs.expenseRegisterFilterCategory.value : "all";
+  const startDate = refs.expenseRegisterFilterStartDate ? refs.expenseRegisterFilterStartDate.value : "";
+  const endDate = refs.expenseRegisterFilterEndDate ? refs.expenseRegisterFilterEndDate.value : "";
+  return state.expenses.filter((item) => {
+    const payerOk = payer === "all" || resolveExpensePayer(item) === payer;
+    const categoryOk = category === "all" || item.category === category;
+    const startOk = !startDate || item.date >= startDate;
+    const endOk = !endDate || item.date <= endDate;
+    return payerOk && categoryOk && startOk && endOk;
+  });
+}
+
+function renderExpenseRegisterTable() {
+  if (!refs.expenseRegisterRows) return;
+  const rows = getFilteredExpenseRegisterList();
+  if (rows.length === 0) {
+    refs.expenseRegisterRows.innerHTML = `<tr><td colspan="7" class="empty">${escapeHtml(t("table.empty"))}</td></tr>`;
+    return;
+  }
+
+  refs.expenseRegisterRows.innerHTML = rows
+    .map((item) => {
+      const seq = item.seqNumber != null ? escapeHtml(String(item.seqNumber)) : "—";
+      const payer = escapeHtml(resolveExpensePayer(item));
+      const status = escapeHtml(resolveExpenseRegisterStatus(item));
+      const statusClass = item.paid || resolveExpensePayer(item) === "Studio9" ? "status-paid" : "status-unpaid";
+      return `
+      <tr>
+        <td class="td-seq">${seq}</td>
+        <td>${formatDate(item.date)}</td>
+        <td>${payer}</td>
+        <td>${escapeHtml(item.category)}</td>
+        <td>${escapeHtml(item.description)}</td>
+        <td>${formatMoney(item.amount, resolveCurrency(item))}</td>
+        <td><span class="expense-status-badge ${statusClass}">${status}</span></td>
+      </tr>
+    `;
+    })
+    .join("");
 }
 
 function selectDefaultIncomeClient() {
@@ -1663,6 +1759,47 @@ function exportIncomePdf() {
   doc.save("studio9-entradas.pdf");
 }
 
+function exportExpenseRegisterPdf() {
+  const items = getFilteredExpenseRegisterList();
+  if (items.length === 0) {
+    window.alert(t("errors.exportEmpty"));
+    return;
+  }
+  const total = formatPendingByCurrency(items);
+  const rows = items.map((item) => [
+    item.seqNumber != null ? String(item.seqNumber) : "—",
+    formatDate(item.date),
+    resolveExpensePayer(item),
+    item.category,
+    item.description,
+    formatMoney(item.amount, resolveCurrency(item)),
+    resolveExpenseRegisterStatus(item),
+  ]);
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: "landscape" });
+  doc.setFontSize(14);
+  doc.text(t("expense.pdfTitle"), 14, 14);
+  doc.setFontSize(10);
+  doc.text(`${t("payments.periodPrefix")} ${total}`, 14, 22);
+  doc.autoTable({
+    head: [
+      [
+        t("expense.seqNumber"),
+        t("table.date"),
+        t("expense.payer"),
+        t("table.category"),
+        t("table.description"),
+        t("table.amount"),
+        t("filter.status"),
+      ],
+    ],
+    body: rows,
+    startY: 28,
+    styles: { fontSize: 8 },
+  });
+  doc.save("studio9-despesas.pdf");
+}
+
 function exportPendingPaymentsPdf() {
   const startDate = refs.paymentFilterStartDate ? refs.paymentFilterStartDate.value : "";
   const endDate = refs.paymentFilterEndDate ? refs.paymentFilterEndDate.value : "";
@@ -1836,6 +1973,12 @@ function applyPeriodMonthToDateFilters() {
     refs.incomeFilterEndDate.value = bounds.end;
   }
   if (refs.incomeFilterClient) refs.incomeFilterClient.value = "all";
+  if (refs.expenseRegisterFilterStartDate && refs.expenseRegisterFilterEndDate) {
+    refs.expenseRegisterFilterStartDate.value = bounds.start;
+    refs.expenseRegisterFilterEndDate.value = bounds.end;
+  }
+  if (refs.expenseRegisterFilterPayer) refs.expenseRegisterFilterPayer.value = "all";
+  if (refs.expenseRegisterFilterCategory) refs.expenseRegisterFilterCategory.value = "all";
 }
 
 function renderPeriodHeader() {
