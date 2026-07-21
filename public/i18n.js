@@ -18,12 +18,10 @@
       "hero.referenceMonth": "Mes de referencia",
       "hero.subtitle":
         "Visao mensal: os valores dos cartoes e da atividade seguem o mes de referencia. A listagem usa tambem «De/Ate» (pre-preenchidos ao mudar o mes; podes ajustar se precisares).",
-      "hero.unpaidExpenses": "Reembolsos por pagar (no mes)",
-      "hero.totalPaid": "Reembolsos pagos (no mes)",
       "hero.incomes": "Entradas (no mes)",
-      "hero.availability": "Disponibilidade (no mes)",
-      "hero.availabilityHint":
-        "Disponibilidade = entradas do mes menos reembolsos pagos menos pagamentos registados no painel Pagamentos.",
+      "hero.studio9Payments": "Pagamentos Studio9 (no mes)",
+      "hero.reimbursementsPaid": "Pagamentos a reembolsar (no mes)",
+      "hero.totalOutflow": "Total de saida (no mes)",
       "hero.accountBalance": "Saldo acumulado (conta)",
       "hero.accountBalanceHint":
         "Saldo acumulado por moeda = entradas menos reembolsos e pagamentos ja efectuados (documentos em euros). Cada moeda tem saldo independente.",
@@ -193,12 +191,10 @@
       "hero.referenceMonth": "Reference month",
       "hero.subtitle":
         "Monthly view: card totals and activity follow the reference month. The list also uses From/To (pre-filled when you change month; adjust if needed).",
-      "hero.unpaidExpenses": "Reimbursements due (this month)",
-      "hero.totalPaid": "Reimbursements paid (this month)",
       "hero.incomes": "Income (this month)",
-      "hero.availability": "Available balance (this month)",
-      "hero.availabilityHint":
-        "Available balance = income this month minus reimbursements paid minus payments recorded in the Payments panel.",
+      "hero.studio9Payments": "Studio9 payments (this month)",
+      "hero.reimbursementsPaid": "Reimbursements paid (this month)",
+      "hero.totalOutflow": "Total outflow (this month)",
       "hero.accountBalance": "Running account balance",
       "hero.accountBalanceHint":
         "Running balance per currency = income minus reimbursements and payments made (documents in euros). Each currency has an independent balance.",

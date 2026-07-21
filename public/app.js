@@ -21,10 +21,10 @@ const bootstrapPollMs = 15000;
 let bootstrapPollTimer = null;
 
 const refs = {
-  totalPorPagar: document.getElementById("totalPorPagar"),
-  totalPago: document.getElementById("totalPago"),
   totalEntradas: document.getElementById("totalEntradas"),
-  disponibilidadeAtual: document.getElementById("disponibilidadeAtual"),
+  monthStudio9Payments: document.getElementById("monthStudio9Payments"),
+  monthReimbursements: document.getElementById("monthReimbursements"),
+  monthTotalOutflow: document.getElementById("monthTotalOutflow"),
   accountBalanceTotal: document.getElementById("accountBalanceTotal"),
   expenseSeqPreview: document.getElementById("expenseSeqPreview"),
   documentForm: document.getElementById("documentForm"),
@@ -433,10 +433,10 @@ function sumAmountsByCurrency(items, predicate) {
   return sums;
 }
 
-function subtractCurrencyBalances(minuend, subtrahend) {
+function addCurrencyBalances(a, b) {
   const out = emptyCurrencyBalances();
   for (const code of CURRENCY_CODES) {
-    out[code] = (minuend[code] || 0) - (subtrahend[code] || 0);
+    out[code] = (a[code] || 0) + (b[code] || 0);
   }
   return out;
 }
@@ -1343,33 +1343,27 @@ function renderTotals() {
     return isoDate >= bounds.start && isoDate <= bounds.end;
   };
 
-  const totalPorPagar = sumAmountsByCurrency(
-    state.expenses,
-    (item) => isReimbursementExpense(item) && !item.paid && inMonth(item.date)
-  );
-  const totalPago = sumAmountsByCurrency(
-    state.expenses,
-    (item) => isReimbursementExpense(item) && item.paid && inMonth(item.date)
-  );
   const totalEntradas = sumAmountsByCurrency(state.incomes, (item) => inMonth(item.date));
-  const totalExpensesPaid = sumAmountsByCurrency(
-    state.expenses,
-    (item) => item.paid && inMonth(item.date)
-  );
   const docsAsEur = (state.documents || []).map((item) => ({ ...item, currency: DEFAULT_CURRENCY }));
-  const totalDocsPagos = sumAmountsByCurrency(
+  const studio9Expenses = sumAmountsByCurrency(
+    state.expenses,
+    (item) => resolveExpensePayer(item) === "Studio9" && item.paid && inMonth(item.date)
+  );
+  const studio9Documents = sumAmountsByCurrency(
     docsAsEur,
     (item) => item.paid && inMonth(item.date)
   );
-  const disponibilidade = subtractCurrencyBalances(
-    subtractCurrencyBalances(totalEntradas, totalExpensesPaid),
-    totalDocsPagos
+  const pagamentosStudio9 = addCurrencyBalances(studio9Expenses, studio9Documents);
+  const pagamentosReembolsar = sumAmountsByCurrency(
+    state.expenses,
+    (item) => isReimbursementExpense(item) && item.paid && inMonth(item.date)
   );
+  const totalSaida = addCurrencyBalances(pagamentosStudio9, pagamentosReembolsar);
 
-  renderCurrencySummary(refs.totalPorPagar, totalPorPagar, { hideZero: true });
-  renderCurrencySummary(refs.totalPago, totalPago, { hideZero: true });
-  renderCurrencySummary(refs.totalEntradas, totalEntradas, { hideZero: true });
-  renderCurrencySummary(refs.disponibilidadeAtual, disponibilidade);
+  renderCurrencySummary(refs.totalEntradas, totalEntradas);
+  renderCurrencySummary(refs.monthStudio9Payments, pagamentosStudio9, { hideZero: true });
+  renderCurrencySummary(refs.monthReimbursements, pagamentosReembolsar, { hideZero: true });
+  renderCurrencySummary(refs.monthTotalOutflow, totalSaida, { hideZero: true });
   renderCurrencySummary(refs.accountBalanceTotal, getAccountBalances());
 }
 

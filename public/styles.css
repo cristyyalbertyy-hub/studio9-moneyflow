@@ -797,20 +797,32 @@ h1 {
   font-size: 1.18rem;
 }
 
-.summary-item.alert {
-  border-color: rgba(239, 68, 68, 0.4);
-}
-
-.summary-item.alert strong {
-  color: #fca5a5;
-}
-
 .summary-item.income strong {
   color: #86efac;
 }
 
-.summary-item.balance strong {
-  color: #67e8f9;
+.summary-item.studio9 {
+  border-color: rgba(96, 165, 250, 0.35);
+}
+
+.summary-item.studio9 strong {
+  color: #93c5fd;
+}
+
+.summary-item.reimbursement {
+  border-color: rgba(251, 191, 36, 0.35);
+}
+
+.summary-item.reimbursement strong {
+  color: #fcd34d;
+}
+
+.summary-item.outflow {
+  border-color: rgba(248, 113, 113, 0.4);
+}
+
+.summary-item.outflow strong {
+  color: #fca5a5;
 }
 
 .field-readonly {
