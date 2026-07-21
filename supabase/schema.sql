@@ -19,6 +19,7 @@ create table if not exists public.expenses (
   category text not null,
   description text not null,
   paid boolean not null default false,
+  paid_at date,
   created_by text not null check (created_by in ('Cris', 'Alex')),
   created_at timestamptz not null default now()
 );

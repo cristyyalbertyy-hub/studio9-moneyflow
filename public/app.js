@@ -522,6 +522,21 @@ function resolveExpensePayer(expense) {
   return expense?.person === "Alex" ? "Alex" : "Cris";
 }
 
+function resolveExpensePaidAt(expense) {
+  const payer = resolveExpensePayer(expense);
+  const isPaid = Boolean(expense?.paid) || payer === "Studio9";
+  if (!isPaid) return null;
+  if (expense?.paidAt) return expense.paidAt;
+  if (expense?.createdAt) return String(expense.createdAt).slice(0, 10);
+  return expense?.date || null;
+}
+
+function isExpensePaidInMonth(expense, inMonth) {
+  const paidAt = resolveExpensePaidAt(expense);
+  if (!paidAt) return false;
+  return inMonth(paidAt);
+}
+
 function isReimbursementExpense(expense) {
   const payer = resolveExpensePayer(expense);
   return payer === "Cris" || payer === "Alex";
@@ -543,7 +558,7 @@ function buildPaymentItems() {
     .map((item) => ({
       kind: "expense",
       id: item.id,
-      date: item.date,
+      date: resolveExpensePaidAt(item) || item.date,
       label: `${item.category} — ${item.description}`,
       amount: item.amount,
       currency: resolveCurrency(item),
@@ -1335,7 +1350,7 @@ function renderExpenseRegisterTable() {
   if (!refs.expenseRegisterRows) return;
   const rows = getFilteredExpenseRegisterList();
   if (rows.length === 0) {
-    refs.expenseRegisterRows.innerHTML = `<tr><td colspan="7" class="empty">${escapeHtml(t("table.empty"))}</td></tr>`;
+    refs.expenseRegisterRows.innerHTML = `<tr><td colspan="8" class="empty">${escapeHtml(t("table.empty"))}</td></tr>`;
     return;
   }
 
@@ -1345,6 +1360,8 @@ function renderExpenseRegisterTable() {
       const payer = escapeHtml(resolveExpensePayer(item));
       const status = escapeHtml(resolveExpenseRegisterStatus(item));
       const statusClass = item.paid || resolveExpensePayer(item) === "Studio9" ? "status-paid" : "status-unpaid";
+      const paidAt = resolveExpensePaidAt(item);
+      const paymentDateCell = paidAt ? formatDate(paidAt) : "—";
       return `
       <tr>
         <td class="td-seq">${seq}</td>
@@ -1354,6 +1371,7 @@ function renderExpenseRegisterTable() {
         <td>${escapeHtml(item.description)}</td>
         <td>${formatMoney(item.amount, resolveCurrency(item))}</td>
         <td><span class="expense-status-badge ${statusClass}">${status}</span></td>
+        <td>${paymentDateCell}</td>
       </tr>
     `;
     })
@@ -1449,7 +1467,7 @@ function renderTotals() {
   const docsAsEur = (state.documents || []).map((item) => ({ ...item, currency: DEFAULT_CURRENCY }));
   const studio9Expenses = sumAmountsByCurrency(
     state.expenses,
-    (item) => resolveExpensePayer(item) === "Studio9" && item.paid && inMonth(item.date)
+    (item) => resolveExpensePayer(item) === "Studio9" && item.paid && isExpensePaidInMonth(item, inMonth)
   );
   const studio9Documents = sumAmountsByCurrency(
     docsAsEur,
@@ -1458,7 +1476,7 @@ function renderTotals() {
   const pagamentosStudio9 = addCurrencyBalances(studio9Expenses, studio9Documents);
   const pagamentosReembolsar = sumAmountsByCurrency(
     state.expenses,
-    (item) => isReimbursementExpense(item) && item.paid && inMonth(item.date)
+    (item) => isReimbursementExpense(item) && item.paid && isExpensePaidInMonth(item, inMonth)
   );
   const totalSaida = addCurrencyBalances(pagamentosStudio9, pagamentosReembolsar);
 
@@ -1691,15 +1709,19 @@ function exportExpenseRegisterPdf() {
     return;
   }
   const total = formatPendingByCurrency(items);
-  const rows = items.map((item) => [
-    item.seqNumber != null ? String(item.seqNumber) : "—",
-    formatDate(item.date),
-    resolveExpensePayer(item),
-    item.category,
-    item.description,
-    formatMoney(item.amount, resolveCurrency(item)),
-    resolveExpenseRegisterStatus(item),
-  ]);
+  const rows = items.map((item) => {
+    const paidAt = resolveExpensePaidAt(item);
+    return [
+      item.seqNumber != null ? String(item.seqNumber) : "—",
+      formatDate(item.date),
+      resolveExpensePayer(item),
+      item.category,
+      item.description,
+      formatMoney(item.amount, resolveCurrency(item)),
+      resolveExpenseRegisterStatus(item),
+      paidAt ? formatDate(paidAt) : "—",
+    ];
+  });
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: "landscape" });
   doc.setFontSize(14);
@@ -1710,17 +1732,18 @@ function exportExpenseRegisterPdf() {
     head: [
       [
         t("expense.seqNumber"),
-        t("table.date"),
+        t("expense.purchaseDate"),
         t("expense.payer"),
         t("table.category"),
         t("table.description"),
         t("table.amount"),
         t("filter.status"),
+        t("expense.paymentDate"),
       ],
     ],
     body: rows,
     startY: 28,
-    styles: { fontSize: 8 },
+    styles: { fontSize: 7 },
   });
   doc.save("studio9-despesas.pdf");
 }

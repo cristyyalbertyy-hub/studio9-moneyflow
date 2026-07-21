@@ -75,3 +75,13 @@ where currency is null or trim(currency) = '' or currency not in ('EUR', 'USD', 
 update public.incomes
 set currency = 'EUR'
 where currency is null or trim(currency) = '' or currency not in ('EUR', 'USD', 'QAR');
+
+-- 5) Data de pagamento nas despesas (distinta da data da compra)
+alter table public.expenses
+  add column if not exists paid_at date;
+
+update public.expenses
+set paid_at = (created_at at time zone 'UTC')::date
+where paid = true and paid_at is null;
+
+create index if not exists expenses_paid_at_idx on public.expenses (paid_at desc);

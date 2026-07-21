@@ -84,6 +84,7 @@ app.post("/api/expenses", authMiddleware, (req, res) => {
   const category = String(req.body?.category || "").trim();
   const description = String(req.body?.description || "").trim();
   const paid = Boolean(req.body?.paid);
+  const paidAt = paid ? new Date().toISOString().slice(0, 10) : null;
 
   if (!profiles.has(person)) return res.status(400).json({ error: "Pessoa invalida" });
   if (!isValidDate(date)) return res.status(400).json({ error: "Data invalida" });
@@ -100,6 +101,7 @@ app.post("/api/expenses", authMiddleware, (req, res) => {
     category,
     description,
     paid,
+    paidAt,
     createdBy: req.user.profile,
     createdAt,
   });
@@ -125,6 +127,7 @@ app.patch("/api/expenses/:id/toggle", authMiddleware, (req, res) => {
   if (!target) return res.status(404).json({ error: "Despesa nao encontrada" });
   const wasPaid = target.paid;
   target.paid = !target.paid;
+  target.paidAt = target.paid ? new Date().toISOString().slice(0, 10) : null;
   const at = new Date().toISOString();
   if (!wasPaid && target.paid) {
     addActivity({
