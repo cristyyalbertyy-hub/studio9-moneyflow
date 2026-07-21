@@ -404,6 +404,13 @@ body {
   background: rgba(239, 68, 68, 0.15);
 }
 
+.studio9-confirm-balance {
+  margin: 0 0 16px;
+  color: #67e8f9;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
 .payments-meta {
   display: flex;
   flex-wrap: wrap;

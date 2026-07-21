@@ -353,46 +353,9 @@
           <div class="panel-title">
             <h2 data-i18n="payments.title">Pagamentos</h2>
             <p data-i18n="payments.desc">
-              Pagamentos efectuados pela Studio9. O registo so e aceite se houver saldo disponivel.
+              Pagamentos efectuados pela Studio9. Registam-se ao guardar uma despesa com pagador Studio9.
             </p>
           </div>
-          <form id="documentForm" class="document-form">
-            <p id="paymentFormStatus" class="payment-form-status hidden" role="status"></p>
-            <label>
-              <span data-i18n="payments.dateMonth">Data (mes)</span>
-              <input id="documentDate" type="date" required />
-            </label>
-            <label>
-              <span data-i18n="payments.amount">Valor</span>
-              <input
-                id="documentAmount"
-                type="number"
-                min="0.01"
-                step="0.01"
-                placeholder="0.00"
-                required
-              />
-            </label>
-            <label class="document-form-wide">
-              <span data-i18n="payments.description">Descricao / referencia</span>
-              <input
-                id="documentLabel"
-                type="text"
-                maxlength="160"
-                data-i18n-placeholder="payments.descriptionPlaceholder"
-                placeholder="Ex: Fatura electricidade Abril"
-                required
-              />
-            </label>
-            <div class="document-form-actions">
-              <button type="submit" id="documentSubmitBtn" class="btn-primary" data-i18n="payments.add">
-                Adicionar documento
-              </button>
-              <button type="button" id="clearPaymentFormBtn" class="btn-ghost hidden" data-i18n="payments.clearForm">
-                Novo pagamento
-              </button>
-            </div>
-          </form>
           <div class="payments-meta">
             <span id="documentsPendingTotal">Total no periodo: EUR 0,00</span>
             <span id="paymentsAccountBalance" class="payments-balance"></span>
@@ -703,6 +666,28 @@
         <h3 id="balanceAlertTitle" data-i18n="payments.insufficientBalanceTitle">Atencao</h3>
         <p data-i18n="payments.insufficientBalanceMsg">Saldo insuficiente para este pagamento.</p>
         <button type="button" id="balanceAlertOk" class="btn-primary" data-i18n="misc.ok">OK</button>
+      </div>
+    </div>
+
+    <div
+      id="studio9PaymentConfirmOverlay"
+      class="alert-overlay hidden"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="studio9PaymentConfirmTitle"
+    >
+      <div class="alert-card">
+        <h3 id="studio9PaymentConfirmTitle" data-i18n="expense.studio9ConfirmTitle">Confirmar pagamento Studio9</h3>
+        <p id="studio9PaymentConfirmMessage"></p>
+        <p id="studio9PaymentConfirmBalance" class="studio9-confirm-balance"></p>
+        <div class="reset-form-actions">
+          <button type="button" id="studio9PaymentConfirmCancel" class="btn-ghost" data-i18n="expense.studio9ConfirmCancel">
+            Cancelar
+          </button>
+          <button type="button" id="studio9PaymentConfirmOk" class="btn-primary" data-i18n="expense.studio9ConfirmOk">
+            Confirmar pagamento
+          </button>
+        </div>
       </div>
     </div>
 

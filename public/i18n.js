@@ -52,7 +52,7 @@
       "table.empty": "Sem resultados para os filtros escolhidos.",
       "payments.title": "Pagamentos",
       "payments.desc":
-        "Pagamentos efectuados pela Studio9. O registo so e aceite se houver saldo disponivel.",
+        "Pagamentos efectuados pela Studio9. Registam-se ao guardar uma despesa com pagador Studio9.",
       "payments.periodPrefix": "Total no periodo:",
       "payments.exportPdf": "Exportar PDF",
       "payments.pdfTitle": "Studio9 - Pagamentos",
@@ -96,6 +96,11 @@
         "Listagem filtrada por pagador, categoria e periodo. Por defeito segue o mes de referencia.",
       "expense.exportPdf": "Exportar PDF",
       "expense.pdfTitle": "Studio9 - Despesas registadas",
+      "expense.studio9ConfirmTitle": "Confirmar pagamento Studio9",
+      "expense.studio9ConfirmMessage":
+        "Esta despesa de {amount} sera paga imediatamente pela Studio9: {description}. Confirmas o pagamento?",
+      "expense.studio9ConfirmOk": "Confirmar pagamento",
+      "expense.studio9ConfirmCancel": "Cancelar",
       "filter.allCategories": "Todas",
       "category.prompt": "Nome da nova categoria:",
       "category.editBtn": "Editar categoria",
@@ -237,7 +242,7 @@
       "table.empty": "No results for the selected filters.",
       "payments.title": "Payments",
       "payments.desc":
-        "Payments made by Studio9. Registration is only accepted when sufficient balance is available.",
+        "Payments made by Studio9. They are recorded when you save an expense with Studio9 as payer.",
       "payments.periodPrefix": "Total in period:",
       "payments.exportPdf": "Export PDF",
       "payments.pdfTitle": "Studio9 - Payments",
@@ -281,6 +286,11 @@
         "List filtered by payer, category and period. Defaults to the reference month.",
       "expense.exportPdf": "Export PDF",
       "expense.pdfTitle": "Studio9 - Recorded expenses",
+      "expense.studio9ConfirmTitle": "Confirm Studio9 payment",
+      "expense.studio9ConfirmMessage":
+        "This expense of {amount} will be paid immediately by Studio9: {description}. Confirm payment?",
+      "expense.studio9ConfirmOk": "Confirm payment",
+      "expense.studio9ConfirmCancel": "Cancel",
       "filter.allCategories": "All",
       "category.prompt": "New category name:",
       "category.editBtn": "Edit category",

@@ -27,13 +27,6 @@ const refs = {
   monthTotalOutflow: document.getElementById("monthTotalOutflow"),
   accountBalanceTotal: document.getElementById("accountBalanceTotal"),
   expenseSeqPreview: document.getElementById("expenseSeqPreview"),
-  documentForm: document.getElementById("documentForm"),
-  documentDate: document.getElementById("documentDate"),
-  documentAmount: document.getElementById("documentAmount"),
-  documentLabel: document.getElementById("documentLabel"),
-  documentSubmitBtn: document.getElementById("documentSubmitBtn"),
-  clearPaymentFormBtn: document.getElementById("clearPaymentFormBtn"),
-  paymentFormStatus: document.getElementById("paymentFormStatus"),
   paymentsPanel: document.querySelector(".payments-panel"),
   paymentRows: document.getElementById("paymentRows"),
   paymentFilterStartDate: document.getElementById("paymentFilterStartDate"),
@@ -44,6 +37,11 @@ const refs = {
   exportPendingPdfBtn: document.getElementById("exportPendingPdfBtn"),
   balanceAlertOverlay: document.getElementById("balanceAlertOverlay"),
   balanceAlertOk: document.getElementById("balanceAlertOk"),
+  studio9PaymentConfirmOverlay: document.getElementById("studio9PaymentConfirmOverlay"),
+  studio9PaymentConfirmMessage: document.getElementById("studio9PaymentConfirmMessage"),
+  studio9PaymentConfirmBalance: document.getElementById("studio9PaymentConfirmBalance"),
+  studio9PaymentConfirmOk: document.getElementById("studio9PaymentConfirmOk"),
+  studio9PaymentConfirmCancel: document.getElementById("studio9PaymentConfirmCancel"),
   resetExperimentalBtn: document.getElementById("resetExperimentalBtn"),
   resetExperimentalOverlay: document.getElementById("resetExperimentalOverlay"),
   resetExperimentalForm: document.getElementById("resetExperimentalForm"),
@@ -138,7 +136,7 @@ const CURRENCY_CODES = ["EUR", "USD", "QAR"];
 const DEFAULT_CURRENCY = "EUR";
 
 let listManageState = null;
-let paymentFormStudio9Locked = false;
+let pendingStudio9Expense = null;
 
 function initProfitDistribution() {
   if (!refs.profitAmount) return;
@@ -257,7 +255,6 @@ async function boot() {
   const now = todayISO();
   refs.expenseDate.value = now;
   refs.incomeDate.value = now;
-  if (refs.documentDate) refs.documentDate.value = now;
   initPeriodMonth();
   refs.newCategoryBtn.addEventListener("click", handleNewCategory);
   if (refs.editCategoryBtn) refs.editCategoryBtn.addEventListener("click", handleEditCategory);
@@ -267,9 +264,6 @@ async function boot() {
   if (refs.deleteClientBtn) refs.deleteClientBtn.addEventListener("click", handleDeleteClient);
   refs.expenseForm.addEventListener("submit", handleExpenseSubmit);
   refs.incomeForm.addEventListener("submit", handleIncomeSubmit);
-  if (refs.documentForm) refs.documentForm.addEventListener("submit", handleDocumentSubmit);
-  if (refs.clearPaymentFormBtn) refs.clearPaymentFormBtn.addEventListener("click", clearPaymentForm);
-  initExpensePaymentSync();
   refs.clearFilters.addEventListener("click", clearFilters);
   refs.logoutBtn.addEventListener("click", () => logout(true));
   refs.exportExcelBtn.addEventListener("click", exportExcel);
@@ -283,6 +277,17 @@ async function boot() {
   if (refs.balanceAlertOverlay) {
     refs.balanceAlertOverlay.addEventListener("click", (event) => {
       if (event.target === refs.balanceAlertOverlay) hideBalanceAlert();
+    });
+  }
+  if (refs.studio9PaymentConfirmOk) {
+    refs.studio9PaymentConfirmOk.addEventListener("click", confirmStudio9Payment);
+  }
+  if (refs.studio9PaymentConfirmCancel) {
+    refs.studio9PaymentConfirmCancel.addEventListener("click", hideStudio9PaymentConfirm);
+  }
+  if (refs.studio9PaymentConfirmOverlay) {
+    refs.studio9PaymentConfirmOverlay.addEventListener("click", (event) => {
+      if (event.target === refs.studio9PaymentConfirmOverlay) hideStudio9PaymentConfirm();
     });
   }
   if (refs.resetExperimentalBtn) {
@@ -571,104 +576,12 @@ function buildExpensePaymentLabel(category, description) {
   return desc || cat;
 }
 
-function isStudio9PayerSelected() {
-  return Boolean(refs.expensePayer && refs.expensePayer.value === "Studio9");
-}
-
-function setPaymentFormReadonly(readonly) {
-  [refs.documentDate, refs.documentAmount, refs.documentLabel].forEach((el) => {
-    if (el) el.readOnly = readonly;
-  });
-  if (refs.documentForm) refs.documentForm.classList.toggle("payment-form--readonly", readonly);
-}
-
-function showPaymentFormStatus(message, mode = "completed") {
-  if (!refs.paymentFormStatus) return;
-  refs.paymentFormStatus.textContent = message;
-  refs.paymentFormStatus.classList.remove("hidden", "preview", "completed");
-  refs.paymentFormStatus.classList.add(mode === "preview" ? "preview" : "completed");
-}
-
-function hidePaymentFormStatus() {
-  if (!refs.paymentFormStatus) refs.paymentFormStatus.classList.add("hidden");
-}
-
-function fillPaymentFormFromExpense({ date, amount, category, description, currency }, options = {}) {
-  const { readonly = false, completed = false } = options;
-  if (refs.documentDate) refs.documentDate.value = date || "";
-  if (refs.documentAmount) refs.documentAmount.value = amount != null && amount !== "" ? String(amount) : "";
-  if (refs.documentLabel) refs.documentLabel.value = buildExpensePaymentLabel(category, description);
-
-  setPaymentFormReadonly(readonly);
-
-  if (refs.documentSubmitBtn) refs.documentSubmitBtn.classList.toggle("hidden", readonly);
-  if (refs.clearPaymentFormBtn) refs.clearPaymentFormBtn.classList.toggle("hidden", !completed);
-
-  if (completed) {
-    showPaymentFormStatus(
-      t("payments.studio9Completed").replace("{amount}", formatMoney(amount, currency || DEFAULT_CURRENCY)),
-      "completed"
-    );
-  } else if (readonly) {
-    const money = amount ? formatMoney(amount, currency || DEFAULT_CURRENCY) : "";
-    const preview = money
-      ? t("payments.studio9PreviewAmount").replace("{amount}", money)
-      : t("payments.studio9Preview");
-    showPaymentFormStatus(preview, "preview");
-  } else {
-    hidePaymentFormStatus();
-  }
-}
-
-function resetPaymentFormEditable() {
-  setPaymentFormReadonly(false);
-  if (refs.documentSubmitBtn) refs.documentSubmitBtn.classList.remove("hidden");
-  if (refs.clearPaymentFormBtn) refs.clearPaymentFormBtn.classList.add("hidden");
-  hidePaymentFormStatus();
-}
-
-function clearPaymentForm() {
-  paymentFormStudio9Locked = false;
-  if (refs.documentForm) refs.documentForm.reset();
-  if (refs.documentDate) refs.documentDate.value = todayISO();
-  resetPaymentFormEditable();
-}
-
-function syncPaymentFormFromExpenseForm() {
-  if (paymentFormStudio9Locked) return;
-  if (!isStudio9PayerSelected()) {
-    resetPaymentFormEditable();
-    return;
-  }
-  fillPaymentFormFromExpense(
-    {
-      date: refs.expenseDate ? refs.expenseDate.value : "",
-      amount: refs.expenseAmount ? refs.expenseAmount.value : "",
-      category: refs.expenseCategorySelect ? refs.expenseCategorySelect.value : "",
-      description: refs.expenseDescription ? refs.expenseDescription.value : "",
-      currency: refs.expenseCurrency ? refs.expenseCurrency.value : DEFAULT_CURRENCY,
-    },
-    { readonly: true, completed: false }
-  );
-}
-
 function ensurePaymentDateFilterIncludes(isoDate) {
   if (!isoDate || !refs.paymentFilterStartDate || !refs.paymentFilterEndDate) return;
   const start = refs.paymentFilterStartDate.value;
   const end = refs.paymentFilterEndDate.value;
   if (!start || isoDate < start) refs.paymentFilterStartDate.value = isoDate;
   if (!end || isoDate > end) refs.paymentFilterEndDate.value = isoDate;
-}
-
-function initExpensePaymentSync() {
-  if (refs.expensePayer) refs.expensePayer.addEventListener("change", syncPaymentFormFromExpenseForm);
-  if (refs.expenseCategorySelect) {
-    refs.expenseCategorySelect.addEventListener("change", syncPaymentFormFromExpenseForm);
-  }
-  [refs.expenseDate, refs.expenseAmount, refs.expenseDescription].filter(Boolean).forEach((el) => {
-    el.addEventListener("input", syncPaymentFormFromExpenseForm);
-  });
-  if (refs.expenseCurrency) refs.expenseCurrency.addEventListener("change", syncPaymentFormFromExpenseForm);
 }
 
 async function fetchBootstrap() {
@@ -727,6 +640,59 @@ function showBalanceAlert() {
 function hideBalanceAlert() {
   if (!refs.balanceAlertOverlay) return;
   refs.balanceAlertOverlay.classList.add("hidden");
+}
+
+function showStudio9PaymentConfirm(payload) {
+  pendingStudio9Expense = payload;
+  const label = buildExpensePaymentLabel(payload.category, payload.description);
+  const amount = formatMoney(payload.amount, payload.currency);
+  if (refs.studio9PaymentConfirmMessage) {
+    refs.studio9PaymentConfirmMessage.textContent = t("expense.studio9ConfirmMessage")
+      .replace("{amount}", amount)
+      .replace("{description}", label);
+  }
+  if (refs.studio9PaymentConfirmBalance) {
+    const balances = CURRENCY_CODES.map((code) => formatMoney(getAccountBalances()[code], code)).join(" · ");
+    refs.studio9PaymentConfirmBalance.textContent = `${t("payments.accountBalance")} ${balances}`;
+  }
+  if (refs.studio9PaymentConfirmOverlay) refs.studio9PaymentConfirmOverlay.classList.remove("hidden");
+}
+
+function hideStudio9PaymentConfirm() {
+  if (refs.studio9PaymentConfirmOverlay) refs.studio9PaymentConfirmOverlay.classList.add("hidden");
+  pendingStudio9Expense = null;
+}
+
+function resetExpenseFormAfterSave() {
+  refs.expenseForm.reset();
+  refs.expenseDate.value = todayISO();
+  if (refs.expensePerson) refs.expensePerson.value = state.session.profile;
+  if (refs.expensePayer) refs.expensePayer.value = state.session.profile;
+  if (refs.expenseCurrency) refs.expenseCurrency.value = DEFAULT_CURRENCY;
+}
+
+async function submitExpenseRecord(payload) {
+  return mutateAndRefresh(() =>
+    apiFetch("/api/expenses", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    })
+  );
+}
+
+async function confirmStudio9Payment() {
+  if (!pendingStudio9Expense) return;
+  const payload = pendingStudio9Expense;
+  if (!canAffordPayment(payload.amount, payload.currency)) {
+    hideStudio9PaymentConfirm();
+    showBalanceAlert();
+    return;
+  }
+  hideStudio9PaymentConfirm();
+  const ok = await submitExpenseRecord(payload);
+  if (!ok) return;
+  ensurePaymentDateFilterIncludes(payload.date);
+  resetExpenseFormAfterSave();
 }
 
 function showResetExperimentalModal() {
@@ -1218,45 +1184,28 @@ async function handleExpenseSubmit(event) {
   const currency = refs.expenseCurrency ? refs.expenseCurrency.value : DEFAULT_CURRENCY;
   if (!category || !description || !amount || !date) return;
 
-  if (payer === "Studio9" && !canAffordPayment(amount, currency)) {
-    showBalanceAlert();
+  const payload = {
+    person: refs.expensePerson.value,
+    payer,
+    currency,
+    date,
+    amount,
+    category,
+    description,
+    paid: payer === "Studio9",
+  };
+
+  if (payer === "Studio9") {
+    if (!canAffordPayment(amount, currency)) {
+      showBalanceAlert();
+      return;
+    }
+    showStudio9PaymentConfirm(payload);
     return;
   }
 
-  const ok = await mutateAndRefresh(() =>
-    apiFetch("/api/expenses", {
-      method: "POST",
-      body: JSON.stringify({
-        person: refs.expensePerson.value,
-        payer,
-        currency,
-        date,
-        amount,
-        category,
-        description,
-        paid: payer === "Studio9",
-      }),
-    })
-  );
-  if (!ok) return;
-
-  if (payer === "Studio9") {
-    paymentFormStudio9Locked = true;
-    fillPaymentFormFromExpense(
-      { date, amount, category, description, currency },
-      { readonly: true, completed: true }
-    );
-    ensurePaymentDateFilterIncludes(date);
-    if (refs.paymentsPanel) {
-      refs.paymentsPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    }
-  }
-
-  refs.expenseForm.reset();
-  refs.expenseDate.value = todayISO();
-  if (refs.expensePerson) refs.expensePerson.value = state.session.profile;
-  if (refs.expensePayer) refs.expensePayer.value = state.session.profile;
-  if (refs.expenseCurrency) refs.expenseCurrency.value = DEFAULT_CURRENCY;
+  const ok = await submitExpenseRecord({ ...payload, paid: false });
+  if (ok) resetExpenseFormAfterSave();
 }
 
 async function handleIncomeSubmit(event) {
@@ -1279,30 +1228,6 @@ async function handleIncomeSubmit(event) {
   refs.incomeDate.value = todayISO();
   if (refs.incomeCurrency) refs.incomeCurrency.value = DEFAULT_CURRENCY;
   selectDefaultIncomeClient();
-}
-
-async function handleDocumentSubmit(event) {
-  event.preventDefault();
-  if (refs.documentDate?.readOnly) return;
-  const label = refs.documentLabel.value.trim();
-  const amount = Number(refs.documentAmount.value);
-  const date = refs.documentDate.value;
-  if (!label || !amount || !date) return;
-
-  if (!canAffordPayment(amount, DEFAULT_CURRENCY)) {
-    showBalanceAlert();
-    return;
-  }
-
-  const ok = await mutateAndRefresh(() =>
-    apiFetch("/api/documents", {
-      method: "POST",
-      body: JSON.stringify({ label, amount, date }),
-    })
-  );
-  if (!ok) return;
-
-  clearPaymentForm();
 }
 
 function clearFilters() {
