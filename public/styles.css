@@ -363,6 +363,27 @@ body {
   font-size: 0.9rem;
 }
 
+.income-list-section {
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.panel-title--sub h3 {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+}
+
+.panel-title--sub p {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.income-filters {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
 .payments-meta {
   display: flex;
   flex-wrap: wrap;

@@ -86,6 +86,12 @@ const refs = {
   incomeAmount: document.getElementById("incomeAmount"),
   incomeCurrency: document.getElementById("incomeCurrency"),
   incomeClientSelect: document.getElementById("incomeClientSelect"),
+  incomeFilterClient: document.getElementById("incomeFilterClient"),
+  incomeFilterStartDate: document.getElementById("incomeFilterStartDate"),
+  incomeFilterEndDate: document.getElementById("incomeFilterEndDate"),
+  incomeClearFilters: document.getElementById("incomeClearFilters"),
+  exportIncomePdfBtn: document.getElementById("exportIncomePdfBtn"),
+  incomeRows: document.getElementById("incomeRows"),
   newClientBtn: document.getElementById("newClientBtn"),
   editClientBtn: document.getElementById("editClientBtn"),
   deleteClientBtn: document.getElementById("deleteClientBtn"),
@@ -262,6 +268,7 @@ async function boot() {
   refs.exportExcelBtn.addEventListener("click", exportExcel);
   refs.exportPdfBtn.addEventListener("click", exportPdf);
   if (refs.exportPendingPdfBtn) refs.exportPendingPdfBtn.addEventListener("click", exportPendingPaymentsPdf);
+  if (refs.exportIncomePdfBtn) refs.exportIncomePdfBtn.addEventListener("click", exportIncomePdf);
   if (refs.balanceAlertOk) refs.balanceAlertOk.addEventListener("click", hideBalanceAlert);
   if (refs.balanceAlertOverlay) {
     refs.balanceAlertOverlay.addEventListener("click", (event) => {
@@ -306,6 +313,14 @@ async function boot() {
     .filter(Boolean)
     .forEach((el) => el.addEventListener("change", render));
   if (refs.paymentClearFilters) refs.paymentClearFilters.addEventListener("click", clearPaymentFilters);
+  if (refs.incomeClearFilters) refs.incomeClearFilters.addEventListener("click", clearIncomeFilters);
+  [
+    refs.incomeFilterClient,
+    refs.incomeFilterStartDate,
+    refs.incomeFilterEndDate,
+  ]
+    .filter(Boolean)
+    .forEach((el) => el.addEventListener("change", render));
 
   if (refs.periodMonth) {
     refs.periodMonth.addEventListener("change", () => {
@@ -1281,6 +1296,16 @@ function clearPaymentFilters() {
   render();
 }
 
+function clearIncomeFilters() {
+  const bounds = getSelectedMonthBounds();
+  if (bounds && refs.incomeFilterStartDate && refs.incomeFilterEndDate) {
+    refs.incomeFilterStartDate.value = bounds.start;
+    refs.incomeFilterEndDate.value = bounds.end;
+  }
+  if (refs.incomeFilterClient) refs.incomeFilterClient.value = "all";
+  render();
+}
+
 function render() {
   renderPeriodHeader();
   renderCategories();
@@ -1288,6 +1313,7 @@ function render() {
   renderExpenseSeqPreview();
   renderTotals();
   renderPaymentPanel();
+  renderIncomeTable();
   renderTable();
   renderActivities();
 }
@@ -1331,9 +1357,64 @@ function renderClients() {
 
   if (current && state.clients.includes(current)) {
     refs.incomeClientSelect.value = current;
+  } else {
+    selectDefaultIncomeClient();
+  }
+  renderIncomeClientFilter();
+}
+
+function renderIncomeClientFilter() {
+  if (!refs.incomeFilterClient) return;
+  const current = refs.incomeFilterClient.value;
+  refs.incomeFilterClient.innerHTML = [
+    `<option value="all">${escapeHtml(t("filter.allClients"))}</option>`,
+    ...state.clients.map(
+      (client) => `<option value="${escapeHtml(client)}">${escapeHtml(client)}</option>`
+    ),
+  ].join("");
+  if (current === "all" || state.clients.includes(current)) {
+    refs.incomeFilterClient.value = current;
     return;
   }
-  selectDefaultIncomeClient();
+  refs.incomeFilterClient.value = "all";
+}
+
+function resolveIncomeClient(income) {
+  return String(income?.client || income?.source || "").trim();
+}
+
+function getFilteredIncomes() {
+  const client = refs.incomeFilterClient ? refs.incomeFilterClient.value : "all";
+  const startDate = refs.incomeFilterStartDate ? refs.incomeFilterStartDate.value : "";
+  const endDate = refs.incomeFilterEndDate ? refs.incomeFilterEndDate.value : "";
+  return state.incomes.filter((item) => {
+    const clientName = resolveIncomeClient(item);
+    const clientOk = client === "all" || clientName === client;
+    const startOk = !startDate || item.date >= startDate;
+    const endOk = !endDate || item.date <= endDate;
+    return clientOk && startOk && endOk;
+  });
+}
+
+function renderIncomeTable() {
+  if (!refs.incomeRows) return;
+  const rows = getFilteredIncomes();
+  if (rows.length === 0) {
+    refs.incomeRows.innerHTML = `<tr><td colspan="3" class="empty">${escapeHtml(t("table.empty"))}</td></tr>`;
+    return;
+  }
+
+  refs.incomeRows.innerHTML = rows
+    .map(
+      (item) => `
+      <tr>
+        <td>${formatDate(item.date)}</td>
+        <td>${escapeHtml(resolveIncomeClient(item))}</td>
+        <td>${formatMoney(item.amount, resolveCurrency(item))}</td>
+      </tr>
+    `
+    )
+    .join("");
 }
 
 function renderTotals() {
@@ -1555,6 +1636,33 @@ function exportPdf() {
   doc.save("studio9-listagem.pdf");
 }
 
+function exportIncomePdf() {
+  const items = getFilteredIncomes();
+  if (items.length === 0) {
+    window.alert(t("errors.exportEmpty"));
+    return;
+  }
+  const total = formatPendingByCurrency(items);
+  const rows = items.map((item) => [
+    formatDate(item.date),
+    resolveIncomeClient(item),
+    formatMoney(item.amount, resolveCurrency(item)),
+  ]);
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: "landscape" });
+  doc.setFontSize(14);
+  doc.text(t("income.pdfTitle"), 14, 14);
+  doc.setFontSize(10);
+  doc.text(`${t("payments.periodPrefix")} ${total}`, 14, 22);
+  doc.autoTable({
+    head: [[t("table.date"), t("income.client"), t("table.amount")]],
+    body: rows,
+    startY: 28,
+    styles: { fontSize: 9 },
+  });
+  doc.save("studio9-entradas.pdf");
+}
+
 function exportPendingPaymentsPdf() {
   const startDate = refs.paymentFilterStartDate ? refs.paymentFilterStartDate.value : "";
   const endDate = refs.paymentFilterEndDate ? refs.paymentFilterEndDate.value : "";
@@ -1723,6 +1831,11 @@ function applyPeriodMonthToDateFilters() {
     refs.paymentFilterStartDate.value = bounds.start;
     refs.paymentFilterEndDate.value = bounds.end;
   }
+  if (refs.incomeFilterStartDate && refs.incomeFilterEndDate) {
+    refs.incomeFilterStartDate.value = bounds.start;
+    refs.incomeFilterEndDate.value = bounds.end;
+  }
+  if (refs.incomeFilterClient) refs.incomeFilterClient.value = "all";
 }
 
 function renderPeriodHeader() {
