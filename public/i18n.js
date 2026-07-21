@@ -132,6 +132,8 @@
       "api.clientInUse": "Cliente em uso em entradas existentes",
       "api.clientNotFound": "Cliente nao encontrado",
       "api.clientRequired": "Cliente obrigatorio",
+      "api.clientsTableMissing":
+        "Tabela de clientes em falta. Abre o Supabase SQL Editor e corre migration_clients.sql.",
     },
     en: {
       "auth.title": "Sign in to MoneyFlow",
@@ -263,6 +265,8 @@
       "api.clientInUse": "Client is used by existing income records",
       "api.clientNotFound": "Client not found",
       "api.clientRequired": "Client is required",
+      "api.clientsTableMissing":
+        "Clients table is missing. Open the Supabase SQL Editor and run migration_clients.sql.",
     },
   };
 
@@ -278,6 +282,8 @@
     "Cliente em uso em entradas existentes": "api.clientInUse",
     "Cliente nao encontrado": "api.clientNotFound",
     "Cliente obrigatorio": "api.clientRequired",
+    "Tabela de clientes em falta. Corre migration_clients.sql no Supabase SQL Editor.":
+      "api.clientsTableMissing",
   };
 
   let currentLang = readLang();
