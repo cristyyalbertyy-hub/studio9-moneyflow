@@ -1532,8 +1532,8 @@ function renderTotals() {
   renderCurrencySummary(refs.monthStudio9Payments, pagamentosStudio9, { hideZero: true });
   renderCurrencySummary(refs.monthReimbursements, pagamentosReembolsar, { hideZero: true });
   renderCurrencySummary(refs.monthTotalOutflow, totalSaida, { hideZero: true });
-  renderCurrencySummary(refs.charityBalanceTotal, getCharityBalances());
-  renderCurrencySummary(refs.accountBalanceTotal, getAccountBalances());
+  renderCurrencySummary(refs.charityBalanceTotal, getCharityBalances(), { hideZero: true });
+  renderCurrencySummary(refs.accountBalanceTotal, getAccountBalances(), { hideZero: true });
 }
 
 function renderActivities() {
