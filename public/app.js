@@ -2,10 +2,17 @@ const state = {
   expenses: [],
   incomes: [],
   documents: [],
+  charityAllocations: [],
   categories: [],
   clients: [],
   activities: [],
-  summary: { accountBalance: 0, accountBalances: { EUR: 0, USD: 0, QAR: 0 }, nextExpenseSeq: 1 },
+  summary: {
+    accountBalance: 0,
+    accountBalances: { EUR: 0, USD: 0, QAR: 0 },
+    charityBalance: 0,
+    charityBalances: { EUR: 0, USD: 0, QAR: 0 },
+    nextExpenseSeq: 1,
+  },
   session: null,
   socket: null,
 };
@@ -26,6 +33,7 @@ const refs = {
   monthReimbursements: document.getElementById("monthReimbursements"),
   monthTotalOutflow: document.getElementById("monthTotalOutflow"),
   accountBalanceTotal: document.getElementById("accountBalanceTotal"),
+  charityBalanceTotal: document.getElementById("charityBalanceTotal"),
   expenseSeqPreview: document.getElementById("expenseSeqPreview"),
   balanceAlertOverlay: document.getElementById("balanceAlertOverlay"),
   balanceAlertOk: document.getElementById("balanceAlertOk"),
@@ -117,6 +125,8 @@ const refs = {
   profitAmtStudio9: document.getElementById("profitAmtStudio9"),
   profitAmtCharity: document.getElementById("profitAmtCharity"),
   profitTotalHint: document.getElementById("profitTotalHint"),
+  charityAddBtn: document.getElementById("charityAddBtn"),
+  charityEntryAmount: document.getElementById("charityEntryAmount"),
 };
 
 const defaultProfitSplits = {
@@ -197,6 +207,13 @@ function clampPercent(value, fallback) {
   return Math.min(n, 100);
 }
 
+function getCharityAllocationAmount() {
+  if (!refs.profitAmount || !refs.profitPctCharity) return 0;
+  const profit = Math.max(0, Number(refs.profitAmount.value) || 0);
+  const pct = clampPercent(refs.profitPctCharity.value, 0);
+  return Math.round(((profit * pct) / 100) * 100) / 100;
+}
+
 function renderProfitDistribution() {
   if (!refs.profitAmount) return;
 
@@ -215,6 +232,10 @@ function renderProfitDistribution() {
     totalPct += pct;
     amtEl.textContent = formatEUR((profit * pct) / 100);
   });
+
+  const charityAmount = getCharityAllocationAmount();
+  if (refs.charityEntryAmount) refs.charityEntryAmount.textContent = formatEUR(charityAmount);
+  if (refs.charityAddBtn) refs.charityAddBtn.disabled = charityAmount <= 0;
 
   if (!refs.profitTotalHint) return;
   const totalLabel = `${t("profit.totalLabel")} ${totalPct.toFixed(1)}%`;
@@ -259,6 +280,7 @@ async function boot() {
   if (refs.deleteClientBtn) refs.deleteClientBtn.addEventListener("click", handleDeleteClient);
   refs.expenseForm.addEventListener("submit", handleExpenseSubmit);
   refs.incomeForm.addEventListener("submit", handleIncomeSubmit);
+  if (refs.charityAddBtn) refs.charityAddBtn.addEventListener("click", handleCharityAdd);
   refs.clearFilters.addEventListener("click", clearFilters);
   refs.logoutBtn.addEventListener("click", () => logout(true));
   refs.exportExcelBtn.addEventListener("click", exportExcel);
@@ -472,6 +494,22 @@ function addCurrencyBalances(a, b) {
   return out;
 }
 
+function getCharityBalances() {
+  const raw = state.summary?.charityBalances;
+  if (raw && typeof raw === "object") {
+    return {
+      EUR: Number(raw.EUR) || 0,
+      USD: Number(raw.USD) || 0,
+      QAR: Number(raw.QAR) || 0,
+    };
+  }
+  return {
+    EUR: Number(state.summary?.charityBalance) || 0,
+    USD: 0,
+    QAR: 0,
+  };
+}
+
 function getAccountBalances() {
   const raw = state.summary?.accountBalances;
   if (raw && typeof raw === "object") {
@@ -580,10 +618,13 @@ function applyBootstrapPayload(response) {
   state.categories = Array.isArray(response.categories) ? response.categories : [];
   state.clients = Array.isArray(response.clients) ? response.clients : [];
   state.documents = Array.isArray(response.documents) ? response.documents : [];
+  state.charityAllocations = Array.isArray(response.charityAllocations) ? response.charityAllocations : [];
   state.activities = Array.isArray(response.activities) ? response.activities : [];
   state.summary = response.summary || {
     accountBalance: 0,
     accountBalances: emptyCurrencyBalances(),
+    charityBalance: 0,
+    charityBalances: emptyCurrencyBalances(),
     nextExpenseSeq: 1,
   };
   const balances = state.summary.accountBalances || {};
@@ -593,6 +634,13 @@ function applyBootstrapPayload(response) {
     QAR: Number(balances.QAR) || 0,
   };
   state.summary.accountBalance = Number(state.summary.accountBalances.EUR) || 0;
+  const charityBalances = state.summary.charityBalances || {};
+  state.summary.charityBalances = {
+    EUR: Number(charityBalances.EUR) || 0,
+    USD: Number(charityBalances.USD) || 0,
+    QAR: Number(charityBalances.QAR) || 0,
+  };
+  state.summary.charityBalance = Number(state.summary.charityBalances.EUR) || 0;
   render();
 }
 
@@ -1129,6 +1177,29 @@ function stopBootstrapPolling() {
   }
 }
 
+async function handleCharityAdd() {
+  const amount = getCharityAllocationAmount();
+  if (amount <= 0) return;
+  if (!canAffordPayment(amount, DEFAULT_CURRENCY)) {
+    showBalanceAlert();
+    return;
+  }
+  const profitAmount = Math.max(0, Number(refs.profitAmount?.value) || 0);
+  const charityPct = clampPercent(refs.profitPctCharity?.value, 0);
+  const ok = await mutateAndRefresh(() =>
+    apiFetch("/api/charity", {
+      method: "POST",
+      body: JSON.stringify({
+        amount,
+        currency: DEFAULT_CURRENCY,
+        profitAmount,
+        charityPct,
+      }),
+    })
+  );
+  if (ok) renderProfitDistribution();
+}
+
 async function handleExpenseSubmit(event) {
   event.preventDefault();
   const category = refs.expenseCategorySelect.value.trim();
@@ -1461,6 +1532,7 @@ function renderTotals() {
   renderCurrencySummary(refs.monthStudio9Payments, pagamentosStudio9, { hideZero: true });
   renderCurrencySummary(refs.monthReimbursements, pagamentosReembolsar, { hideZero: true });
   renderCurrencySummary(refs.monthTotalOutflow, totalSaida, { hideZero: true });
+  renderCurrencySummary(refs.charityBalanceTotal, getCharityBalances());
   renderCurrencySummary(refs.accountBalanceTotal, getAccountBalances());
 }
 

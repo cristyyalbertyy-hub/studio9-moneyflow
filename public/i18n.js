@@ -152,6 +152,12 @@
       "profit.totalLabel": "Total das percentagens:",
       "profit.totalOk": "100% — distribuicao completa.",
       "profit.totalWarn": "Atencao: as percentagens somam {total}%. Ajusta para 100%.",
+      "charity.title": "Caridade",
+      "charity.desc":
+        "Valor de entrada calculado na distribuicao de lucro. Usa Add para mover do saldo da conta para Caridade Saldo.",
+      "charity.entry": "Entrada (distribuicao de lucro)",
+      "charity.balance": "Caridade Saldo",
+      "charity.add": "Add",
       "activity.title": "Atividade recente",
       "activity.desc":
         "Gastos, entradas e reembolsos (quando uma despesa «por pagar» passa a paga).",
@@ -346,6 +352,12 @@
       "profit.totalLabel": "Total percentages:",
       "profit.totalOk": "100% — full distribution.",
       "profit.totalWarn": "Note: percentages add up to {total}%. Adjust to 100%.",
+      "charity.title": "Charity",
+      "charity.desc":
+        "Entry amount calculated in profit distribution. Use Add to move from account balance to Charity Balance.",
+      "charity.entry": "Entry (profit distribution)",
+      "charity.balance": "Charity balance",
+      "charity.add": "Add",
       "activity.title": "Recent activity",
       "activity.desc":
         "Expenses, income and reimbursements (when an unpaid expense becomes paid).",

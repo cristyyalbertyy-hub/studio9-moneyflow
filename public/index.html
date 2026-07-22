@@ -82,10 +82,16 @@
               mudar o mes; podes ajustar se precisares).
             </p>
           </div>
-          <article class="hero-balance-card" aria-label="Saldo acumulado">
-            <span data-i18n="hero.accountBalance">Saldo acumulado (conta)</span>
-            <strong id="accountBalanceTotal" class="summary-multi"></strong>
-          </article>
+          <div class="hero-balance-group">
+            <article class="hero-balance-card hero-balance-card--charity" aria-label="Caridade Saldo">
+              <span data-i18n="charity.balance">Caridade Saldo</span>
+              <strong id="charityBalanceTotal" class="summary-multi"></strong>
+            </article>
+            <article class="hero-balance-card" aria-label="Saldo acumulado">
+              <span data-i18n="hero.accountBalance">Saldo acumulado (conta)</span>
+              <strong id="accountBalanceTotal" class="summary-multi"></strong>
+            </article>
+          </div>
         </div>
         <div class="summary-grid">
           <article class="summary-item income">
@@ -505,7 +511,7 @@
                 </label>
                 <strong id="profitAmtStudio9" class="profit-split-amount">EUR 0,00</strong>
               </li>
-              <li class="profit-split-row">
+              <li class="profit-split-row profit-split-row--charity">
                 <span class="profit-split-label" data-i18n="profit.charity">Caridade</span>
                 <label class="profit-pct-field">
                   <input
@@ -520,10 +526,26 @@
                   <span>%</span>
                 </label>
                 <strong id="profitAmtCharity" class="profit-split-amount">EUR 0,00</strong>
+                <button type="button" id="charityAddBtn" class="btn-ghost btn-charity-add" data-i18n="charity.add">
+                  Add
+                </button>
               </li>
             </ul>
             <p id="profitTotalHint" class="profit-total-hint"></p>
           </div>
+        </section>
+
+        <section class="panel charity-panel">
+          <div class="panel-title">
+            <h2 data-i18n="charity.title">Caridade</h2>
+            <p data-i18n="charity.desc">
+              Valor de entrada calculado na distribuicao de lucro. Usa Add para mover do saldo da conta para Caridade Saldo.
+            </p>
+          </div>
+          <article class="charity-entry-card">
+            <span data-i18n="charity.entry">Entrada (distribuicao de lucro)</span>
+            <strong id="charityEntryAmount">EUR 0,00</strong>
+          </article>
         </section>
       </div>
 
