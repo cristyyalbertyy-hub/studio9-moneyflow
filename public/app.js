@@ -72,7 +72,6 @@ const refs = {
   authOverlay: document.getElementById("authOverlay"),
   activeProfile: document.getElementById("activeProfile"),
   logoutBtn: document.getElementById("logoutBtn"),
-  exportExcelBtn: document.getElementById("exportExcelBtn"),
   exportPdfBtn: document.getElementById("exportPdfBtn"),
   expenseCategorySelect: document.getElementById("expenseCategorySelect"),
   newCategoryBtn: document.getElementById("newCategoryBtn"),
@@ -992,7 +991,6 @@ async function boot() {
   initInvoicePanel();
   refs.clearFilters.addEventListener("click", clearFilters);
   refs.logoutBtn.addEventListener("click", () => logout(true));
-  refs.exportExcelBtn.addEventListener("click", exportExcel);
   refs.exportPdfBtn.addEventListener("click", exportPdf);
   if (refs.exportIncomePdfBtn) refs.exportIncomePdfBtn.addEventListener("click", exportIncomePdf);
   if (refs.exportExpenseRegisterPdfBtn) {
@@ -2553,27 +2551,6 @@ function getFilteredExpenses() {
     const endOk = !endDate || item.date <= endDate;
     return personOk && statusOk && startOk && endOk;
   });
-}
-
-function exportExcel() {
-  const rows = getFilteredExpenses().map((item) => ({
-    [t("expense.seqNumber")]: item.seqNumber != null ? item.seqNumber : "",
-    [t("table.date")]: formatDate(item.date),
-    [t("expense.payer")]: resolveExpensePayer(item),
-    [t("table.category")]: item.category,
-    [t("table.description")]: item.description,
-    [t("currency.label")]: resolveCurrency(item),
-    [t("table.amount")]: item.amount,
-    [t("table.reimbursement")]: item.paid ? t("status.paid") : t("status.unpaid"),
-  }));
-  if (rows.length === 0) {
-    window.alert(t("errors.exportEmpty"));
-    return;
-  }
-  const worksheet = XLSX.utils.json_to_sheet(rows);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, t("export.sheetName"));
-  XLSX.writeFile(workbook, "studio9-listagem.xlsx");
 }
 
 function exportPdf() {
