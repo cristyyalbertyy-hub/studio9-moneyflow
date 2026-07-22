@@ -24,11 +24,11 @@
       "hero.totalOutflow": "Total de saida (no mes)",
       "hero.accountBalance": "Saldo acumulado (conta)",
       "hero.accountBalanceHint":
-        "Tres contas separadas (USD, EUR, QAR) — sem cambio. Saldo = entradas menos reembolsos e pagamentos ja efectuados (documentos em dolares).",
+        "Tres contas separadas (USD, EUR, Real) — sem cambio. Saldo = entradas menos reembolsos e pagamentos ja efectuados (documentos em dolares).",
       "currency.label": "Moeda",
       "currency.EUR": "Euro (EUR)",
       "currency.USD": "Dolar (USD)",
-      "currency.QAR": "Dinar Qatar (QAR)",
+      "currency.QAR": "Real (QAR)",
       "status.unpaid": "Por pagar",
       "status.paid": "Pago",
       "list.title": "Reembolsos Cris / Alex",
@@ -146,7 +146,7 @@
       "client.noneSelected": "Escolhe um cliente primeiro.",
       "profit.title": "Distribuicao de lucro",
       "profit.desc":
-        "O lucro a distribuir corresponde sempre ao saldo da moeda escolhida. Escolhe USD, EUR ou QAR e ajusta as percentagens antes de confirmar com Accao.",
+        "O lucro a distribuir corresponde sempre ao saldo da moeda escolhida. Escolhe USD, EUR ou Real e ajusta as percentagens antes de confirmar com Accao.",
       "profit.amount": "Lucro a distribuir",
       "profit.percent": "Percentagem",
       "profit.assigned": "Valor atribuido",
@@ -210,7 +210,7 @@
       "charity.disbursementMigrationTitle": "Configuracao em falta no Supabase",
       "charity.disbursementMigrationBody":
         "A tabela charity_disbursements ainda nao existe. No Supabase, abre SQL Editor, cola migration_charity_disbursements.sql (ou a secao 8 de migration_all_pending.sql) e clica Run. Depois faz refresh a esta pagina.",
-      "charity.entry": "Saldo Caridade (USD · EUR · QAR)",
+      "charity.entry": "Saldo Caridade (USD · EUR · Real)",
       "charity.noEntry": "Ainda sem entrada",
       "charity.add": "Add",
       "charity.confirmTitle": "Confirmar entrada de caridade",
@@ -314,11 +314,11 @@
       "hero.totalOutflow": "Total outflow (this month)",
       "hero.accountBalance": "Running account balance",
       "hero.accountBalanceHint":
-        "Three separate accounts (USD, EUR, QAR) — no exchange rate. Balance = income minus reimbursements and payments made (documents in dollars).",
+        "Three separate accounts (USD, EUR, Real) — no exchange rate. Balance = income minus reimbursements and payments made (documents in dollars).",
       "currency.label": "Currency",
       "currency.EUR": "Euro (EUR)",
       "currency.USD": "US Dollar (USD)",
-      "currency.QAR": "Qatar Dinar (QAR)",
+      "currency.QAR": "Real (QAR)",
       "status.unpaid": "Unpaid",
       "status.paid": "Paid",
       "list.title": "Cris / Alex reimbursements",
@@ -436,7 +436,7 @@
       "client.noneSelected": "Choose a client first.",
       "profit.title": "Profit distribution",
       "profit.desc":
-        "Profit to distribute always matches the balance of the selected currency. Choose USD, EUR, or QAR and adjust the percentages before confirming with Action.",
+        "Profit to distribute always matches the balance of the selected currency. Choose USD, EUR, or Real and adjust the percentages before confirming with Action.",
       "profit.amount": "Profit to distribute",
       "profit.percent": "Percentage",
       "profit.assigned": "Assigned amount",
@@ -500,7 +500,7 @@
       "charity.disbursementMigrationTitle": "Missing Supabase setup",
       "charity.disbursementMigrationBody":
         "The charity_disbursements table does not exist yet. In Supabase, open SQL Editor, paste migration_charity_disbursements.sql (or section 8 of migration_all_pending.sql) and click Run. Then refresh this page.",
-      "charity.entry": "Charity balance (USD · EUR · QAR)",
+      "charity.entry": "Charity balance (USD · EUR · Real)",
       "charity.noEntry": "No entry yet",
       "charity.add": "Add",
       "charity.confirmTitle": "Confirm charity entry",

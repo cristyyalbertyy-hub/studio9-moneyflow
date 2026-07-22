@@ -88,6 +88,7 @@ const refs = {
   expenseInvoiceFileInput: document.getElementById("expenseInvoiceFileInput"),
   expenseRegisterFilterPayer: document.getElementById("expenseRegisterFilterPayer"),
   expenseRegisterFilterCategory: document.getElementById("expenseRegisterFilterCategory"),
+  expenseRegisterFilterCurrency: document.getElementById("expenseRegisterFilterCurrency"),
   expenseRegisterFilterStartDate: document.getElementById("expenseRegisterFilterStartDate"),
   expenseRegisterFilterEndDate: document.getElementById("expenseRegisterFilterEndDate"),
   expenseRegisterPeriodTotal: document.getElementById("expenseRegisterPeriodTotal"),
@@ -101,6 +102,7 @@ const refs = {
   incomeCurrency: document.getElementById("incomeCurrency"),
   incomeClientSelect: document.getElementById("incomeClientSelect"),
   incomeFilterClient: document.getElementById("incomeFilterClient"),
+  incomeFilterCurrency: document.getElementById("incomeFilterCurrency"),
   incomeFilterStartDate: document.getElementById("incomeFilterStartDate"),
   incomeFilterEndDate: document.getElementById("incomeFilterEndDate"),
   incomeClearFilters: document.getElementById("incomeClearFilters"),
@@ -111,6 +113,7 @@ const refs = {
   deleteClientBtn: document.getElementById("deleteClientBtn"),
   filterPerson: document.getElementById("filterPerson"),
   filterStatus: document.getElementById("filterStatus"),
+  filterCurrency: document.getElementById("filterCurrency"),
   filterStartDate: document.getElementById("filterStartDate"),
   filterEndDate: document.getElementById("filterEndDate"),
   clearFilters: document.getElementById("clearFilters"),
@@ -186,6 +189,7 @@ const refs = {
   invoiceMigrationNotice: document.getElementById("invoiceMigrationNotice"),
   invoiceFilterStartDate: document.getElementById("invoiceFilterStartDate"),
   invoiceFilterEndDate: document.getElementById("invoiceFilterEndDate"),
+  invoiceFilterCurrency: document.getElementById("invoiceFilterCurrency"),
   invoiceClearFilters: document.getElementById("invoiceClearFilters"),
   invoiceRows: document.getElementById("invoiceRows"),
   invoiceListPeriodTotal: document.getElementById("invoiceListPeriodTotal"),
@@ -555,6 +559,7 @@ function renderInvoiceExpenseSelect() {
 function getFilteredExpenseInvoices() {
   const startDate = refs.invoiceFilterStartDate ? refs.invoiceFilterStartDate.value : "";
   const endDate = refs.invoiceFilterEndDate ? refs.invoiceFilterEndDate.value : "";
+  const filterCurrency = getListCurrencyFilter(refs.invoiceFilterCurrency);
   return (state.expenseInvoices || [])
     .map((invoice) => {
       const expense = findExpenseById(invoice.expenseId);
@@ -563,6 +568,7 @@ function getFilteredExpenseInvoices() {
     })
     .filter(Boolean)
     .filter(({ expense }) => {
+      if (!matchesListCurrencyFilter(expense, filterCurrency)) return false;
       const date = expense.date || "";
       if (!date) return true;
       const startOk = !startDate || date >= startDate;
@@ -584,7 +590,13 @@ function renderInvoiceTable() {
   if (!refs.invoiceRows) return;
   const rows = getFilteredExpenseInvoices();
   if (refs.invoiceListPeriodTotal) {
-    refs.invoiceListPeriodTotal.textContent = `${t("invoices.periodPrefix")} ${rows.length}`;
+    const filterCurrency = getListCurrencyFilter(refs.invoiceFilterCurrency);
+    const totalLabel = formatListPeriodTotal(
+      rows.map(({ expense }) => expense),
+      filterCurrency,
+      (expense) => expense.amount
+    );
+    refs.invoiceListPeriodTotal.textContent = `${t("invoices.periodPrefix")} ${totalLabel} (${rows.length})`;
   }
   if (rows.length === 0) {
     refs.invoiceRows.innerHTML = `<tr><td colspan="6" class="empty">${escapeHtml(t("table.empty"))}</td></tr>`;
@@ -624,6 +636,7 @@ function clearInvoiceFilters() {
     refs.invoiceFilterStartDate.value = bounds.start;
     refs.invoiceFilterEndDate.value = bounds.end;
   }
+  if (refs.invoiceFilterCurrency) refs.invoiceFilterCurrency.value = "all";
   renderInvoiceTable();
 }
 
@@ -633,6 +646,7 @@ function initInvoicePanel() {
   if (refs.invoiceClearFilters) refs.invoiceClearFilters.addEventListener("click", clearInvoiceFilters);
   if (refs.invoiceFilterStartDate) refs.invoiceFilterStartDate.addEventListener("change", renderInvoiceTable);
   if (refs.invoiceFilterEndDate) refs.invoiceFilterEndDate.addEventListener("change", renderInvoiceTable);
+  if (refs.invoiceFilterCurrency) refs.invoiceFilterCurrency.addEventListener("change", renderInvoiceTable);
 }
 
 function resetInvoiceUploadForm() {
@@ -1094,12 +1108,13 @@ async function boot() {
   }
   if (refs.authForm) refs.authForm.addEventListener("submit", handleAuthSubmit);
 
-  [refs.filterPerson, refs.filterStatus, refs.filterStartDate, refs.filterEndDate].forEach(
-    (el) => el.addEventListener("change", render)
+  [refs.filterPerson, refs.filterStatus, refs.filterCurrency, refs.filterStartDate, refs.filterEndDate].forEach(
+    (el) => el && el.addEventListener("change", render)
   );
   if (refs.incomeClearFilters) refs.incomeClearFilters.addEventListener("click", clearIncomeFilters);
   [
     refs.incomeFilterClient,
+    refs.incomeFilterCurrency,
     refs.incomeFilterStartDate,
     refs.incomeFilterEndDate,
   ]
@@ -1111,6 +1126,7 @@ async function boot() {
   [
     refs.expenseRegisterFilterPayer,
     refs.expenseRegisterFilterCategory,
+    refs.expenseRegisterFilterCurrency,
     refs.expenseRegisterFilterStartDate,
     refs.expenseRegisterFilterEndDate,
   ]
@@ -2235,6 +2251,7 @@ async function handleIncomeSubmit(event) {
 function clearFilters() {
   refs.filterPerson.value = "all";
   refs.filterStatus.value = "unpaid";
+  if (refs.filterCurrency) refs.filterCurrency.value = "all";
   applyPeriodMonthToDateFilters();
   render();
 }
@@ -2246,6 +2263,7 @@ function clearIncomeFilters() {
     refs.incomeFilterEndDate.value = bounds.end;
   }
   if (refs.incomeFilterClient) refs.incomeFilterClient.value = "all";
+  if (refs.incomeFilterCurrency) refs.incomeFilterCurrency.value = "all";
   render();
 }
 
@@ -2257,6 +2275,7 @@ function clearExpenseRegisterFilters() {
   }
   if (refs.expenseRegisterFilterPayer) refs.expenseRegisterFilterPayer.value = "all";
   if (refs.expenseRegisterFilterCategory) refs.expenseRegisterFilterCategory.value = "all";
+  if (refs.expenseRegisterFilterCurrency) refs.expenseRegisterFilterCurrency.value = "all";
   render();
 }
 
@@ -2322,6 +2341,7 @@ function resolveExpenseRegisterStatus(expense) {
 function getFilteredExpenseRegisterList() {
   const payer = refs.expenseRegisterFilterPayer ? refs.expenseRegisterFilterPayer.value : "all";
   const category = refs.expenseRegisterFilterCategory ? refs.expenseRegisterFilterCategory.value : "all";
+  const filterCurrency = getListCurrencyFilter(refs.expenseRegisterFilterCurrency);
   const startDate = refs.expenseRegisterFilterStartDate ? refs.expenseRegisterFilterStartDate.value : "";
   const endDate = refs.expenseRegisterFilterEndDate ? refs.expenseRegisterFilterEndDate.value : "";
 
@@ -2331,19 +2351,22 @@ function getFilteredExpenseRegisterList() {
     const filterDate = expenseRegisterFilterDate(item);
     const startOk = !startDate || filterDate >= startDate;
     const endOk = !endDate || filterDate <= endDate;
-    return payerOk && categoryOk && startOk && endOk;
+    const currencyOk = matchesListCurrencyFilter(item, filterCurrency);
+    return payerOk && categoryOk && startOk && endOk && currencyOk;
   });
 
   let documentRows = [];
   if ((payer === "all" || payer === "Studio9") && category === "all") {
-    documentRows = (state.documents || [])
-      .filter((item) => item.paid)
-      .filter((item) => {
-        const startOk = !startDate || item.date >= startDate;
-        const endOk = !endDate || item.date <= endDate;
-        return startOk && endOk;
-      })
-      .map(mapLegacyDocumentToRegisterRow);
+    if (filterCurrency === "all" || filterCurrency === DEFAULT_CURRENCY) {
+      documentRows = (state.documents || [])
+        .filter((item) => item.paid)
+        .filter((item) => {
+          const startOk = !startDate || item.date >= startDate;
+          const endOk = !endDate || item.date <= endDate;
+          return startOk && endOk;
+        })
+        .map(mapLegacyDocumentToRegisterRow);
+    }
   }
 
   return [...expenseRows, ...documentRows].sort((a, b) => {
@@ -2356,7 +2379,9 @@ function getFilteredExpenseRegisterList() {
 function renderExpenseRegisterMeta() {
   const items = getFilteredExpenseRegisterList();
   if (refs.expenseRegisterPeriodTotal) {
-    refs.expenseRegisterPeriodTotal.textContent = `${t("payments.periodPrefix")} ${formatPendingByCurrency(items)} (${items.length})`;
+    const filterCurrency = getListCurrencyFilter(refs.expenseRegisterFilterCurrency);
+    const totalLabel = formatListPeriodTotal(items, filterCurrency, (item) => item.amount);
+    refs.expenseRegisterPeriodTotal.textContent = `${t("payments.periodPrefix")} ${totalLabel} (${items.length})`;
   }
   if (refs.expenseRegisterAccountBalance) {
     const balances = CURRENCY_CODES.map((code) => formatMoney(getAccountBalances()[code], code)).join(" · ");
@@ -2443,6 +2468,7 @@ function resolveIncomeClient(income) {
 
 function getFilteredIncomes() {
   const client = refs.incomeFilterClient ? refs.incomeFilterClient.value : "all";
+  const filterCurrency = getListCurrencyFilter(refs.incomeFilterCurrency);
   const startDate = refs.incomeFilterStartDate ? refs.incomeFilterStartDate.value : "";
   const endDate = refs.incomeFilterEndDate ? refs.incomeFilterEndDate.value : "";
   return state.incomes.filter((item) => {
@@ -2450,7 +2476,8 @@ function getFilteredIncomes() {
     const clientOk = client === "all" || clientName === client;
     const startOk = !startDate || item.date >= startDate;
     const endOk = !endDate || item.date <= endDate;
-    return clientOk && startOk && endOk;
+    const currencyOk = matchesListCurrencyFilter(item, filterCurrency);
+    return clientOk && startOk && endOk && currencyOk;
   });
 }
 
@@ -2583,6 +2610,7 @@ function renderTable() {
 function getFilteredExpenses() {
   const person = refs.filterPerson.value;
   const status = refs.filterStatus.value;
+  const filterCurrency = getListCurrencyFilter(refs.filterCurrency);
   const startDate = refs.filterStartDate.value;
   const endDate = refs.filterEndDate.value;
   return state.expenses.filter((item) => {
@@ -2594,7 +2622,8 @@ function getFilteredExpenses() {
       (status === "unpaid" && !item.paid);
     const startOk = !startDate || item.date >= startDate;
     const endOk = !endDate || item.date <= endDate;
-    return personOk && statusOk && startOk && endOk;
+    const currencyOk = matchesListCurrencyFilter(item, filterCurrency);
+    return personOk && statusOk && startOk && endOk && currencyOk;
   });
 }
 
