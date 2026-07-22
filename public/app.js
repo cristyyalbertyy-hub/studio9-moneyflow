@@ -86,6 +86,7 @@ const refs = {
   expenseAmount: document.getElementById("expenseAmount"),
   expenseCurrency: document.getElementById("expenseCurrency"),
   expenseDescription: document.getElementById("expenseDescription"),
+  expenseInvoiceFileInput: document.getElementById("expenseInvoiceFileInput"),
   expenseRegisterFilterPayer: document.getElementById("expenseRegisterFilterPayer"),
   expenseRegisterFilterCategory: document.getElementById("expenseRegisterFilterCategory"),
   expenseRegisterFilterStartDate: document.getElementById("expenseRegisterFilterStartDate"),
@@ -632,6 +633,66 @@ function isInvoiceMigrationError(message) {
   return text.includes("faturas em falta") || text.includes("expense_invoices") || text.includes("invoice table");
 }
 
+function getSelectedExpenseInvoiceFile() {
+  return refs.expenseInvoiceFileInput?.files?.[0] || null;
+}
+
+function validateExpenseInvoiceFile(file) {
+  if (!file) return null;
+  const mimeType = String(file.type || "").toLowerCase();
+  const name = String(file.name || "").toLowerCase();
+  if (mimeType !== "application/pdf" && !name.endsWith(".pdf")) {
+    return t("invoices.invalidFile");
+  }
+  if (file.size > MAX_INVOICE_BYTES) {
+    return t("invoices.fileTooLarge");
+  }
+  return null;
+}
+
+async function uploadExpenseInvoiceForExpense(expenseId, file) {
+  const fileBase64 = await readFileAsBase64(file);
+  const response = await apiFetch("/api/invoices", {
+    method: "POST",
+    body: JSON.stringify({
+      action: "upload",
+      expenseId,
+      fileName: file.name,
+      mimeType: "application/pdf",
+      fileBase64,
+    }),
+  });
+  applyBootstrapPayload(response);
+}
+
+async function attachExpenseInvoiceIfSelected(expenseId) {
+  const file = getSelectedExpenseInvoiceFile();
+  if (!file || !expenseId) return true;
+  if (!isExpenseInvoicesTableReady()) {
+    if (refs.invoiceMigrationNotice) refs.invoiceMigrationNotice.classList.remove("hidden");
+    window.alert(t("invoices.migrationNotice"));
+    return false;
+  }
+
+  const validationError = validateExpenseInvoiceFile(file);
+  if (validationError) {
+    window.alert(validationError);
+    return false;
+  }
+
+  try {
+    await uploadExpenseInvoiceForExpense(expenseId, file);
+    return true;
+  } catch (error) {
+    const message = parseApiErrorMessage(error);
+    if (isInvoiceMigrationError(message) && refs.invoiceMigrationNotice) {
+      refs.invoiceMigrationNotice.classList.remove("hidden");
+    }
+    window.alert(message);
+    return false;
+  }
+}
+
 async function handleInvoiceUploadSubmit(event) {
   event.preventDefault();
   if (!isExpenseInvoicesTableReady()) {
@@ -643,30 +704,14 @@ async function handleInvoiceUploadSubmit(event) {
   const file = refs.invoiceFileInput?.files?.[0];
   if (!expenseId || !file) return;
 
-  const mimeType = String(file.type || "").toLowerCase();
-  const name = String(file.name || "").toLowerCase();
-  if (mimeType !== "application/pdf" && !name.endsWith(".pdf")) {
-    window.alert(t("invoices.invalidFile"));
-    return;
-  }
-  if (file.size > MAX_INVOICE_BYTES) {
-    window.alert(t("invoices.fileTooLarge"));
+  const validationError = validateExpenseInvoiceFile(file);
+  if (validationError) {
+    window.alert(validationError);
     return;
   }
 
   try {
-    const fileBase64 = await readFileAsBase64(file);
-    const response = await apiFetch("/api/invoices", {
-      method: "POST",
-      body: JSON.stringify({
-        action: "upload",
-        expenseId,
-        fileName: file.name,
-        mimeType: "application/pdf",
-        fileBase64,
-      }),
-    });
-    applyBootstrapPayload(response);
+    await uploadExpenseInvoiceForExpense(expenseId, file);
     resetInvoiceUploadForm();
     renderInvoicePanel();
   } catch (error) {
@@ -1559,12 +1604,27 @@ function resetExpenseFormAfterSave() {
 }
 
 async function submitExpenseRecord(payload) {
-  return mutateAndRefresh(() =>
-    apiFetch("/api/expenses", {
+  try {
+    const response = await apiFetch("/api/expenses", {
       method: "POST",
       body: JSON.stringify(payload),
-    })
-  );
+    });
+    applyBootstrapPayload(response);
+    return response;
+  } catch (error) {
+    window.alert(parseApiErrorMessage(error));
+    return null;
+  }
+}
+
+async function finalizeExpenseSave(response, expenseDate) {
+  const expenseId = response?.createdExpenseId;
+  if (expenseId) {
+    await attachExpenseInvoiceIfSelected(expenseId);
+  }
+  if (expenseDate) ensureExpenseRegisterDateFilterIncludes(expenseDate);
+  resetExpenseFormAfterSave();
+  renderInvoicePanel();
 }
 
 async function confirmStudio9Payment() {
@@ -1576,10 +1636,9 @@ async function confirmStudio9Payment() {
     return;
   }
   hideStudio9PaymentConfirm();
-  const ok = await submitExpenseRecord(payload);
-  if (!ok) return;
-  ensureExpenseRegisterDateFilterIncludes(payload.date);
-  resetExpenseFormAfterSave();
+  const response = await submitExpenseRecord(payload);
+  if (!response) return;
+  await finalizeExpenseSave(response, payload.date);
 }
 
 function showResetExperimentalModal() {
@@ -2108,8 +2167,8 @@ async function handleExpenseSubmit(event) {
     return;
   }
 
-  const ok = await submitExpenseRecord({ ...payload, paid: false });
-  if (ok) resetExpenseFormAfterSave();
+  const response = await submitExpenseRecord({ ...payload, paid: false });
+  if (response) await finalizeExpenseSave(response, date);
 }
 
 async function handleIncomeSubmit(event) {

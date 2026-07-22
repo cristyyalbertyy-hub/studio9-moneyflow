@@ -1159,6 +1159,12 @@ table.profit-table td:nth-child(3) {
   font-size: 0.82rem;
 }
 
+.expense-invoice-hint {
+  margin: -4px 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
 .invoice-list-section {
   margin-top: 8px;
 }

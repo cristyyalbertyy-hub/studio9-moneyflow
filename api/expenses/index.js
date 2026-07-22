@@ -8,9 +8,9 @@ module.exports = async function handler(req, res) {
 
   try {
     const user = requireUser(req);
-    await createExpense(req.body || {}, user.profile);
+    const created = await createExpense(req.body || {}, user.profile);
     const payload = await getBootstrapData();
-    return json(res, 200, payload);
+    return json(res, 200, { ...payload, createdExpenseId: created?.id || null });
   } catch (error) {
     return handleError(res, error);
   }

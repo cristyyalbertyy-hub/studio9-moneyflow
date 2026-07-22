@@ -90,6 +90,8 @@
       "expense.newCategory": "+ Nova categoria",
       "expense.description": "Descricao",
       "expense.descriptionPlaceholder": "Ex: Compra de dossiers e canetas",
+      "expense.invoiceFile": "Fatura PDF (opcional)",
+      "expense.invoiceHint": "Se anexares um PDF, fica associado a esta despesa apos guardar.",
       "expense.reimbursementAria": "Estado do reembolso",
       "expense.listTitle": "Despesas registadas",
       "expense.listDesc":
@@ -376,6 +378,8 @@
       "expense.newCategory": "+ New category",
       "expense.description": "Description",
       "expense.descriptionPlaceholder": "E.g. Folders and pens purchase",
+      "expense.invoiceFile": "Invoice PDF (optional)",
+      "expense.invoiceHint": "If you attach a PDF, it will be linked to this expense after saving.",
       "expense.reimbursementAria": "Reimbursement status",
       "expense.listTitle": "Recorded expenses",
       "expense.listDesc":
