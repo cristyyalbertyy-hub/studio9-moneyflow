@@ -296,6 +296,14 @@ function getProfitDistributionSnapshot() {
   };
 }
 
+function getProfitDistributionOutflow(snapshot) {
+  return roundMoney(snapshot.amtCris + snapshot.amtAlex + snapshot.amtCharity);
+}
+
+function getProfitBalanceAfterAction(snapshot) {
+  return roundMoney(snapshot.amtStudio9);
+}
+
 function roundMoney(value) {
   return Math.round(Number(value) * 100) / 100;
 }
@@ -326,7 +334,8 @@ function renderProfitDistribution() {
   }
 
   if (refs.profitActionBtn) {
-    const canAfford = canAffordPayment(snapshot.profitAmount, snapshot.currency);
+    const outflow = getProfitDistributionOutflow(snapshot);
+    const canAfford = canAffordPayment(outflow, snapshot.currency);
     refs.profitActionBtn.disabled =
       snapshot.profitAmount <= 0 ||
       Math.abs(snapshot.totalPct - 100) > 0.05 ||
@@ -996,7 +1005,8 @@ function hideStudio9PaymentConfirm() {
 function showProfitActionConfirm() {
   const snapshot = getProfitDistributionSnapshot();
   if (snapshot.profitAmount <= 0 || Math.abs(snapshot.totalPct - 100) > 0.05) return;
-  if (!canAffordPayment(snapshot.profitAmount, snapshot.currency)) {
+  const outflow = getProfitDistributionOutflow(snapshot);
+  if (!canAffordPayment(outflow, snapshot.currency)) {
     showBalanceAlert();
     return;
   }
@@ -1012,7 +1022,7 @@ function showProfitActionConfirm() {
   }
   if (refs.profitActionConfirmBalance) {
     const currentBalance = getAccountBalances()[snapshot.currency] || 0;
-    const afterBalance = Math.max(0, roundMoney(currentBalance - snapshot.profitAmount));
+    const afterBalance = getProfitBalanceAfterAction(snapshot);
     refs.profitActionConfirmBalance.textContent = t("profit.confirmBalanceBefore")
       .replace("{amount}", formatMoney(currentBalance, snapshot.currency));
     if (refs.profitActionConfirmAfterBalance) {
@@ -1535,7 +1545,7 @@ async function confirmProfitDistribution() {
   if (!pendingProfitDistribution) return;
   const payload = pendingProfitDistribution;
   hideProfitActionConfirm();
-  if (!canAffordPayment(payload.profitAmount, payload.currency)) {
+  if (!canAffordPayment(getProfitDistributionOutflow(payload), payload.currency)) {
     showBalanceAlert();
     return;
   }

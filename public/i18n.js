@@ -156,7 +156,7 @@
       "profit.actionDisabledNoAmount": "Sem saldo na moeda seleccionada.",
       "profit.actionDisabledPct": "As percentagens devem somar 100%.",
       "profit.confirmBalanceBefore": "Saldo actual: {amount}",
-      "profit.confirmBalanceAfter": "Saldo apos a accao: {amount}",
+      "profit.confirmBalanceAfter": "Saldo apos a accao (parte Studio9): {amount}",
       "profit.listTitle": "Accoes registadas",
       "profit.listDesc":
         "Cada linha corresponde a uma distribuicao de lucro confirmada com Accao.",
@@ -394,7 +394,7 @@
       "profit.actionDisabledNoAmount": "No balance in the selected currency.",
       "profit.actionDisabledPct": "Percentages must add up to 100%.",
       "profit.confirmBalanceBefore": "Current balance: {amount}",
-      "profit.confirmBalanceAfter": "Balance after action: {amount}",
+      "profit.confirmBalanceAfter": "Balance after action (Studio9 share): {amount}",
       "profit.listTitle": "Recorded actions",
       "profit.listDesc":
         "Each row is a profit distribution confirmed with Action.",
