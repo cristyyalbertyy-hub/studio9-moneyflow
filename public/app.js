@@ -40,6 +40,8 @@ const refs = {
   expenseSeqPreview: document.getElementById("expenseSeqPreview"),
   balanceAlertOverlay: document.getElementById("balanceAlertOverlay"),
   balanceAlertOk: document.getElementById("balanceAlertOk"),
+  pendingReimbursementsAlertOverlay: document.getElementById("pendingReimbursementsAlertOverlay"),
+  pendingReimbursementsAlertOk: document.getElementById("pendingReimbursementsAlertOk"),
   studio9PaymentConfirmOverlay: document.getElementById("studio9PaymentConfirmOverlay"),
   studio9PaymentConfirmMessage: document.getElementById("studio9PaymentConfirmMessage"),
   studio9PaymentConfirmBalance: document.getElementById("studio9PaymentConfirmBalance"),
@@ -735,6 +737,14 @@ async function boot() {
       if (event.target === refs.balanceAlertOverlay) hideBalanceAlert();
     });
   }
+  if (refs.pendingReimbursementsAlertOk) {
+    refs.pendingReimbursementsAlertOk.addEventListener("click", hidePendingReimbursementsAlert);
+  }
+  if (refs.pendingReimbursementsAlertOverlay) {
+    refs.pendingReimbursementsAlertOverlay.addEventListener("click", (event) => {
+      if (event.target === refs.pendingReimbursementsAlertOverlay) hidePendingReimbursementsAlert();
+    });
+  }
   if (refs.studio9PaymentConfirmOk) {
     refs.studio9PaymentConfirmOk.addEventListener("click", confirmStudio9Payment);
   }
@@ -1012,6 +1022,14 @@ function isReimbursementExpense(expense) {
   return payer === "Cris" || payer === "Alex";
 }
 
+function getPendingReimbursements() {
+  return state.expenses.filter((item) => isReimbursementExpense(item) && !item.paid);
+}
+
+function hasPendingReimbursements() {
+  return getPendingReimbursements().length > 0;
+}
+
 function buildExpensePaymentLabel(category, description) {
   const cat = String(category || "").trim();
   const desc = String(description || "").trim();
@@ -1121,6 +1139,16 @@ function hideBalanceAlert() {
   refs.balanceAlertOverlay.classList.add("hidden");
 }
 
+function showPendingReimbursementsAlert() {
+  if (!refs.pendingReimbursementsAlertOverlay) return;
+  refs.pendingReimbursementsAlertOverlay.classList.remove("hidden");
+}
+
+function hidePendingReimbursementsAlert() {
+  if (!refs.pendingReimbursementsAlertOverlay) return;
+  refs.pendingReimbursementsAlertOverlay.classList.add("hidden");
+}
+
 function showStudio9PaymentConfirm(payload) {
   pendingStudio9Expense = payload;
   const label = buildExpensePaymentLabel(payload.category, payload.description);
@@ -1143,6 +1171,10 @@ function hideStudio9PaymentConfirm() {
 }
 
 function showProfitActionConfirm() {
+  if (hasPendingReimbursements()) {
+    showPendingReimbursementsAlert();
+    return;
+  }
   const snapshot = getProfitDistributionSnapshot();
   if (snapshot.profitAmount <= 0 || Math.abs(snapshot.totalPct - 100) > 0.05) return;
   const outflow = getProfitDistributionOutflow(snapshot);
@@ -1284,6 +1316,11 @@ async function confirmCharityDisbursement() {
 
 function isProfitMigrationError(message) {
   return String(message || "").toLowerCase().includes("distribuicao de lucro");
+}
+
+function isPendingReimbursementsError(message) {
+  const text = String(message || "").toLowerCase();
+  return text.includes("reembolsos por efectuar") || text.includes("reimbursements still to be made");
 }
 
 function resetExpenseFormAfterSave() {
@@ -1779,6 +1816,11 @@ async function handleProfitAction() {
 
 async function confirmProfitDistribution() {
   if (!pendingProfitDistribution) return;
+  if (hasPendingReimbursements()) {
+    hideProfitActionConfirm();
+    showPendingReimbursementsAlert();
+    return;
+  }
   const payload = pendingProfitDistribution;
   hideProfitActionConfirm();
   if (!canAffordPayment(getProfitDistributionOutflow(payload), payload.currency)) {
@@ -1804,6 +1846,7 @@ async function confirmProfitDistribution() {
   } catch (error) {
     const message = parseApiErrorMessage(error);
     if (isProfitMigrationError(message)) showProfitMigrationNotice();
+    else if (isPendingReimbursementsError(message)) showPendingReimbursementsAlert();
     else window.alert(message);
   }
 }
