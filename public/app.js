@@ -91,7 +91,6 @@ const refs = {
   expenseRegisterFilterCategory: document.getElementById("expenseRegisterFilterCategory"),
   expenseRegisterFilterStartDate: document.getElementById("expenseRegisterFilterStartDate"),
   expenseRegisterFilterEndDate: document.getElementById("expenseRegisterFilterEndDate"),
-  expenseRegisterStudio9Btn: document.getElementById("expenseRegisterStudio9Btn"),
   expenseRegisterPeriodTotal: document.getElementById("expenseRegisterPeriodTotal"),
   expenseRegisterAccountBalance: document.getElementById("expenseRegisterAccountBalance"),
   expenseRegisterClearFilters: document.getElementById("expenseRegisterClearFilters"),
@@ -998,9 +997,6 @@ async function boot() {
   if (refs.exportIncomePdfBtn) refs.exportIncomePdfBtn.addEventListener("click", exportIncomePdf);
   if (refs.exportExpenseRegisterPdfBtn) {
     refs.exportExpenseRegisterPdfBtn.addEventListener("click", exportExpenseRegisterPdf);
-  }
-  if (refs.expenseRegisterStudio9Btn) {
-    refs.expenseRegisterStudio9Btn.addEventListener("click", filterExpenseRegisterStudio9);
   }
   if (refs.balanceAlertOk) refs.balanceAlertOk.addEventListener("click", hideBalanceAlert);
   if (refs.balanceAlertOverlay) {
@@ -2217,17 +2213,6 @@ function clearExpenseRegisterFilters() {
     refs.expenseRegisterFilterEndDate.value = bounds.end;
   }
   if (refs.expenseRegisterFilterPayer) refs.expenseRegisterFilterPayer.value = "all";
-  if (refs.expenseRegisterFilterCategory) refs.expenseRegisterFilterCategory.value = "all";
-  render();
-}
-
-function filterExpenseRegisterStudio9() {
-  const bounds = getSelectedMonthBounds();
-  if (bounds && refs.expenseRegisterFilterStartDate && refs.expenseRegisterFilterEndDate) {
-    refs.expenseRegisterFilterStartDate.value = bounds.start;
-    refs.expenseRegisterFilterEndDate.value = bounds.end;
-  }
-  if (refs.expenseRegisterFilterPayer) refs.expenseRegisterFilterPayer.value = "Studio9";
   if (refs.expenseRegisterFilterCategory) refs.expenseRegisterFilterCategory.value = "all";
   render();
 }
