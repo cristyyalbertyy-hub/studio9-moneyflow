@@ -1483,7 +1483,7 @@ async function confirmProfitDistribution() {
     return;
   }
   try {
-    const response = await apiFetch("/api/profit-distributions", {
+    const response = await apiFetch("/api/profit", {
       method: "POST",
       body: JSON.stringify({
         profitAmount: payload.profitAmount,
