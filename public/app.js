@@ -127,6 +127,11 @@ const refs = {
   profitTotalHint: document.getElementById("profitTotalHint"),
   charityAddBtn: document.getElementById("charityAddBtn"),
   charityEntryAmount: document.getElementById("charityEntryAmount"),
+  charityAddConfirmOverlay: document.getElementById("charityAddConfirmOverlay"),
+  charityAddConfirmMessage: document.getElementById("charityAddConfirmMessage"),
+  charityAddConfirmBalance: document.getElementById("charityAddConfirmBalance"),
+  charityAddConfirmOk: document.getElementById("charityAddConfirmOk"),
+  charityAddConfirmCancel: document.getElementById("charityAddConfirmCancel"),
 };
 
 const defaultProfitSplits = {
@@ -142,6 +147,7 @@ const DEFAULT_CURRENCY = "EUR";
 
 let listManageState = null;
 let pendingStudio9Expense = null;
+let pendingCharityAdd = null;
 let profitAmountManual = false;
 
 function syncProfitAmountFromBalance() {
@@ -244,7 +250,6 @@ function renderProfitDistribution() {
   });
 
   const charityAmount = getCharityAllocationAmount();
-  if (refs.charityEntryAmount) refs.charityEntryAmount.textContent = formatEUR(charityAmount);
   if (refs.charityAddBtn) refs.charityAddBtn.disabled = charityAmount <= 0;
 
   if (!refs.profitTotalHint) return;
@@ -259,6 +264,18 @@ function renderProfitDistribution() {
 
   refs.profitTotalHint.textContent = `${totalLabel} — ${t("profit.totalWarn").replace("{total}", totalPct.toFixed(1))}`;
   refs.profitTotalHint.classList.add("is-warning");
+}
+
+function renderCharityPanel() {
+  if (!refs.charityEntryAmount) return;
+  const balance = getCharityBalances().EUR;
+  if (balance <= 0) {
+    refs.charityEntryAmount.textContent = t("charity.noEntry");
+    refs.charityEntryAmount.classList.add("charity-entry-empty");
+    return;
+  }
+  refs.charityEntryAmount.textContent = formatEUR(balance);
+  refs.charityEntryAmount.classList.remove("charity-entry-empty");
 }
 
 boot().catch((error) => {
@@ -291,6 +308,15 @@ async function boot() {
   refs.expenseForm.addEventListener("submit", handleExpenseSubmit);
   refs.incomeForm.addEventListener("submit", handleIncomeSubmit);
   if (refs.charityAddBtn) refs.charityAddBtn.addEventListener("click", handleCharityAdd);
+  if (refs.charityAddConfirmOk) refs.charityAddConfirmOk.addEventListener("click", confirmCharityAdd);
+  if (refs.charityAddConfirmCancel) {
+    refs.charityAddConfirmCancel.addEventListener("click", hideCharityAddConfirm);
+  }
+  if (refs.charityAddConfirmOverlay) {
+    refs.charityAddConfirmOverlay.addEventListener("click", (event) => {
+      if (event.target === refs.charityAddConfirmOverlay) hideCharityAddConfirm();
+    });
+  }
   refs.clearFilters.addEventListener("click", clearFilters);
   refs.logoutBtn.addEventListener("click", () => logout(true));
   refs.exportExcelBtn.addEventListener("click", exportExcel);
@@ -704,6 +730,37 @@ function showStudio9PaymentConfirm(payload) {
 function hideStudio9PaymentConfirm() {
   if (refs.studio9PaymentConfirmOverlay) refs.studio9PaymentConfirmOverlay.classList.add("hidden");
   pendingStudio9Expense = null;
+}
+
+function showCharityAddConfirm() {
+  const amount = getCharityAllocationAmount();
+  if (amount <= 0) return;
+  if (!canAffordPayment(amount, DEFAULT_CURRENCY)) {
+    showBalanceAlert();
+    return;
+  }
+  pendingCharityAdd = {
+    amount,
+    profitAmount: Math.max(0, Number(refs.profitAmount?.value) || 0),
+    charityPct: clampPercent(refs.profitPctCharity?.value, 0),
+  };
+  const amountLabel = formatMoney(amount, DEFAULT_CURRENCY);
+  const pctLabel = pendingCharityAdd.charityPct.toFixed(1);
+  if (refs.charityAddConfirmMessage) {
+    refs.charityAddConfirmMessage.textContent = t("charity.confirmMessage")
+      .replace("{amount}", amountLabel)
+      .replace("{pct}", pctLabel);
+  }
+  if (refs.charityAddConfirmBalance) {
+    const balances = CURRENCY_CODES.map((code) => formatMoney(getAccountBalances()[code], code)).join(" · ");
+    refs.charityAddConfirmBalance.textContent = `${t("payments.accountBalance")} ${balances}`;
+  }
+  if (refs.charityAddConfirmOverlay) refs.charityAddConfirmOverlay.classList.remove("hidden");
+}
+
+function hideCharityAddConfirm() {
+  if (refs.charityAddConfirmOverlay) refs.charityAddConfirmOverlay.classList.add("hidden");
+  pendingCharityAdd = null;
 }
 
 function resetExpenseFormAfterSave() {
@@ -1189,22 +1246,21 @@ function stopBootstrapPolling() {
 }
 
 async function handleCharityAdd() {
-  const amount = getCharityAllocationAmount();
-  if (amount <= 0) return;
-  if (!canAffordPayment(amount, DEFAULT_CURRENCY)) {
-    showBalanceAlert();
-    return;
-  }
-  const profitAmount = Math.max(0, Number(refs.profitAmount?.value) || 0);
-  const charityPct = clampPercent(refs.profitPctCharity?.value, 0);
+  showCharityAddConfirm();
+}
+
+async function confirmCharityAdd() {
+  if (!pendingCharityAdd) return;
+  const payload = pendingCharityAdd;
+  hideCharityAddConfirm();
   const ok = await mutateAndRefresh(() =>
     apiFetch("/api/charity", {
       method: "POST",
       body: JSON.stringify({
-        amount,
+        amount: payload.amount,
         currency: DEFAULT_CURRENCY,
-        profitAmount,
-        charityPct,
+        profitAmount: payload.profitAmount,
+        charityPct: payload.charityPct,
       }),
     })
   );
@@ -1317,6 +1373,7 @@ function render() {
   renderExpenseRegisterTable();
   renderTable();
   renderActivities();
+  renderCharityPanel();
   renderProfitDistribution();
 }
 

@@ -540,12 +540,13 @@
           <div class="panel-title">
             <h2 data-i18n="charity.title">Caridade</h2>
             <p data-i18n="charity.desc">
-              Valor de entrada calculado na distribuicao de lucro. Usa Add para mover do saldo da conta para Caridade Saldo.
+              Usa Add na distribuicao de lucro para transferir o valor atribuido a caridade.
+              A entrada so aparece aqui apos confirmacao.
             </p>
           </div>
           <article class="charity-entry-card">
             <span data-i18n="charity.entry">Entrada (distribuicao de lucro)</span>
-            <strong id="charityEntryAmount">EUR 0,00</strong>
+            <strong id="charityEntryAmount" class="charity-entry-empty">Ainda sem entrada</strong>
           </article>
         </section>
       </div>
@@ -675,6 +676,28 @@
           </button>
           <button type="button" id="studio9PaymentConfirmOk" class="btn-primary" data-i18n="expense.studio9ConfirmOk">
             Confirmar pagamento
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="charityAddConfirmOverlay"
+      class="alert-overlay hidden"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="charityAddConfirmTitle"
+    >
+      <div class="alert-card">
+        <h3 id="charityAddConfirmTitle" data-i18n="charity.confirmTitle">Confirmar entrada de caridade</h3>
+        <p id="charityAddConfirmMessage"></p>
+        <p id="charityAddConfirmBalance" class="studio9-confirm-balance"></p>
+        <div class="reset-form-actions">
+          <button type="button" id="charityAddConfirmCancel" class="btn-ghost" data-i18n="charity.confirmCancel">
+            Cancelar
+          </button>
+          <button type="button" id="charityAddConfirmOk" class="btn-primary" data-i18n="charity.confirmOk">
+            Confirmar
           </button>
         </div>
       </div>

@@ -154,10 +154,16 @@
       "profit.totalWarn": "Atencao: as percentagens somam {total}%. Ajusta para 100%.",
       "charity.title": "Caridade",
       "charity.desc":
-        "Valor de entrada calculado na distribuicao de lucro. Usa Add para mover do saldo da conta para Caridade Saldo.",
+        "Usa Add na distribuicao de lucro para transferir o valor atribuido a caridade. A entrada so aparece aqui apos confirmacao.",
       "charity.entry": "Entrada (distribuicao de lucro)",
+      "charity.noEntry": "Ainda sem entrada",
       "charity.balance": "Caridade Saldo",
       "charity.add": "Add",
+      "charity.confirmTitle": "Confirmar entrada de caridade",
+      "charity.confirmMessage":
+        "Vais mover {amount} do saldo da conta para Caridade Saldo ({pct}% do lucro a distribuir). Confirmas?",
+      "charity.confirmOk": "Confirmar",
+      "charity.confirmCancel": "Cancelar",
       "activity.title": "Atividade recente",
       "activity.desc":
         "Gastos, entradas e reembolsos (quando uma despesa «por pagar» passa a paga).",
@@ -354,10 +360,16 @@
       "profit.totalWarn": "Note: percentages add up to {total}%. Adjust to 100%.",
       "charity.title": "Charity",
       "charity.desc":
-        "Entry amount calculated in profit distribution. Use Add to move from account balance to Charity Balance.",
+        "Use Add in profit distribution to transfer the charity share. The entry only appears here after confirmation.",
       "charity.entry": "Entry (profit distribution)",
+      "charity.noEntry": "No entry yet",
       "charity.balance": "Charity balance",
       "charity.add": "Add",
+      "charity.confirmTitle": "Confirm charity entry",
+      "charity.confirmMessage":
+        "You will move {amount} from the account balance to Charity Balance ({pct}% of profit to distribute). Confirm?",
+      "charity.confirmOk": "Confirm",
+      "charity.confirmCancel": "Cancel",
       "activity.title": "Recent activity",
       "activity.desc":
         "Expenses, income and reimbursements (when an unpaid expense becomes paid).",

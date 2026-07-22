@@ -1054,6 +1054,12 @@ h1 {
   color: #fdf4ff;
 }
 
+.charity-entry-card strong.charity-entry-empty {
+  font-size: 0.98rem;
+  font-weight: 500;
+  color: #c4b5fd;
+}
+
 .profit-total-hint {
   margin: 8px 0 0;
   color: var(--muted);
