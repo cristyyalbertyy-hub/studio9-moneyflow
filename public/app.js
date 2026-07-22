@@ -3,6 +3,7 @@ const state = {
   incomes: [],
   documents: [],
   charityAllocations: [],
+  profitDistributions: [],
   categories: [],
   clients: [],
   activities: [],
@@ -125,16 +126,21 @@ const refs = {
   profitAmtStudio9: document.getElementById("profitAmtStudio9"),
   profitAmtCharity: document.getElementById("profitAmtCharity"),
   profitTotalHint: document.getElementById("profitTotalHint"),
-  charityAddBtn: document.getElementById("charityAddBtn"),
+  profitActionBtn: document.getElementById("profitActionBtn"),
+  profitActionConfirmOverlay: document.getElementById("profitActionConfirmOverlay"),
+  profitActionConfirmMessage: document.getElementById("profitActionConfirmMessage"),
+  profitActionConfirmBalance: document.getElementById("profitActionConfirmBalance"),
+  profitActionConfirmOk: document.getElementById("profitActionConfirmOk"),
+  profitActionConfirmCancel: document.getElementById("profitActionConfirmCancel"),
+  profitMigrationNotice: document.getElementById("profitMigrationNotice"),
+  profitMigrationOverlay: document.getElementById("profitMigrationOverlay"),
+  profitMigrationOk: document.getElementById("profitMigrationOk"),
+  profitFilterStartDate: document.getElementById("profitFilterStartDate"),
+  profitFilterEndDate: document.getElementById("profitFilterEndDate"),
+  profitClearFilters: document.getElementById("profitClearFilters"),
+  profitDistributionRows: document.getElementById("profitDistributionRows"),
+  profitListPeriodTotal: document.getElementById("profitListPeriodTotal"),
   charityEntryAmount: document.getElementById("charityEntryAmount"),
-  charityAddConfirmOverlay: document.getElementById("charityAddConfirmOverlay"),
-  charityAddConfirmMessage: document.getElementById("charityAddConfirmMessage"),
-  charityAddConfirmBalance: document.getElementById("charityAddConfirmBalance"),
-  charityAddConfirmOk: document.getElementById("charityAddConfirmOk"),
-  charityAddConfirmCancel: document.getElementById("charityAddConfirmCancel"),
-  charityMigrationNotice: document.getElementById("charityMigrationNotice"),
-  charityMigrationOverlay: document.getElementById("charityMigrationOverlay"),
-  charityMigrationOk: document.getElementById("charityMigrationOk"),
   charityFilterStartDate: document.getElementById("charityFilterStartDate"),
   charityFilterEndDate: document.getElementById("charityFilterEndDate"),
   charityClearFilters: document.getElementById("charityClearFilters"),
@@ -155,7 +161,7 @@ const DEFAULT_CURRENCY = "USD";
 
 let listManageState = null;
 let pendingStudio9Expense = null;
-let pendingCharityAdd = null;
+let pendingProfitDistribution = null;
 let profitAmountManual = false;
 
 function syncProfitAmountFromBalance() {
@@ -231,17 +237,37 @@ function clampPercent(value, fallback) {
   return Math.min(n, 100);
 }
 
-function getCharityAllocationAmount() {
-  if (!refs.profitAmount || !refs.profitPctCharity) return 0;
-  const profit = Math.max(0, Number(refs.profitAmount.value) || 0);
-  const pct = clampPercent(refs.profitPctCharity.value, 0);
-  return Math.round(((profit * pct) / 100) * 100) / 100;
+function getProfitDistributionSnapshot() {
+  const profitAmount = Math.max(0, Number(refs.profitAmount?.value) || 0);
+  const pctCris = clampPercent(refs.profitPctCris?.value, 0);
+  const pctAlex = clampPercent(refs.profitPctAlex?.value, 0);
+  const pctStudio9 = clampPercent(refs.profitPctStudio9?.value, 0);
+  const pctCharity = clampPercent(refs.profitPctCharity?.value, 0);
+  const totalPct = pctCris + pctAlex + pctStudio9 + pctCharity;
+  return {
+    profitAmount,
+    currency: DEFAULT_CURRENCY,
+    pctCris,
+    pctAlex,
+    pctStudio9,
+    pctCharity,
+    totalPct,
+    amtCris: roundMoney((profitAmount * pctCris) / 100),
+    amtAlex: roundMoney((profitAmount * pctAlex) / 100),
+    amtStudio9: roundMoney((profitAmount * pctStudio9) / 100),
+    amtCharity: roundMoney((profitAmount * pctCharity) / 100),
+  };
+}
+
+function roundMoney(value) {
+  return Math.round(Number(value) * 100) / 100;
 }
 
 function renderProfitDistribution() {
   if (!refs.profitAmount) return;
 
-  const profit = Math.max(0, Number(refs.profitAmount.value) || 0);
+  const snapshot = getProfitDistributionSnapshot();
+  const profit = snapshot.profitAmount;
   const splits = [
     { pctEl: refs.profitPctCris, amtEl: refs.profitAmtCris },
     { pctEl: refs.profitPctAlex, amtEl: refs.profitAmtAlex },
@@ -249,41 +275,44 @@ function renderProfitDistribution() {
     { pctEl: refs.profitPctCharity, amtEl: refs.profitAmtCharity },
   ];
 
-  let totalPct = 0;
   splits.forEach(({ pctEl, amtEl }) => {
     if (!pctEl || !amtEl) return;
     const pct = clampPercent(pctEl.value, 0);
-    totalPct += pct;
     amtEl.textContent = formatPrimaryCurrency((profit * pct) / 100);
   });
 
-  const charityAmount = getCharityAllocationAmount();
-  if (refs.charityAddBtn) {
-    refs.charityAddBtn.disabled = charityAmount <= 0 || !isCharityTableReady();
+  if (refs.profitMigrationNotice) {
+    refs.profitMigrationNotice.classList.toggle("hidden", isProfitDistributionTableReady());
+  }
+
+  if (refs.profitActionBtn) {
+    const canAfford = canAffordPayment(snapshot.profitAmount, snapshot.currency);
+    refs.profitActionBtn.disabled =
+      !isProfitDistributionTableReady() ||
+      snapshot.profitAmount <= 0 ||
+      Math.abs(snapshot.totalPct - 100) > 0.05 ||
+      !canAfford;
   }
 
   if (!refs.profitTotalHint) return;
-  const totalLabel = `${t("profit.totalLabel")} ${totalPct.toFixed(1)}%`;
+  const totalLabel = `${t("profit.totalLabel")} ${snapshot.totalPct.toFixed(1)}%`;
   refs.profitTotalHint.classList.remove("is-warning", "is-ok");
 
-  if (Math.abs(totalPct - 100) < 0.05) {
+  if (Math.abs(snapshot.totalPct - 100) < 0.05) {
     refs.profitTotalHint.textContent = `${totalLabel} — ${t("profit.totalOk")}`;
     refs.profitTotalHint.classList.add("is-ok");
     return;
   }
 
-  refs.profitTotalHint.textContent = `${totalLabel} — ${t("profit.totalWarn").replace("{total}", totalPct.toFixed(1))}`;
+  refs.profitTotalHint.textContent = `${totalLabel} — ${t("profit.totalWarn").replace("{total}", snapshot.totalPct.toFixed(1))}`;
   refs.profitTotalHint.classList.add("is-warning");
 }
 
-function isCharityTableReady() {
-  return state.summary?.charityTableReady !== false;
+function isProfitDistributionTableReady() {
+  return state.summary?.profitDistributionTableReady !== false;
 }
 
 function renderCharityPanel() {
-  if (refs.charityMigrationNotice) {
-    refs.charityMigrationNotice.classList.toggle("hidden", isCharityTableReady());
-  }
   if (!refs.charityEntryAmount) return;
   const balances = getCharityBalances();
   const hasBalance = CURRENCY_CODES.some((code) => (balances[code] || 0) !== 0);
@@ -299,10 +328,46 @@ function renderCharityPanel() {
   refs.charityEntryAmount.classList.remove("charity-entry-empty");
 }
 
+function getCharityHistoryEntries() {
+  const fromDistributions = (state.profitDistributions || [])
+    .filter((item) => Number(item.amtCharity || 0) > 0)
+    .map((item) => ({
+      date: item.date || (item.createdAt ? String(item.createdAt).slice(0, 10) : ""),
+      amount: item.amtCharity,
+      currency: resolveCurrency(item),
+      charityPct: item.pctCharity,
+      createdBy: item.createdBy || "",
+    }));
+  const legacy = (state.charityAllocations || []).map((item) => ({
+    date: item.date || (item.createdAt ? String(item.createdAt).slice(0, 10) : ""),
+    amount: item.amount,
+    currency: resolveCurrency(item),
+    charityPct: item.charityPct,
+    createdBy: item.createdBy || "",
+  }));
+  return [...fromDistributions, ...legacy].sort((a, b) => {
+    const dateA = a.date || "";
+    const dateB = b.date || "";
+    return dateB.localeCompare(dateA);
+  });
+}
+
 function getFilteredCharityAllocations() {
   const startDate = refs.charityFilterStartDate ? refs.charityFilterStartDate.value : "";
   const endDate = refs.charityFilterEndDate ? refs.charityFilterEndDate.value : "";
-  return (state.charityAllocations || [])
+  return getCharityHistoryEntries().filter((item) => {
+    const date = item.date || "";
+    if (!date) return true;
+    const startOk = !startDate || date >= startDate;
+    const endOk = !endDate || date <= endDate;
+    return startOk && endOk;
+  });
+}
+
+function getFilteredProfitDistributions() {
+  const startDate = refs.profitFilterStartDate ? refs.profitFilterStartDate.value : "";
+  const endDate = refs.profitFilterEndDate ? refs.profitFilterEndDate.value : "";
+  return (state.profitDistributions || [])
     .filter((item) => {
       const date = item.date || (item.createdAt ? String(item.createdAt).slice(0, 10) : "");
       if (!date) return true;
@@ -315,6 +380,51 @@ function getFilteredCharityAllocations() {
       const dateB = b.date || String(b.createdAt || "").slice(0, 10);
       return dateB.localeCompare(dateA);
     });
+}
+
+function renderProfitDistributionTable() {
+  if (!refs.profitDistributionRows) return;
+  const rows = getFilteredProfitDistributions();
+  if (refs.profitListPeriodTotal) {
+    const sums = emptyCurrencyBalances();
+    for (const item of rows) {
+      sums[resolveCurrency(item)] += Number(item.profitAmount || 0);
+    }
+    const parts = CURRENCY_CODES.map((code) => formatMoney(sums[code] || 0, code)).join(" · ");
+    refs.profitListPeriodTotal.textContent = `${t("profit.periodPrefix")} ${parts} (${rows.length})`;
+  }
+  if (rows.length === 0) {
+    refs.profitDistributionRows.innerHTML = `<tr><td colspan="4" class="empty">${escapeHtml(t("table.empty"))}</td></tr>`;
+    return;
+  }
+  refs.profitDistributionRows.innerHTML = rows
+    .map((item) => {
+      const date = item.date || (item.createdAt ? String(item.createdAt).slice(0, 10) : "");
+      const breakdown = [
+        `Cris ${formatMoney(item.amtCris, item.currency)}`,
+        `Alex ${formatMoney(item.amtAlex, item.currency)}`,
+        `Studio9 ${formatMoney(item.amtStudio9, item.currency)}`,
+        `${t("profit.charity")} ${formatMoney(item.amtCharity, item.currency)}`,
+      ].join(" · ");
+      return `
+      <tr>
+        <td>${date ? formatDate(date) : "—"}</td>
+        <td>${formatMoney(item.profitAmount, resolveCurrency(item))}</td>
+        <td>${escapeHtml(breakdown)}</td>
+        <td>${escapeHtml(item.createdBy || "—")}</td>
+      </tr>
+    `;
+    })
+    .join("");
+}
+
+function clearProfitFilters() {
+  const bounds = getSelectedMonthBounds();
+  if (bounds && refs.profitFilterStartDate && refs.profitFilterEndDate) {
+    refs.profitFilterStartDate.value = bounds.start;
+    refs.profitFilterEndDate.value = bounds.end;
+  }
+  renderProfitDistributionTable();
 }
 
 function renderCharityTable() {
@@ -369,6 +479,7 @@ async function boot() {
     i18n.applyPageTranslations();
     refreshProfileLabel();
     renderProfitDistribution();
+    renderProfitDistributionTable();
     render();
   });
 
@@ -386,22 +497,26 @@ async function boot() {
   if (refs.deleteClientBtn) refs.deleteClientBtn.addEventListener("click", handleDeleteClient);
   refs.expenseForm.addEventListener("submit", handleExpenseSubmit);
   refs.incomeForm.addEventListener("submit", handleIncomeSubmit);
-  if (refs.charityAddBtn) refs.charityAddBtn.addEventListener("click", handleCharityAdd);
-  if (refs.charityAddConfirmOk) refs.charityAddConfirmOk.addEventListener("click", confirmCharityAdd);
-  if (refs.charityAddConfirmCancel) {
-    refs.charityAddConfirmCancel.addEventListener("click", hideCharityAddConfirm);
+  if (refs.profitActionBtn) refs.profitActionBtn.addEventListener("click", handleProfitAction);
+  if (refs.profitActionConfirmOk) refs.profitActionConfirmOk.addEventListener("click", confirmProfitDistribution);
+  if (refs.profitActionConfirmCancel) {
+    refs.profitActionConfirmCancel.addEventListener("click", hideProfitActionConfirm);
   }
-  if (refs.charityAddConfirmOverlay) {
-    refs.charityAddConfirmOverlay.addEventListener("click", (event) => {
-      if (event.target === refs.charityAddConfirmOverlay) hideCharityAddConfirm();
+  if (refs.profitActionConfirmOverlay) {
+    refs.profitActionConfirmOverlay.addEventListener("click", (event) => {
+      if (event.target === refs.profitActionConfirmOverlay) hideProfitActionConfirm();
     });
   }
-  if (refs.charityMigrationOk) refs.charityMigrationOk.addEventListener("click", hideCharityMigrationNotice);
-  if (refs.charityMigrationOverlay) {
-    refs.charityMigrationOverlay.addEventListener("click", (event) => {
-      if (event.target === refs.charityMigrationOverlay) hideCharityMigrationNotice();
+  if (refs.profitMigrationOk) refs.profitMigrationOk.addEventListener("click", hideProfitMigrationNotice);
+  if (refs.profitMigrationOverlay) {
+    refs.profitMigrationOverlay.addEventListener("click", (event) => {
+      if (event.target === refs.profitMigrationOverlay) hideProfitMigrationNotice();
     });
   }
+  if (refs.profitClearFilters) refs.profitClearFilters.addEventListener("click", clearProfitFilters);
+  [refs.profitFilterStartDate, refs.profitFilterEndDate].filter(Boolean).forEach((input) => {
+    input.addEventListener("change", renderProfitDistributionTable);
+  });
   if (refs.charityClearFilters) refs.charityClearFilters.addEventListener("click", clearCharityFilters);
   [refs.charityFilterStartDate, refs.charityFilterEndDate].filter(Boolean).forEach((input) => {
     input.addEventListener("change", renderCharityTable);
@@ -749,6 +864,7 @@ function applyBootstrapPayload(response) {
   state.clients = Array.isArray(response.clients) ? response.clients : [];
   state.documents = Array.isArray(response.documents) ? response.documents : [];
   state.charityAllocations = Array.isArray(response.charityAllocations) ? response.charityAllocations : [];
+  state.profitDistributions = Array.isArray(response.profitDistributions) ? response.profitDistributions : [];
   state.activities = Array.isArray(response.activities) ? response.activities : [];
   state.summary = response.summary || {
     accountBalance: 0,
@@ -827,47 +943,45 @@ function hideStudio9PaymentConfirm() {
   pendingStudio9Expense = null;
 }
 
-function showCharityAddConfirm() {
-  const amount = getCharityAllocationAmount();
-  if (amount <= 0) return;
-  if (!canAffordPayment(amount, DEFAULT_CURRENCY)) {
+function showProfitActionConfirm() {
+  const snapshot = getProfitDistributionSnapshot();
+  if (snapshot.profitAmount <= 0 || Math.abs(snapshot.totalPct - 100) > 0.05) return;
+  if (!canAffordPayment(snapshot.profitAmount, snapshot.currency)) {
     showBalanceAlert();
     return;
   }
-  pendingCharityAdd = {
-    amount,
-    profitAmount: Math.max(0, Number(refs.profitAmount?.value) || 0),
-    charityPct: clampPercent(refs.profitPctCharity?.value, 0),
-  };
-  const amountLabel = formatMoney(amount, DEFAULT_CURRENCY);
-  const pctLabel = pendingCharityAdd.charityPct.toFixed(1);
-  if (refs.charityAddConfirmMessage) {
-    refs.charityAddConfirmMessage.textContent = t("charity.confirmMessage")
+  pendingProfitDistribution = { ...snapshot };
+  const amountLabel = formatMoney(snapshot.profitAmount, snapshot.currency);
+  if (refs.profitActionConfirmMessage) {
+    refs.profitActionConfirmMessage.textContent = t("profit.confirmMessage")
       .replace("{amount}", amountLabel)
-      .replace("{pct}", pctLabel);
+      .replace("{cris}", formatMoney(snapshot.amtCris, snapshot.currency))
+      .replace("{alex}", formatMoney(snapshot.amtAlex, snapshot.currency))
+      .replace("{studio9}", formatMoney(snapshot.amtStudio9, snapshot.currency))
+      .replace("{charity}", formatMoney(snapshot.amtCharity, snapshot.currency));
   }
-  if (refs.charityAddConfirmBalance) {
+  if (refs.profitActionConfirmBalance) {
     const balances = CURRENCY_CODES.map((code) => formatMoney(getAccountBalances()[code], code)).join(" · ");
-    refs.charityAddConfirmBalance.textContent = `${t("payments.accountBalance")} ${balances}`;
+    refs.profitActionConfirmBalance.textContent = `${t("payments.accountBalance")} ${balances}`;
   }
-  if (refs.charityAddConfirmOverlay) refs.charityAddConfirmOverlay.classList.remove("hidden");
+  if (refs.profitActionConfirmOverlay) refs.profitActionConfirmOverlay.classList.remove("hidden");
 }
 
-function hideCharityAddConfirm() {
-  if (refs.charityAddConfirmOverlay) refs.charityAddConfirmOverlay.classList.add("hidden");
-  pendingCharityAdd = null;
+function hideProfitActionConfirm() {
+  if (refs.profitActionConfirmOverlay) refs.profitActionConfirmOverlay.classList.add("hidden");
+  pendingProfitDistribution = null;
 }
 
-function showCharityMigrationNotice() {
-  if (refs.charityMigrationOverlay) refs.charityMigrationOverlay.classList.remove("hidden");
+function showProfitMigrationNotice() {
+  if (refs.profitMigrationOverlay) refs.profitMigrationOverlay.classList.remove("hidden");
 }
 
-function hideCharityMigrationNotice() {
-  if (refs.charityMigrationOverlay) refs.charityMigrationOverlay.classList.add("hidden");
+function hideProfitMigrationNotice() {
+  if (refs.profitMigrationOverlay) refs.profitMigrationOverlay.classList.add("hidden");
 }
 
-function isCharityMigrationError(message) {
-  return String(message || "").toLowerCase().includes("tabela de caridade");
+function isProfitMigrationError(message) {
+  return String(message || "").toLowerCase().includes("distribuicao de lucro");
 }
 
 function resetExpenseFormAfterSave() {
@@ -1352,33 +1466,42 @@ function stopBootstrapPolling() {
   }
 }
 
-async function handleCharityAdd() {
-  if (!isCharityTableReady()) {
-    showCharityMigrationNotice();
+async function handleProfitAction() {
+  if (!isProfitDistributionTableReady()) {
+    showProfitMigrationNotice();
     return;
   }
-  showCharityAddConfirm();
+  showProfitActionConfirm();
 }
 
-async function confirmCharityAdd() {
-  if (!pendingCharityAdd) return;
-  const payload = pendingCharityAdd;
-  hideCharityAddConfirm();
+async function confirmProfitDistribution() {
+  if (!pendingProfitDistribution) return;
+  const payload = pendingProfitDistribution;
+  hideProfitActionConfirm();
+  if (!canAffordPayment(payload.profitAmount, payload.currency)) {
+    showBalanceAlert();
+    return;
+  }
   try {
-    const response = await apiFetch("/api/charity", {
+    const response = await apiFetch("/api/profit-distributions", {
       method: "POST",
       body: JSON.stringify({
-        amount: payload.amount,
-        currency: DEFAULT_CURRENCY,
         profitAmount: payload.profitAmount,
-        charityPct: payload.charityPct,
+        currency: payload.currency,
+        pctCris: payload.pctCris,
+        pctAlex: payload.pctAlex,
+        pctStudio9: payload.pctStudio9,
+        pctCharity: payload.pctCharity,
       }),
     });
     applyBootstrapPayload(response);
+    profitAmountManual = false;
+    syncProfitAmountFromBalance();
     renderProfitDistribution();
+    renderProfitDistributionTable();
   } catch (error) {
     const message = parseApiErrorMessage(error);
-    if (isCharityMigrationError(message)) showCharityMigrationNotice();
+    if (isProfitMigrationError(message)) showProfitMigrationNotice();
     else window.alert(message);
   }
 }
@@ -1492,6 +1615,7 @@ function render() {
   renderCharityPanel();
   renderCharityTable();
   renderProfitDistribution();
+  renderProfitDistributionTable();
 }
 
 function renderExpenseSeqPreview() {
@@ -2092,6 +2216,10 @@ function applyPeriodMonthToDateFilters() {
   if (refs.charityFilterStartDate && refs.charityFilterEndDate) {
     refs.charityFilterStartDate.value = bounds.start;
     refs.charityFilterEndDate.value = bounds.end;
+  }
+  if (refs.profitFilterStartDate && refs.profitFilterEndDate) {
+    refs.profitFilterStartDate.value = bounds.start;
+    refs.profitFilterEndDate.value = bounds.end;
   }
 }
 

@@ -443,8 +443,8 @@
             <h2 data-i18n="profit.title">Distribuicao de lucro</h2>
             <p data-i18n="profit.desc">
               O lucro a distribuir corresponde ao saldo acumulado (USD) e aparece
-              pre-preenchido. Ajusta as percentagens — os valores calculam-se
-              automaticamente.
+              pre-preenchido. Ajusta as percentagens e usa Accao para confirmar a
+              distribuicao completa.
             </p>
           </div>
           <div class="profit-split-wrap">
@@ -512,7 +512,7 @@
                 </label>
                 <strong id="profitAmtStudio9" class="profit-split-amount">US$ 0,00</strong>
               </li>
-              <li class="profit-split-row profit-split-row--charity">
+              <li class="profit-split-row">
                 <span class="profit-split-label" data-i18n="profit.charity">Caridade</span>
                 <label class="profit-pct-field">
                   <input
@@ -527,12 +527,59 @@
                   <span>%</span>
                 </label>
                 <strong id="profitAmtCharity" class="profit-split-amount">US$ 0,00</strong>
-                <button type="button" id="charityAddBtn" class="btn-ghost btn-charity-add" data-i18n="charity.add">
-                  Add
-                </button>
               </li>
             </ul>
             <p id="profitTotalHint" class="profit-total-hint"></p>
+            <p id="profitMigrationNotice" class="profit-migration-notice hidden" data-i18n="profit.migrationNotice">
+              Falta criar a tabela de distribuicao de lucro no Supabase. Abre SQL Editor e corre
+              migration_profit_distributions.sql (ou a secao 7 de migration_all_pending.sql).
+            </p>
+            <div class="profit-action-row">
+              <button type="button" id="profitActionBtn" class="btn-ghost btn-profit-action" data-i18n="profit.action">
+                Accao
+              </button>
+            </div>
+
+            <div class="profit-list-section">
+              <div class="panel-title panel-title--sub">
+                <h3 data-i18n="profit.listTitle">Accoes registadas</h3>
+                <p data-i18n="profit.listDesc">
+                  Cada linha corresponde a uma distribuicao de lucro confirmada com Accao.
+                </p>
+              </div>
+
+              <div class="profit-register-meta">
+                <span id="profitListPeriodTotal">Total no periodo: US$ 0,00 · 0,00 € · 0,00 QAR (0)</span>
+              </div>
+
+              <div class="filters profit-filters">
+                <label>
+                  <span data-i18n="filter.from">De</span>
+                  <input id="profitFilterStartDate" type="date" />
+                </label>
+                <label>
+                  <span data-i18n="filter.to">Ate</span>
+                  <input id="profitFilterEndDate" type="date" />
+                </label>
+                <button type="button" id="profitClearFilters" class="btn-ghost" data-i18n="filter.clear">
+                  Limpar filtros
+                </button>
+              </div>
+
+              <div class="table-wrap">
+                <table class="expense-table">
+                  <thead>
+                    <tr>
+                      <th data-i18n="table.date">Data</th>
+                      <th data-i18n="table.amount">Valor</th>
+                      <th data-i18n="profit.breakdown">Distribuicao</th>
+                      <th data-i18n="profit.recordedBy">Registado por</th>
+                    </tr>
+                  </thead>
+                  <tbody id="profitDistributionRows"></tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -540,14 +587,10 @@
           <div class="panel-title">
             <h2 data-i18n="charity.title">Caridade</h2>
             <p data-i18n="charity.desc">
-              Usa Add na distribuicao de lucro para transferir o valor atribuido a caridade.
-              A entrada so aparece aqui apos confirmacao.
+              A parte de caridade e transferida quando confirmas Accao na distribuicao de lucro.
+              O saldo acumulado aparece abaixo.
             </p>
           </div>
-          <p id="charityMigrationNotice" class="charity-migration-notice hidden" data-i18n="charity.migrationNotice">
-            Falta criar a tabela de caridade no Supabase. Abre SQL Editor e corre
-            migration_charity.sql (ou a secao 6 de migration_all_pending.sql).
-          </p>
           <article class="charity-entry-card">
             <span data-i18n="charity.entry">Entrada (distribuicao de lucro)</span>
             <strong id="charityEntryAmount" class="summary-multi charity-entry-empty">Ainda sem entrada</strong>
@@ -557,7 +600,7 @@
             <div class="panel-title panel-title--sub">
               <h3 data-i18n="charity.listTitle">Entradas registadas</h3>
               <p data-i18n="charity.listDesc">
-                Cada linha corresponde a um Add confirmado na distribuicao de lucro.
+                Cada linha corresponde a caridade incluida numa distribuicao de lucro confirmada.
               </p>
             </div>
 
@@ -727,42 +770,42 @@
     </div>
 
     <div
-      id="charityAddConfirmOverlay"
+      id="profitActionConfirmOverlay"
       class="alert-overlay hidden"
       role="alertdialog"
       aria-modal="true"
-      aria-labelledby="charityAddConfirmTitle"
+      aria-labelledby="profitActionConfirmTitle"
     >
       <div class="alert-card">
-        <h3 id="charityAddConfirmTitle" data-i18n="charity.confirmTitle">Confirmar entrada de caridade</h3>
-        <p id="charityAddConfirmMessage"></p>
-        <p id="charityAddConfirmBalance" class="studio9-confirm-balance"></p>
+        <h3 id="profitActionConfirmTitle" data-i18n="profit.confirmTitle">Confirmar distribuicao de lucro</h3>
+        <p id="profitActionConfirmMessage"></p>
+        <p id="profitActionConfirmBalance" class="studio9-confirm-balance"></p>
         <div class="reset-form-actions">
-          <button type="button" id="charityAddConfirmCancel" class="btn-ghost" data-i18n="charity.confirmCancel">
+          <button type="button" id="profitActionConfirmCancel" class="btn-ghost" data-i18n="profit.confirmCancel">
             Cancelar
           </button>
-          <button type="button" id="charityAddConfirmOk" class="btn-primary" data-i18n="charity.confirmOk">
-            Confirmar
+          <button type="button" id="profitActionConfirmOk" class="btn-primary" data-i18n="profit.confirmOk">
+            Confirmar distribuicao
           </button>
         </div>
       </div>
     </div>
 
     <div
-      id="charityMigrationOverlay"
+      id="profitMigrationOverlay"
       class="alert-overlay hidden"
       role="alertdialog"
       aria-modal="true"
-      aria-labelledby="charityMigrationTitle"
+      aria-labelledby="profitMigrationTitle"
     >
       <div class="alert-card">
-        <h3 id="charityMigrationTitle" data-i18n="charity.migrationTitle">Configuracao em falta no Supabase</h3>
-        <p data-i18n="charity.migrationBody">
-          A tabela charity_allocations ainda nao existe. No Supabase, abre SQL Editor, cola o ficheiro
-          migration_charity.sql do projecto (ou a secao 6 de migration_all_pending.sql) e clica Run.
+        <h3 id="profitMigrationTitle" data-i18n="profit.migrationTitle">Configuracao em falta no Supabase</h3>
+        <p data-i18n="profit.migrationBody">
+          A tabela profit_distributions ainda nao existe. No Supabase, abre SQL Editor, cola o ficheiro
+          migration_profit_distributions.sql do projecto (ou a secao 7 de migration_all_pending.sql) e clica Run.
           Depois faz refresh a esta pagina.
         </p>
-        <button type="button" id="charityMigrationOk" class="btn-primary" data-i18n="misc.ok">OK</button>
+        <button type="button" id="profitMigrationOk" class="btn-primary" data-i18n="misc.ok">OK</button>
       </div>
     </div>
 

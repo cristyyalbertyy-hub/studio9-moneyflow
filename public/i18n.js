@@ -144,7 +144,7 @@
       "client.noneSelected": "Escolhe um cliente primeiro.",
       "profit.title": "Distribuicao de lucro",
       "profit.desc":
-        "O lucro a distribuir corresponde ao saldo acumulado (USD) e aparece pre-preenchido. Ajusta as percentagens — os valores calculam-se automaticamente.",
+        "O lucro a distribuir corresponde ao saldo acumulado (USD) e aparece pre-preenchido. Ajusta as percentagens e usa Accao para confirmar a distribuicao completa.",
       "profit.amount": "Lucro a distribuir (USD)",
       "profit.percent": "Percentagem",
       "profit.assigned": "Valor atribuido",
@@ -152,12 +152,29 @@
       "profit.totalLabel": "Total das percentagens:",
       "profit.totalOk": "100% — distribuicao completa.",
       "profit.totalWarn": "Atencao: as percentagens somam {total}%. Ajusta para 100%.",
+      "profit.action": "Accao",
+      "profit.listTitle": "Accoes registadas",
+      "profit.listDesc":
+        "Cada linha corresponde a uma distribuicao de lucro confirmada com Accao.",
+      "profit.periodPrefix": "Total no periodo:",
+      "profit.breakdown": "Distribuicao",
+      "profit.recordedBy": "Registado por",
+      "profit.confirmTitle": "Confirmar distribuicao de lucro",
+      "profit.confirmMessage":
+        "Vais distribuir {amount} do saldo da conta: Cris {cris} · Alex {alex} · Studio9 {studio9} · Caridade {charity}. Confirmas?",
+      "profit.confirmOk": "Confirmar distribuicao",
+      "profit.confirmCancel": "Cancelar",
+      "profit.migrationNotice":
+        "Falta criar a tabela de distribuicao de lucro no Supabase. Abre SQL Editor e corre migration_profit_distributions.sql (ou a secao 7 de migration_all_pending.sql).",
+      "profit.migrationTitle": "Configuracao em falta no Supabase",
+      "profit.migrationBody":
+        "A tabela profit_distributions ainda nao existe. No Supabase, abre SQL Editor, cola o ficheiro migration_profit_distributions.sql do projecto (ou a secao 7 de migration_all_pending.sql) e clica Run. Depois faz refresh a esta pagina.",
       "charity.title": "Caridade",
       "charity.desc":
-        "Usa Add na distribuicao de lucro para transferir o valor atribuido a caridade. A entrada so aparece aqui apos confirmacao.",
+        "A parte de caridade e transferida quando confirmas Accao na distribuicao de lucro. O saldo acumulado aparece abaixo.",
       "charity.listTitle": "Entradas registadas",
       "charity.listDesc":
-        "Cada linha corresponde a um Add confirmado na distribuicao de lucro.",
+        "Cada linha corresponde a caridade incluida numa distribuicao de lucro confirmada.",
       "charity.periodPrefix": "Total no periodo:",
       "charity.percent": "Percentagem",
       "charity.recordedBy": "Registado por",
@@ -361,7 +378,7 @@
       "client.noneSelected": "Choose a client first.",
       "profit.title": "Profit distribution",
       "profit.desc":
-        "Profit to distribute matches the accumulated balance (USD) and is filled in by default. Adjust the percentages — assigned amounts are calculated automatically.",
+        "Profit to distribute matches the accumulated balance (USD) and is filled in by default. Adjust the percentages and use Action to confirm the full distribution.",
       "profit.amount": "Profit to distribute (USD)",
       "profit.percent": "Percentage",
       "profit.assigned": "Assigned amount",
@@ -369,12 +386,29 @@
       "profit.totalLabel": "Total percentages:",
       "profit.totalOk": "100% — full distribution.",
       "profit.totalWarn": "Note: percentages add up to {total}%. Adjust to 100%.",
+      "profit.action": "Action",
+      "profit.listTitle": "Recorded actions",
+      "profit.listDesc":
+        "Each row is a profit distribution confirmed with Action.",
+      "profit.periodPrefix": "Period total:",
+      "profit.breakdown": "Breakdown",
+      "profit.recordedBy": "Recorded by",
+      "profit.confirmTitle": "Confirm profit distribution",
+      "profit.confirmMessage":
+        "You will distribute {amount} from the account balance: Cris {cris} · Alex {alex} · Studio9 {studio9} · Charity {charity}. Confirm?",
+      "profit.confirmOk": "Confirm distribution",
+      "profit.confirmCancel": "Cancel",
+      "profit.migrationNotice":
+        "Profit distribution table missing in Supabase. Open SQL Editor and run migration_profit_distributions.sql (or section 7 of migration_all_pending.sql).",
+      "profit.migrationTitle": "Missing Supabase setup",
+      "profit.migrationBody":
+        "The profit_distributions table does not exist yet. In Supabase, open SQL Editor, paste migration_profit_distributions.sql from the project (or section 7 of migration_all_pending.sql) and click Run. Then refresh this page.",
       "charity.title": "Charity",
       "charity.desc":
-        "Use Add in profit distribution to transfer the charity share. The entry only appears here after confirmation.",
+        "The charity share is transferred when you confirm Action in profit distribution. The accumulated balance appears below.",
       "charity.listTitle": "Recorded entries",
       "charity.listDesc":
-        "Each row is a confirmed Add from profit distribution.",
+        "Each row is charity included in a confirmed profit distribution.",
       "charity.periodPrefix": "Period total:",
       "charity.percent": "Percentage",
       "charity.recordedBy": "Recorded by",
