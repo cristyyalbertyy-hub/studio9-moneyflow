@@ -112,8 +112,8 @@
           </article>
         </div>
         <p class="summary-hint" data-i18n="hero.accountBalanceHint">
-          Saldo acumulado por moeda = entradas menos reembolsos e pagamentos ja efectuados
-          (documentos em dolares). Cada moeda tem saldo independente.
+          Tres contas separadas (USD, EUR, QAR) — sem cambio. Saldo = entradas menos reembolsos e
+          pagamentos ja efectuados (documentos em dolares).
         </p>
       </header>
 
@@ -550,8 +550,49 @@
           </p>
           <article class="charity-entry-card">
             <span data-i18n="charity.entry">Entrada (distribuicao de lucro)</span>
-            <strong id="charityEntryAmount" class="charity-entry-empty">Ainda sem entrada</strong>
+            <strong id="charityEntryAmount" class="summary-multi charity-entry-empty">Ainda sem entrada</strong>
           </article>
+
+          <div class="charity-list-section">
+            <div class="panel-title panel-title--sub">
+              <h3 data-i18n="charity.listTitle">Entradas registadas</h3>
+              <p data-i18n="charity.listDesc">
+                Cada linha corresponde a um Add confirmado na distribuicao de lucro.
+              </p>
+            </div>
+
+            <div class="charity-register-meta">
+              <span id="charityListPeriodTotal">Total no periodo: US$ 0,00 · 0,00 € · 0,00 QAR (0)</span>
+            </div>
+
+            <div class="filters charity-filters">
+              <label>
+                <span data-i18n="filter.from">De</span>
+                <input id="charityFilterStartDate" type="date" />
+              </label>
+              <label>
+                <span data-i18n="filter.to">Ate</span>
+                <input id="charityFilterEndDate" type="date" />
+              </label>
+              <button type="button" id="charityClearFilters" class="btn-ghost" data-i18n="filter.clear">
+                Limpar filtros
+              </button>
+            </div>
+
+            <div class="table-wrap">
+              <table class="expense-table">
+                <thead>
+                  <tr>
+                    <th data-i18n="table.date">Data</th>
+                    <th data-i18n="table.amount">Valor</th>
+                    <th data-i18n="charity.percent">Percentagem</th>
+                    <th data-i18n="charity.recordedBy">Registado por</th>
+                  </tr>
+                </thead>
+                <tbody id="charityRows"></tbody>
+              </table>
+            </div>
+          </div>
         </section>
       </div>
 

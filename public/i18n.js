@@ -24,7 +24,7 @@
       "hero.totalOutflow": "Total de saida (no mes)",
       "hero.accountBalance": "Saldo acumulado (conta)",
       "hero.accountBalanceHint":
-        "Saldo acumulado por moeda = entradas menos reembolsos e pagamentos ja efectuados (documentos em dolares). Cada moeda tem saldo independente.",
+        "Tres contas separadas (USD, EUR, QAR) — sem cambio. Saldo = entradas menos reembolsos e pagamentos ja efectuados (documentos em dolares).",
       "currency.label": "Moeda",
       "currency.EUR": "Euro (EUR)",
       "currency.USD": "Dolar (USD)",
@@ -155,7 +155,13 @@
       "charity.title": "Caridade",
       "charity.desc":
         "Usa Add na distribuicao de lucro para transferir o valor atribuido a caridade. A entrada so aparece aqui apos confirmacao.",
-      "charity.entry": "Entrada (distribuicao de lucro)",
+      "charity.listTitle": "Entradas registadas",
+      "charity.listDesc":
+        "Cada linha corresponde a um Add confirmado na distribuicao de lucro.",
+      "charity.periodPrefix": "Total no periodo:",
+      "charity.percent": "Percentagem",
+      "charity.recordedBy": "Registado por",
+      "charity.entry": "Saldo Caridade (USD · EUR · QAR)",
       "charity.noEntry": "Ainda sem entrada",
       "charity.balance": "Caridade Saldo",
       "charity.add": "Add",
@@ -235,7 +241,7 @@
       "hero.totalOutflow": "Total outflow (this month)",
       "hero.accountBalance": "Running account balance",
       "hero.accountBalanceHint":
-        "Running balance per currency = income minus reimbursements and payments made (documents in dollars). Each currency has an independent balance.",
+        "Three separate accounts (USD, EUR, QAR) — no exchange rate. Balance = income minus reimbursements and payments made (documents in dollars).",
       "currency.label": "Currency",
       "currency.EUR": "Euro (EUR)",
       "currency.USD": "US Dollar (USD)",
@@ -366,7 +372,13 @@
       "charity.title": "Charity",
       "charity.desc":
         "Use Add in profit distribution to transfer the charity share. The entry only appears here after confirmation.",
-      "charity.entry": "Entry (profit distribution)",
+      "charity.listTitle": "Recorded entries",
+      "charity.listDesc":
+        "Each row is a confirmed Add from profit distribution.",
+      "charity.periodPrefix": "Period total:",
+      "charity.percent": "Percentage",
+      "charity.recordedBy": "Recorded by",
+      "charity.entry": "Charity balance (USD · EUR · QAR)",
       "charity.noEntry": "No entry yet",
       "charity.balance": "Charity balance",
       "charity.add": "Add",

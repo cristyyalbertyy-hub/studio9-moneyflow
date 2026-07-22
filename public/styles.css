@@ -1069,10 +1069,28 @@ h1 {
   color: #fdf4ff;
 }
 
+.charity-entry-card .summary-multi {
+  gap: 2px;
+}
+
 .charity-entry-card strong.charity-entry-empty {
   font-size: 0.98rem;
   font-weight: 500;
   color: #c4b5fd;
+}
+
+.charity-list-section {
+  margin-top: 22px;
+}
+
+.charity-register-meta {
+  margin-bottom: 12px;
+  color: #c4b5fd;
+  font-size: 0.88rem;
+}
+
+.charity-filters {
+  margin-bottom: 12px;
 }
 
 .profit-total-hint {
