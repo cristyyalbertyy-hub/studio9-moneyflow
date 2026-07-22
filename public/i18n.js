@@ -163,6 +163,7 @@
       "profit.listDesc":
         "Cada linha corresponde a uma distribuicao de lucro confirmada com Accao.",
       "profit.periodPrefix": "Total no periodo:",
+      "profit.pdfTitle": "Studio9 - Distribuicoes de lucro",
       "profit.breakdown": "Distribuicao",
       "profit.recordedBy": "Registado por",
       "profit.confirmTitle": "Confirmar distribuicao de lucro",
@@ -187,6 +188,8 @@
       "charity.outflowDesc":
         "Compras de pacotes confirmadas — o valor saiu do Caridade Saldo.",
       "charity.periodPrefix": "Total no periodo:",
+      "charity.pdfTitle": "Studio9 - Caridade (entradas)",
+      "charity.outflowPdfTitle": "Studio9 - Caridade (saidas)",
       "charity.percent": "Percentagem",
       "charity.recordedBy": "Registado por",
       "charity.balance": "Caridade Saldo",
@@ -450,6 +453,7 @@
       "profit.listDesc":
         "Each row is a profit distribution confirmed with Action.",
       "profit.periodPrefix": "Period total:",
+      "profit.pdfTitle": "Studio9 - Profit distributions",
       "profit.breakdown": "Breakdown",
       "profit.recordedBy": "Recorded by",
       "profit.confirmTitle": "Confirm profit distribution",
@@ -474,6 +478,8 @@
       "charity.outflowDesc":
         "Confirmed package purchases — the amount left Charity Balance.",
       "charity.periodPrefix": "Period total:",
+      "charity.pdfTitle": "Studio9 - Charity (entries)",
+      "charity.outflowPdfTitle": "Studio9 - Charity (outflows)",
       "charity.percent": "Percentage",
       "charity.recordedBy": "Recorded by",
       "charity.balance": "Charity balance",

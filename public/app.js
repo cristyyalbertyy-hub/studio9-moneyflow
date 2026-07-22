@@ -146,6 +146,7 @@ const refs = {
   profitFilterEndDate: document.getElementById("profitFilterEndDate"),
   profitFilterCurrency: document.getElementById("profitFilterCurrency"),
   profitClearFilters: document.getElementById("profitClearFilters"),
+  exportProfitPdfBtn: document.getElementById("exportProfitPdfBtn"),
   profitDistributionRows: document.getElementById("profitDistributionRows"),
   profitListPeriodTotal: document.getElementById("profitListPeriodTotal"),
   charityEntryAmount: document.getElementById("charityEntryAmount"),
@@ -153,6 +154,7 @@ const refs = {
   charityFilterEndDate: document.getElementById("charityFilterEndDate"),
   charityFilterCurrency: document.getElementById("charityFilterCurrency"),
   charityClearFilters: document.getElementById("charityClearFilters"),
+  exportCharityPdfBtn: document.getElementById("exportCharityPdfBtn"),
   charityRows: document.getElementById("charityRows"),
   charityListPeriodTotal: document.getElementById("charityListPeriodTotal"),
   charityDisbursementForm: document.getElementById("charityDisbursementForm"),
@@ -175,6 +177,7 @@ const refs = {
   charityOutflowFilterEndDate: document.getElementById("charityOutflowFilterEndDate"),
   charityOutflowFilterCurrency: document.getElementById("charityOutflowFilterCurrency"),
   charityOutflowClearFilters: document.getElementById("charityOutflowClearFilters"),
+  exportCharityOutflowPdfBtn: document.getElementById("exportCharityOutflowPdfBtn"),
   charityOutflowRows: document.getElementById("charityOutflowRows"),
   charityOutflowListPeriodTotal: document.getElementById("charityOutflowListPeriodTotal"),
   invoiceUploadForm: document.getElementById("invoiceUploadForm"),
@@ -989,6 +992,7 @@ async function boot() {
   if (refs.profitFilterCurrency) {
     refs.profitFilterCurrency.addEventListener("change", renderProfitDistributionTable);
   }
+  if (refs.exportProfitPdfBtn) refs.exportProfitPdfBtn.addEventListener("click", exportProfitPdf);
   if (refs.charityClearFilters) refs.charityClearFilters.addEventListener("click", clearCharityFilters);
   [refs.charityFilterStartDate, refs.charityFilterEndDate].filter(Boolean).forEach((input) => {
     input.addEventListener("change", renderCharityTable);
@@ -996,6 +1000,7 @@ async function boot() {
   if (refs.charityFilterCurrency) {
     refs.charityFilterCurrency.addEventListener("change", renderCharityTable);
   }
+  if (refs.exportCharityPdfBtn) refs.exportCharityPdfBtn.addEventListener("click", exportCharityPdf);
   if (refs.charityOutflowClearFilters) {
     refs.charityOutflowClearFilters.addEventListener("click", clearCharityOutflowFilters);
   }
@@ -1004,6 +1009,9 @@ async function boot() {
   });
   if (refs.charityOutflowFilterCurrency) {
     refs.charityOutflowFilterCurrency.addEventListener("change", renderCharityOutflowTable);
+  }
+  if (refs.exportCharityOutflowPdfBtn) {
+    refs.exportCharityOutflowPdfBtn.addEventListener("click", exportCharityOutflowPdf);
   }
   if (refs.charityDisburseConfirmOk) {
     refs.charityDisburseConfirmOk.addEventListener("click", confirmCharityDisbursement);
@@ -2698,6 +2706,125 @@ function exportExpenseRegisterPdf() {
     styles: { fontSize: 7 },
   });
   doc.save("studio9-despesas.pdf");
+}
+
+function formatProfitBreakdown(item) {
+  return [
+    `Cris ${formatMoney(item.amtCris, item.currency)}`,
+    `Alex ${formatMoney(item.amtAlex, item.currency)}`,
+    `Studio9 ${formatMoney(item.amtStudio9, item.currency)}`,
+    `${t("profit.charity")} ${formatMoney(item.amtCharity, item.currency)}`,
+  ].join(" · ");
+}
+
+function exportProfitPdf() {
+  const items = getFilteredProfitDistributions();
+  if (items.length === 0) {
+    window.alert(t("errors.exportEmpty"));
+    return;
+  }
+  const filterCurrency = getListCurrencyFilter(refs.profitFilterCurrency);
+  const total = formatListPeriodTotal(items, filterCurrency, (item) => item.profitAmount);
+  const rows = items.map((item) => {
+    const date = item.date || (item.createdAt ? String(item.createdAt).slice(0, 10) : "");
+    return [
+      date ? formatDate(date) : "—",
+      formatMoney(item.profitAmount, resolveCurrency(item)),
+      formatProfitBreakdown(item),
+      item.createdBy || "—",
+    ];
+  });
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: "landscape" });
+  doc.setFontSize(14);
+  doc.text(t("profit.pdfTitle"), 14, 14);
+  doc.setFontSize(10);
+  doc.text(`${t("profit.periodPrefix")} ${total}`, 14, 22);
+  doc.autoTable({
+    head: [[t("table.date"), t("table.amount"), t("profit.breakdown"), t("profit.recordedBy")]],
+    body: rows,
+    startY: 28,
+    styles: { fontSize: 7 },
+  });
+  doc.save("studio9-lucro.pdf");
+}
+
+function exportCharityPdf() {
+  const items = getFilteredCharityAllocations();
+  if (items.length === 0) {
+    window.alert(t("errors.exportEmpty"));
+    return;
+  }
+  const filterCurrency = getListCurrencyFilter(refs.charityFilterCurrency);
+  const total = formatListPeriodTotal(items, filterCurrency, (item) => item.amount);
+  const rows = items.map((item) => {
+    const date = item.date || (item.createdAt ? String(item.createdAt).slice(0, 10) : "");
+    const pct =
+      item.charityPct != null && Number.isFinite(Number(item.charityPct))
+        ? `${Number(item.charityPct).toFixed(1)}%`
+        : "—";
+    return [
+      date ? formatDate(date) : "—",
+      formatMoney(item.amount, resolveCurrency(item)),
+      pct,
+      item.createdBy || "—",
+    ];
+  });
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: "landscape" });
+  doc.setFontSize(14);
+  doc.text(t("charity.pdfTitle"), 14, 14);
+  doc.setFontSize(10);
+  doc.text(`${t("charity.periodPrefix")} ${total}`, 14, 22);
+  doc.autoTable({
+    head: [[t("table.date"), t("table.amount"), t("charity.percent"), t("charity.recordedBy")]],
+    body: rows,
+    startY: 28,
+    styles: { fontSize: 9 },
+  });
+  doc.save("studio9-caridade-entradas.pdf");
+}
+
+function exportCharityOutflowPdf() {
+  const items = getFilteredCharityDisbursements();
+  if (items.length === 0) {
+    window.alert(t("errors.exportEmpty"));
+    return;
+  }
+  const filterCurrency = getListCurrencyFilter(refs.charityOutflowFilterCurrency);
+  const total = formatListPeriodTotal(items, filterCurrency, (item) => item.amount);
+  const rows = items.map((item) => {
+    const date = item.date || (item.createdAt ? String(item.createdAt).slice(0, 10) : "");
+    const currency = resolveCurrency(item);
+    return [
+      date ? formatDate(date) : "—",
+      item.description || "—",
+      formatMoney(item.amount, currency),
+      currency,
+      item.createdBy || "—",
+    ];
+  });
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: "landscape" });
+  doc.setFontSize(14);
+  doc.text(t("charity.outflowPdfTitle"), 14, 14);
+  doc.setFontSize(10);
+  doc.text(`${t("charity.periodPrefix")} ${total}`, 14, 22);
+  doc.autoTable({
+    head: [
+      [
+        t("table.date"),
+        t("table.description"),
+        t("table.amount"),
+        t("currency.label"),
+        t("charity.recordedBy"),
+      ],
+    ],
+    body: rows,
+    startY: 28,
+    styles: { fontSize: 9 },
+  });
+  doc.save("studio9-caridade-saidas.pdf");
 }
 
 async function apiFetch(url, options = {}) {
