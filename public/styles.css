@@ -953,8 +953,31 @@ h1 {
   margin-bottom: 10px;
 }
 
-.profit-amount-field input {
-  max-width: 220px;
+.profit-amount-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.profit-currency-field {
+  display: grid;
+  gap: 4px;
+}
+
+.profit-currency-field select {
+  min-width: 150px;
+}
+
+.profit-amount-display {
+  font-size: 1.15rem;
+  color: #7dd3fc;
+  font-variant-numeric: tabular-nums;
+}
+
+.studio9-confirm-balance--after {
+  color: #86efac;
 }
 
 .profit-split-head,

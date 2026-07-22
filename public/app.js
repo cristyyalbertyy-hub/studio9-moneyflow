@@ -25,6 +25,7 @@ const locale = () => i18n.locale();
 const sessionCacheKey = "studio9-session-v1";
 const periodStorageKey = "studio9-period-month-v1";
 const profitSplitsStorageKey = "studio9-profit-splits-v1";
+const profitCurrencyStorageKey = "studio9-profit-currency-v1";
 const bootstrapPollMs = 15000;
 let bootstrapPollTimer = null;
 
@@ -116,7 +117,8 @@ const refs = {
   loginProfile: document.getElementById("loginProfile"),
   authPassword: document.getElementById("authPassword"),
   authError: document.getElementById("authError"),
-  profitAmount: document.getElementById("profitAmount"),
+  profitCurrency: document.getElementById("profitCurrency"),
+  profitAmountDisplay: document.getElementById("profitAmountDisplay"),
   profitPctCris: document.getElementById("profitPctCris"),
   profitPctAlex: document.getElementById("profitPctAlex"),
   profitPctStudio9: document.getElementById("profitPctStudio9"),
@@ -130,6 +132,7 @@ const refs = {
   profitActionConfirmOverlay: document.getElementById("profitActionConfirmOverlay"),
   profitActionConfirmMessage: document.getElementById("profitActionConfirmMessage"),
   profitActionConfirmBalance: document.getElementById("profitActionConfirmBalance"),
+  profitActionConfirmAfterBalance: document.getElementById("profitActionConfirmAfterBalance"),
   profitActionConfirmOk: document.getElementById("profitActionConfirmOk"),
   profitActionConfirmCancel: document.getElementById("profitActionConfirmCancel"),
   profitMigrationNotice: document.getElementById("profitMigrationNotice"),
@@ -162,16 +165,52 @@ const DEFAULT_CURRENCY = "USD";
 let listManageState = null;
 let pendingStudio9Expense = null;
 let pendingProfitDistribution = null;
-let profitAmountManual = false;
 
-function syncProfitAmountFromBalance() {
-  if (!refs.profitAmount || profitAmountManual) return;
-  const balance = Math.max(0, getAccountBalance());
-  refs.profitAmount.value = balance.toFixed(2);
+function getSelectedProfitCurrency() {
+  const code = refs.profitCurrency?.value || DEFAULT_CURRENCY;
+  return CURRENCY_CODES.includes(code) ? code : DEFAULT_CURRENCY;
+}
+
+function readProfitCurrency() {
+  try {
+    const raw = window.localStorage.getItem(profitCurrencyStorageKey);
+    if (raw && CURRENCY_CODES.includes(raw)) return raw;
+  } catch {
+    /* ignore */
+  }
+  return DEFAULT_CURRENCY;
+}
+
+function persistProfitCurrency() {
+  if (!refs.profitCurrency) return;
+  try {
+    window.localStorage.setItem(profitCurrencyStorageKey, getSelectedProfitCurrency());
+  } catch {
+    /* ignore */
+  }
+}
+
+function getProfitAmountForCurrency(currency = getSelectedProfitCurrency()) {
+  return Math.max(0, getAccountBalances()[currency] || 0);
+}
+
+function syncProfitDisplayFromBalance() {
+  if (!refs.profitAmountDisplay) return;
+  const currency = getSelectedProfitCurrency();
+  refs.profitAmountDisplay.textContent = formatMoney(getProfitAmountForCurrency(currency), currency);
 }
 
 function initProfitDistribution() {
-  if (!refs.profitAmount) return;
+  if (!refs.profitAmountDisplay) return;
+
+  if (refs.profitCurrency) {
+    refs.profitCurrency.value = readProfitCurrency();
+    refs.profitCurrency.addEventListener("change", () => {
+      persistProfitCurrency();
+      syncProfitDisplayFromBalance();
+      renderProfitDistribution();
+    });
+  }
 
   const stored = readProfitSplits();
   if (refs.profitPctCris) refs.profitPctCris.value = stored.cris;
@@ -179,29 +218,21 @@ function initProfitDistribution() {
   if (refs.profitPctStudio9) refs.profitPctStudio9.value = stored.studio9;
   if (refs.profitPctCharity) refs.profitPctCharity.value = stored.charity;
 
-  const inputs = [
-    refs.profitAmount,
+  [
     refs.profitPctCris,
     refs.profitPctAlex,
     refs.profitPctStudio9,
     refs.profitPctCharity,
-  ].filter(Boolean);
-
-  inputs.forEach((input) => {
-    input.addEventListener("input", () => {
-      if (input === refs.profitAmount) profitAmountManual = true;
-      persistProfitSplits();
-      renderProfitDistribution();
+  ]
+    .filter(Boolean)
+    .forEach((input) => {
+      input.addEventListener("input", () => {
+        persistProfitSplits();
+        renderProfitDistribution();
+      });
     });
-  });
 
-  if (refs.profitAmount) {
-    refs.profitAmount.addEventListener("focus", () => {
-      profitAmountManual = true;
-    });
-  }
-
-  syncProfitAmountFromBalance();
+  syncProfitDisplayFromBalance();
   renderProfitDistribution();
 }
 
@@ -243,7 +274,8 @@ function clampPercent(value, fallback) {
 }
 
 function getProfitDistributionSnapshot() {
-  const profitAmount = Math.max(0, Number(refs.profitAmount?.value) || 0);
+  const currency = getSelectedProfitCurrency();
+  const profitAmount = getProfitAmountForCurrency(currency);
   const pctCris = clampPercent(refs.profitPctCris?.value, 0);
   const pctAlex = clampPercent(refs.profitPctAlex?.value, 0);
   const pctStudio9 = clampPercent(refs.profitPctStudio9?.value, 0);
@@ -251,7 +283,7 @@ function getProfitDistributionSnapshot() {
   const totalPct = pctCris + pctAlex + pctStudio9 + pctCharity;
   return {
     profitAmount,
-    currency: DEFAULT_CURRENCY,
+    currency,
     pctCris,
     pctAlex,
     pctStudio9,
@@ -269,10 +301,11 @@ function roundMoney(value) {
 }
 
 function renderProfitDistribution() {
-  if (!refs.profitAmount) return;
+  if (!refs.profitAmountDisplay) return;
 
   const snapshot = getProfitDistributionSnapshot();
   const profit = snapshot.profitAmount;
+  const currency = snapshot.currency;
   const splits = [
     { pctEl: refs.profitPctCris, amtEl: refs.profitAmtCris },
     { pctEl: refs.profitPctAlex, amtEl: refs.profitAmtAlex },
@@ -280,10 +313,12 @@ function renderProfitDistribution() {
     { pctEl: refs.profitPctCharity, amtEl: refs.profitAmtCharity },
   ];
 
+  syncProfitDisplayFromBalance();
+
   splits.forEach(({ pctEl, amtEl }) => {
     if (!pctEl || !amtEl) return;
     const pct = clampPercent(pctEl.value, 0);
-    amtEl.textContent = formatPrimaryCurrency((profit * pct) / 100);
+    amtEl.textContent = formatMoney((profit * pct) / 100, currency);
   });
 
   if (refs.profitMigrationNotice) {
@@ -902,7 +937,7 @@ function applyBootstrapPayload(response) {
     QAR: Number(charityBalances.QAR) || 0,
   };
   state.summary.charityBalance = Number(state.summary.charityBalances[DEFAULT_CURRENCY]) || 0;
-  syncProfitAmountFromBalance();
+  syncProfitDisplayFromBalance();
   render();
 }
 
@@ -976,8 +1011,14 @@ function showProfitActionConfirm() {
       .replace("{charity}", formatMoney(snapshot.amtCharity, snapshot.currency));
   }
   if (refs.profitActionConfirmBalance) {
-    const balances = CURRENCY_CODES.map((code) => formatMoney(getAccountBalances()[code], code)).join(" · ");
-    refs.profitActionConfirmBalance.textContent = `${t("payments.accountBalance")} ${balances}`;
+    const currentBalance = getAccountBalances()[snapshot.currency] || 0;
+    const afterBalance = Math.max(0, roundMoney(currentBalance - snapshot.profitAmount));
+    refs.profitActionConfirmBalance.textContent = t("profit.confirmBalanceBefore")
+      .replace("{amount}", formatMoney(currentBalance, snapshot.currency));
+    if (refs.profitActionConfirmAfterBalance) {
+      refs.profitActionConfirmAfterBalance.textContent = t("profit.confirmBalanceAfter")
+        .replace("{amount}", formatMoney(afterBalance, snapshot.currency));
+    }
   }
   if (refs.profitActionConfirmOverlay) refs.profitActionConfirmOverlay.classList.remove("hidden");
 }
@@ -1055,15 +1096,16 @@ function hideResetExperimentalModal() {
 function resetLocalPreferences() {
   try {
     window.localStorage.removeItem(profitSplitsStorageKey);
+    window.localStorage.removeItem(profitCurrencyStorageKey);
   } catch {
     /* ignore */
   }
-  profitAmountManual = false;
+  if (refs.profitCurrency) refs.profitCurrency.value = DEFAULT_CURRENCY;
   if (refs.profitPctCris) refs.profitPctCris.value = defaultProfitSplits.cris;
   if (refs.profitPctAlex) refs.profitPctAlex.value = defaultProfitSplits.alex;
   if (refs.profitPctStudio9) refs.profitPctStudio9.value = defaultProfitSplits.studio9;
   if (refs.profitPctCharity) refs.profitPctCharity.value = defaultProfitSplits.charity;
-  syncProfitAmountFromBalance();
+  syncProfitDisplayFromBalance();
   renderProfitDistribution();
 }
 
@@ -1510,8 +1552,7 @@ async function confirmProfitDistribution() {
       }),
     });
     applyBootstrapPayload(response);
-    profitAmountManual = false;
-    syncProfitAmountFromBalance();
+    syncProfitDisplayFromBalance();
     renderProfitDistribution();
     renderProfitDistributionTable();
   } catch (error) {

@@ -442,22 +442,25 @@
           <div class="panel-title">
             <h2 data-i18n="profit.title">Distribuicao de lucro</h2>
             <p data-i18n="profit.desc">
-              O lucro a distribuir aparece pre-preenchido com o saldo USD, mas podes
-              editar o valor. Ajusta as percentagens e usa Accao para confirmar a
-              distribuicao completa.
+              O lucro a distribuir corresponde sempre ao saldo da moeda escolhida.
+              Escolhe USD, EUR ou QAR e ajusta as percentagens antes de confirmar com Accao.
             </p>
           </div>
           <div class="profit-split-wrap">
-            <label class="profit-amount-field">
-              <span data-i18n="profit.amount">Lucro a distribuir (USD)</span>
-              <input
-                id="profitAmount"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-              />
-            </label>
+            <div class="profit-amount-field">
+              <span data-i18n="profit.amount">Lucro a distribuir</span>
+              <div class="profit-amount-row">
+                <label class="profit-currency-field">
+                  <span data-i18n="currency.label">Moeda</span>
+                  <select id="profitCurrency">
+                    <option value="USD" selected data-i18n="currency.USD">Dolar (USD)</option>
+                    <option value="EUR" data-i18n="currency.EUR">Euro (EUR)</option>
+                    <option value="QAR" data-i18n="currency.QAR">Dinar Qatar (QAR)</option>
+                  </select>
+                </label>
+                <strong id="profitAmountDisplay" class="profit-amount-display">US$ 0,00</strong>
+              </div>
+            </div>
             <div class="profit-split-head" aria-hidden="true">
               <span></span>
               <span data-i18n="profit.percent">Percentagem</span>
@@ -780,6 +783,7 @@
         <h3 id="profitActionConfirmTitle" data-i18n="profit.confirmTitle">Confirmar distribuicao de lucro</h3>
         <p id="profitActionConfirmMessage"></p>
         <p id="profitActionConfirmBalance" class="studio9-confirm-balance"></p>
+        <p id="profitActionConfirmAfterBalance" class="studio9-confirm-balance studio9-confirm-balance--after"></p>
         <div class="reset-form-actions">
           <button type="button" id="profitActionConfirmCancel" class="btn-ghost" data-i18n="profit.confirmCancel">
             Cancelar
