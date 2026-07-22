@@ -1164,6 +1164,20 @@ table.profit-table td:nth-child(3) {
   margin-top: 22px;
 }
 
+.charity-outflow-section {
+  padding-top: 20px;
+  border-top: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.charity-disbursement-form {
+  margin: 18px 0 8px;
+  max-width: 520px;
+}
+
+.charity-disbursement-form .full-width {
+  grid-column: 1 / -1;
+}
+
 .charity-register-meta {
   margin-bottom: 12px;
   color: #c4b5fd;

@@ -175,16 +175,36 @@
         "A tabela profit_distributions ainda nao existe. No Supabase, abre SQL Editor, cola o ficheiro migration_profit_distributions.sql do projecto (ou a secao 7 de migration_all_pending.sql) e clica Run. Depois faz refresh a esta pagina.",
       "charity.title": "Caridade",
       "charity.desc":
-        "A parte de caridade e transferida quando confirmas Accao na distribuicao de lucro. O saldo acumulado aparece abaixo.",
+        "Regista compras de pacotes para oferecer. Ao confirmar, o valor sai do Caridade Saldo e entra no saldo da conta na mesma moeda.",
       "charity.listTitle": "Entradas registadas",
       "charity.listDesc":
-        "Cada linha corresponde a caridade incluida numa distribuicao de lucro confirmada.",
+        "Caridade recebida atraves de distribuicoes de lucro confirmadas.",
+      "charity.outflowTitle": "Saidas registadas",
+      "charity.outflowDesc":
+        "Compras de pacotes confirmadas — o valor saiu do Caridade Saldo.",
       "charity.periodPrefix": "Total no periodo:",
       "charity.percent": "Percentagem",
       "charity.recordedBy": "Registado por",
+      "charity.balance": "Caridade Saldo",
+      "charity.noBalance": "Ainda sem saldo",
+      "charity.disburseConfirm": "Confirmar saida",
+      "charity.disburseConfirmOk": "Confirmar saida",
+      "charity.disburseConfirmTitle": "Confirmar saida de caridade",
+      "charity.disburseConfirmMessage":
+        "Vais usar {amount} do Caridade Saldo para «{description}». O valor passa para o saldo da conta. Confirmas?",
+      "charity.disburseCharityBefore": "Caridade Saldo actual: {amount}",
+      "charity.disburseCharityAfter": "Caridade Saldo apos a saida: {amount}",
+      "charity.disburseAccountBefore": "Saldo conta actual: {amount}",
+      "charity.disburseAccountAfter": "Saldo conta apos a saida: {amount}",
+      "charity.disburseDescriptionPlaceholder": "Ex: Pacotes para oferecer",
+      "charity.insufficientBalance": "Saldo de caridade insuficiente para esta saida.",
+      "charity.disbursementMigrationNotice":
+        "Falta criar a tabela de saidas de caridade no Supabase. Corre migration_charity_disbursements.sql (ou a secao 8 de migration_all_pending.sql).",
+      "charity.disbursementMigrationTitle": "Configuracao em falta no Supabase",
+      "charity.disbursementMigrationBody":
+        "A tabela charity_disbursements ainda nao existe. No Supabase, abre SQL Editor, cola migration_charity_disbursements.sql (ou a secao 8 de migration_all_pending.sql) e clica Run. Depois faz refresh a esta pagina.",
       "charity.entry": "Saldo Caridade (USD · EUR · QAR)",
       "charity.noEntry": "Ainda sem entrada",
-      "charity.balance": "Caridade Saldo",
       "charity.add": "Add",
       "charity.confirmTitle": "Confirmar entrada de caridade",
       "charity.confirmMessage":
@@ -413,16 +433,36 @@
         "The profit_distributions table does not exist yet. In Supabase, open SQL Editor, paste migration_profit_distributions.sql from the project (or section 7 of migration_all_pending.sql) and click Run. Then refresh this page.",
       "charity.title": "Charity",
       "charity.desc":
-        "The charity share is transferred when you confirm Action in profit distribution. The accumulated balance appears below.",
+        "Record purchases of gift packages. When confirmed, the amount leaves Charity Balance and enters the account balance in the same currency.",
       "charity.listTitle": "Recorded entries",
       "charity.listDesc":
-        "Each row is charity included in a confirmed profit distribution.",
+        "Charity received through confirmed profit distributions.",
+      "charity.outflowTitle": "Recorded outflows",
+      "charity.outflowDesc":
+        "Confirmed package purchases — the amount left Charity Balance.",
       "charity.periodPrefix": "Period total:",
       "charity.percent": "Percentage",
       "charity.recordedBy": "Recorded by",
+      "charity.balance": "Charity balance",
+      "charity.noBalance": "No balance yet",
+      "charity.disburseConfirm": "Confirm outflow",
+      "charity.disburseConfirmOk": "Confirm outflow",
+      "charity.disburseConfirmTitle": "Confirm charity outflow",
+      "charity.disburseConfirmMessage":
+        "You will use {amount} from Charity Balance for «{description}». The amount moves to the account balance. Confirm?",
+      "charity.disburseCharityBefore": "Current Charity Balance: {amount}",
+      "charity.disburseCharityAfter": "Charity Balance after outflow: {amount}",
+      "charity.disburseAccountBefore": "Current account balance: {amount}",
+      "charity.disburseAccountAfter": "Account balance after outflow: {amount}",
+      "charity.disburseDescriptionPlaceholder": "E.g. Gift packages",
+      "charity.insufficientBalance": "Insufficient charity balance for this outflow.",
+      "charity.disbursementMigrationNotice":
+        "Charity outflows table missing in Supabase. Run migration_charity_disbursements.sql (or section 8 of migration_all_pending.sql).",
+      "charity.disbursementMigrationTitle": "Missing Supabase setup",
+      "charity.disbursementMigrationBody":
+        "The charity_disbursements table does not exist yet. In Supabase, open SQL Editor, paste migration_charity_disbursements.sql (or section 8 of migration_all_pending.sql) and click Run. Then refresh this page.",
       "charity.entry": "Charity balance (USD · EUR · QAR)",
       "charity.noEntry": "No entry yet",
-      "charity.balance": "Charity balance",
       "charity.add": "Add",
       "charity.confirmTitle": "Confirm charity entry",
       "charity.confirmMessage":

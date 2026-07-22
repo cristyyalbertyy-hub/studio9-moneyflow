@@ -3,6 +3,7 @@ const state = {
   incomes: [],
   documents: [],
   charityAllocations: [],
+  charityDisbursements: [],
   profitDistributions: [],
   categories: [],
   clients: [],
@@ -149,6 +150,27 @@ const refs = {
   charityClearFilters: document.getElementById("charityClearFilters"),
   charityRows: document.getElementById("charityRows"),
   charityListPeriodTotal: document.getElementById("charityListPeriodTotal"),
+  charityDisbursementForm: document.getElementById("charityDisbursementForm"),
+  charityDisburseDate: document.getElementById("charityDisburseDate"),
+  charityDisburseCurrency: document.getElementById("charityDisburseCurrency"),
+  charityDisburseAmount: document.getElementById("charityDisburseAmount"),
+  charityDisburseDescription: document.getElementById("charityDisburseDescription"),
+  charityDisbursementMigrationNotice: document.getElementById("charityDisbursementMigrationNotice"),
+  charityDisburseConfirmOverlay: document.getElementById("charityDisburseConfirmOverlay"),
+  charityDisburseConfirmMessage: document.getElementById("charityDisburseConfirmMessage"),
+  charityDisburseConfirmCharityBalance: document.getElementById("charityDisburseConfirmCharityBalance"),
+  charityDisburseConfirmCharityAfter: document.getElementById("charityDisburseConfirmCharityAfter"),
+  charityDisburseConfirmAccountBalance: document.getElementById("charityDisburseConfirmAccountBalance"),
+  charityDisburseConfirmAccountAfter: document.getElementById("charityDisburseConfirmAccountAfter"),
+  charityDisburseConfirmOk: document.getElementById("charityDisburseConfirmOk"),
+  charityDisburseConfirmCancel: document.getElementById("charityDisburseConfirmCancel"),
+  charityDisburseMigrationOverlay: document.getElementById("charityDisburseMigrationOverlay"),
+  charityDisburseMigrationOk: document.getElementById("charityDisburseMigrationOk"),
+  charityOutflowFilterStartDate: document.getElementById("charityOutflowFilterStartDate"),
+  charityOutflowFilterEndDate: document.getElementById("charityOutflowFilterEndDate"),
+  charityOutflowClearFilters: document.getElementById("charityOutflowClearFilters"),
+  charityOutflowRows: document.getElementById("charityOutflowRows"),
+  charityOutflowListPeriodTotal: document.getElementById("charityOutflowListPeriodTotal"),
 };
 
 const defaultProfitSplits = {
@@ -165,6 +187,7 @@ const DEFAULT_CURRENCY = "USD";
 let listManageState = null;
 let pendingStudio9Expense = null;
 let pendingProfitDistribution = null;
+let pendingCharityDisbursement = null;
 
 function getSelectedProfitCurrency() {
   const code = refs.profitCurrency?.value || DEFAULT_CURRENCY;
@@ -366,16 +389,106 @@ function renderProfitDistribution() {
   refs.profitTotalHint.classList.add("is-warning");
 }
 
+function isCharityDisbursementTableReady() {
+  return state.summary?.charityDisbursementTableReady !== false;
+}
+
+function getCharityBalanceForCurrency(currency = DEFAULT_CURRENCY) {
+  return getCharityBalances()[resolveCurrency({ currency })] || 0;
+}
+
+function canAffordCharityDisbursement(amount, currency = DEFAULT_CURRENCY) {
+  const code = resolveCurrency({ currency });
+  const balance = getCharityBalanceForCurrency(code);
+  return Math.round(balance * 100) >= Math.round(Number(amount) * 100);
+}
+
+function getFilteredCharityDisbursements() {
+  const startDate = refs.charityOutflowFilterStartDate ? refs.charityOutflowFilterStartDate.value : "";
+  const endDate = refs.charityOutflowFilterEndDate ? refs.charityOutflowFilterEndDate.value : "";
+  return (state.charityDisbursements || [])
+    .filter((item) => {
+      const date = item.date || (item.createdAt ? String(item.createdAt).slice(0, 10) : "");
+      if (!date) return true;
+      const startOk = !startDate || date >= startDate;
+      const endOk = !endDate || date <= endDate;
+      return startOk && endOk;
+    })
+    .sort((a, b) => {
+      const dateA = a.date || String(a.createdAt || "").slice(0, 10);
+      const dateB = b.date || String(b.createdAt || "").slice(0, 10);
+      return dateB.localeCompare(dateA);
+    });
+}
+
+function renderCharityOutflowTable() {
+  if (!refs.charityOutflowRows) return;
+  const rows = getFilteredCharityDisbursements();
+  if (refs.charityOutflowListPeriodTotal) {
+    const sums = emptyCurrencyBalances();
+    for (const item of rows) {
+      sums[resolveCurrency(item)] += Number(item.amount || 0);
+    }
+    const parts = CURRENCY_CODES.map((code) => formatMoney(sums[code] || 0, code)).join(" · ");
+    refs.charityOutflowListPeriodTotal.textContent = `${t("charity.periodPrefix")} ${parts} (${rows.length})`;
+  }
+  if (rows.length === 0) {
+    refs.charityOutflowRows.innerHTML = `<tr><td colspan="5" class="empty">${escapeHtml(t("table.empty"))}</td></tr>`;
+    return;
+  }
+  refs.charityOutflowRows.innerHTML = rows
+    .map((item) => {
+      const date = item.date || (item.createdAt ? String(item.createdAt).slice(0, 10) : "");
+      const currency = resolveCurrency(item);
+      return `
+      <tr>
+        <td>${date ? formatDate(date) : "—"}</td>
+        <td>${escapeHtml(item.description || "—")}</td>
+        <td>${formatMoney(item.amount, currency)}</td>
+        <td>${escapeHtml(currency)}</td>
+        <td>${escapeHtml(item.createdBy || "—")}</td>
+      </tr>
+    `;
+    })
+    .join("");
+}
+
+function clearCharityOutflowFilters() {
+  const bounds = getSelectedMonthBounds();
+  if (bounds && refs.charityOutflowFilterStartDate && refs.charityOutflowFilterEndDate) {
+    refs.charityOutflowFilterStartDate.value = bounds.start;
+    refs.charityOutflowFilterEndDate.value = bounds.end;
+  }
+  renderCharityOutflowTable();
+}
+
+function initCharityDisbursementForm() {
+  if (!refs.charityDisbursementForm) return;
+  if (refs.charityDisburseDate) refs.charityDisburseDate.value = todayISO();
+  if (refs.charityDisburseCurrency) refs.charityDisburseCurrency.value = DEFAULT_CURRENCY;
+  refs.charityDisbursementForm.addEventListener("submit", handleCharityDisbursementSubmit);
+}
+
+function resetCharityDisbursementForm() {
+  if (!refs.charityDisbursementForm) return;
+  refs.charityDisbursementForm.reset();
+  if (refs.charityDisburseDate) refs.charityDisburseDate.value = todayISO();
+  if (refs.charityDisburseCurrency) refs.charityDisburseCurrency.value = DEFAULT_CURRENCY;
+}
+
 function isProfitDistributionTableReady() {
   return state.summary?.profitDistributionTableReady !== false;
 }
 
 function renderCharityPanel() {
+  if (refs.charityDisbursementMigrationNotice) {
+    refs.charityDisbursementMigrationNotice.classList.toggle("hidden", isCharityDisbursementTableReady());
+  }
   if (!refs.charityEntryAmount) return;
   const balances = getCharityBalances();
   const hasBalance = CURRENCY_CODES.some((code) => (balances[code] || 0) !== 0);
   if (!hasBalance) {
-    refs.charityEntryAmount.textContent = t("charity.noEntry");
+    refs.charityEntryAmount.textContent = t("charity.noBalance");
     refs.charityEntryAmount.classList.add("charity-entry-empty");
     return;
   }
@@ -579,6 +692,32 @@ async function boot() {
   [refs.charityFilterStartDate, refs.charityFilterEndDate].filter(Boolean).forEach((input) => {
     input.addEventListener("change", renderCharityTable);
   });
+  if (refs.charityOutflowClearFilters) {
+    refs.charityOutflowClearFilters.addEventListener("click", clearCharityOutflowFilters);
+  }
+  [refs.charityOutflowFilterStartDate, refs.charityOutflowFilterEndDate].filter(Boolean).forEach((input) => {
+    input.addEventListener("change", renderCharityOutflowTable);
+  });
+  if (refs.charityDisburseConfirmOk) {
+    refs.charityDisburseConfirmOk.addEventListener("click", confirmCharityDisbursement);
+  }
+  if (refs.charityDisburseConfirmCancel) {
+    refs.charityDisburseConfirmCancel.addEventListener("click", hideCharityDisburseConfirm);
+  }
+  if (refs.charityDisburseConfirmOverlay) {
+    refs.charityDisburseConfirmOverlay.addEventListener("click", (event) => {
+      if (event.target === refs.charityDisburseConfirmOverlay) hideCharityDisburseConfirm();
+    });
+  }
+  if (refs.charityDisburseMigrationOk) {
+    refs.charityDisburseMigrationOk.addEventListener("click", hideCharityDisburseMigrationNotice);
+  }
+  if (refs.charityDisburseMigrationOverlay) {
+    refs.charityDisburseMigrationOverlay.addEventListener("click", (event) => {
+      if (event.target === refs.charityDisburseMigrationOverlay) hideCharityDisburseMigrationNotice();
+    });
+  }
+  initCharityDisbursementForm();
   refs.clearFilters.addEventListener("click", clearFilters);
   refs.logoutBtn.addEventListener("click", () => logout(true));
   refs.exportExcelBtn.addEventListener("click", exportExcel);
@@ -922,6 +1061,7 @@ function applyBootstrapPayload(response) {
   state.clients = Array.isArray(response.clients) ? response.clients : [];
   state.documents = Array.isArray(response.documents) ? response.documents : [];
   state.charityAllocations = Array.isArray(response.charityAllocations) ? response.charityAllocations : [];
+  state.charityDisbursements = Array.isArray(response.charityDisbursements) ? response.charityDisbursements : [];
   state.profitDistributions = Array.isArray(response.profitDistributions) ? response.profitDistributions : [];
   state.activities = Array.isArray(response.activities) ? response.activities : [];
   state.summary = response.summary || {
@@ -1044,6 +1184,102 @@ function showProfitMigrationNotice() {
 
 function hideProfitMigrationNotice() {
   if (refs.profitMigrationOverlay) refs.profitMigrationOverlay.classList.add("hidden");
+}
+
+function showCharityDisburseConfirm() {
+  if (!pendingCharityDisbursement) return;
+  const payload = pendingCharityDisbursement;
+  const currency = resolveCurrency(payload);
+  const amountLabel = formatMoney(payload.amount, currency);
+  const charityBefore = getCharityBalanceForCurrency(currency);
+  const charityAfter = Math.max(0, roundMoney(charityBefore - payload.amount));
+  const accountBefore = getAccountBalances()[currency] || 0;
+  const accountAfter = roundMoney(accountBefore + payload.amount);
+
+  if (refs.charityDisburseConfirmMessage) {
+    refs.charityDisburseConfirmMessage.textContent = t("charity.disburseConfirmMessage")
+      .replace("{amount}", amountLabel)
+      .replace("{description}", payload.description);
+  }
+  if (refs.charityDisburseConfirmCharityBalance) {
+    refs.charityDisburseConfirmCharityBalance.textContent = t("charity.disburseCharityBefore")
+      .replace("{amount}", formatMoney(charityBefore, currency));
+  }
+  if (refs.charityDisburseConfirmCharityAfter) {
+    refs.charityDisburseConfirmCharityAfter.textContent = t("charity.disburseCharityAfter")
+      .replace("{amount}", formatMoney(charityAfter, currency));
+  }
+  if (refs.charityDisburseConfirmAccountBalance) {
+    refs.charityDisburseConfirmAccountBalance.textContent = t("charity.disburseAccountBefore")
+      .replace("{amount}", formatMoney(accountBefore, currency));
+  }
+  if (refs.charityDisburseConfirmAccountAfter) {
+    refs.charityDisburseConfirmAccountAfter.textContent = t("charity.disburseAccountAfter")
+      .replace("{amount}", formatMoney(accountAfter, currency));
+  }
+  if (refs.charityDisburseConfirmOverlay) refs.charityDisburseConfirmOverlay.classList.remove("hidden");
+}
+
+function hideCharityDisburseConfirm() {
+  if (refs.charityDisburseConfirmOverlay) refs.charityDisburseConfirmOverlay.classList.add("hidden");
+  pendingCharityDisbursement = null;
+}
+
+function showCharityDisburseMigrationNotice() {
+  if (refs.charityDisburseMigrationOverlay) refs.charityDisburseMigrationOverlay.classList.remove("hidden");
+}
+
+function hideCharityDisburseMigrationNotice() {
+  if (refs.charityDisburseMigrationOverlay) refs.charityDisburseMigrationOverlay.classList.add("hidden");
+}
+
+function isCharityDisburseMigrationError(message) {
+  return String(message || "").toLowerCase().includes("saidas de caridade");
+}
+
+async function handleCharityDisbursementSubmit(event) {
+  event.preventDefault();
+  if (!isCharityDisbursementTableReady()) {
+    showCharityDisburseMigrationNotice();
+    return;
+  }
+
+  const amount = Number(refs.charityDisburseAmount?.value);
+  const date = refs.charityDisburseDate?.value;
+  const currency = refs.charityDisburseCurrency ? refs.charityDisburseCurrency.value : DEFAULT_CURRENCY;
+  const description = refs.charityDisburseDescription?.value.trim();
+  if (!amount || !date || !description) return;
+
+  if (!canAffordCharityDisbursement(amount, currency)) {
+    window.alert(t("charity.insufficientBalance"));
+    return;
+  }
+
+  pendingCharityDisbursement = { amount, date, currency, description };
+  showCharityDisburseConfirm();
+}
+
+async function confirmCharityDisbursement() {
+  if (!pendingCharityDisbursement) return;
+  const payload = pendingCharityDisbursement;
+  hideCharityDisburseConfirm();
+  if (!canAffordCharityDisbursement(payload.amount, payload.currency)) {
+    window.alert(t("charity.insufficientBalance"));
+    return;
+  }
+  try {
+    const response = await apiFetch("/api/charity", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    applyBootstrapPayload(response);
+    resetCharityDisbursementForm();
+    renderCharityOutflowTable();
+  } catch (error) {
+    const message = parseApiErrorMessage(error);
+    if (isCharityDisburseMigrationError(message)) showCharityDisburseMigrationNotice();
+    else window.alert(message);
+  }
 }
 
 function isProfitMigrationError(message) {
@@ -1679,6 +1915,7 @@ function render() {
   renderActivities();
   renderCharityPanel();
   renderCharityTable();
+  renderCharityOutflowTable();
   renderProfitDistribution();
   renderProfitDistributionTable();
 }
@@ -2281,6 +2518,10 @@ function applyPeriodMonthToDateFilters() {
   if (refs.charityFilterStartDate && refs.charityFilterEndDate) {
     refs.charityFilterStartDate.value = bounds.start;
     refs.charityFilterEndDate.value = bounds.end;
+  }
+  if (refs.charityOutflowFilterStartDate && refs.charityOutflowFilterEndDate) {
+    refs.charityOutflowFilterStartDate.value = bounds.start;
+    refs.charityOutflowFilterEndDate.value = bounds.end;
   }
   if (refs.profitFilterStartDate && refs.profitFilterEndDate) {
     refs.profitFilterStartDate.value = bounds.start;

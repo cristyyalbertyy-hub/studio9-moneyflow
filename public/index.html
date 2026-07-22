@@ -590,14 +590,51 @@
           <div class="panel-title">
             <h2 data-i18n="charity.title">Caridade</h2>
             <p data-i18n="charity.desc">
-              A parte de caridade e transferida quando confirmas Accao na distribuicao de lucro.
-              O saldo acumulado aparece abaixo.
+              Regista compras de pacotes para oferecer. Ao confirmar, o valor sai do Caridade Saldo
+              e entra no saldo da conta na mesma moeda.
             </p>
           </div>
+          <p id="charityDisbursementMigrationNotice" class="charity-migration-notice hidden" data-i18n="charity.disbursementMigrationNotice">
+            Falta criar a tabela de saidas de caridade no Supabase. Corre migration_charity_disbursements.sql
+            (ou a secao 8 de migration_all_pending.sql).
+          </p>
           <article class="charity-entry-card">
-            <span data-i18n="charity.entry">Entrada (distribuicao de lucro)</span>
-            <strong id="charityEntryAmount" class="summary-multi charity-entry-empty">Ainda sem entrada</strong>
+            <span data-i18n="charity.balance">Caridade Saldo</span>
+            <strong id="charityEntryAmount" class="summary-multi charity-entry-empty">Ainda sem saldo</strong>
           </article>
+
+          <form id="charityDisbursementForm" class="charity-disbursement-form form-grid">
+            <label>
+              <span data-i18n="table.date">Data</span>
+              <input id="charityDisburseDate" type="date" required />
+            </label>
+            <label>
+              <span data-i18n="currency.label">Moeda</span>
+              <select id="charityDisburseCurrency" required>
+                <option value="USD" selected data-i18n="currency.USD">Dolar (USD)</option>
+                <option value="EUR" data-i18n="currency.EUR">Euro (EUR)</option>
+                <option value="QAR" data-i18n="currency.QAR">Dinar Qatar (QAR)</option>
+              </select>
+            </label>
+            <label>
+              <span data-i18n="table.amount">Valor</span>
+              <input id="charityDisburseAmount" type="number" min="0.01" step="0.01" placeholder="0.00" required />
+            </label>
+            <label class="full-width">
+              <span data-i18n="table.description">Descricao</span>
+              <input
+                id="charityDisburseDescription"
+                type="text"
+                maxlength="120"
+                data-i18n-placeholder="charity.disburseDescriptionPlaceholder"
+                placeholder="Ex: Pacotes para oferecer"
+                required
+              />
+            </label>
+            <button type="submit" class="btn-primary full-width" data-i18n="charity.disburseConfirm">
+              Confirmar saida
+            </button>
+          </form>
 
           <div class="charity-list-section">
             <div class="panel-title panel-title--sub">
@@ -636,6 +673,48 @@
                   </tr>
                 </thead>
                 <tbody id="charityRows"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="charity-list-section charity-outflow-section">
+            <div class="panel-title panel-title--sub">
+              <h3 data-i18n="charity.outflowTitle">Saidas registadas</h3>
+              <p data-i18n="charity.outflowDesc">
+                Compras de pacotes confirmadas — o valor saiu do Caridade Saldo.
+              </p>
+            </div>
+
+            <div class="charity-register-meta">
+              <span id="charityOutflowListPeriodTotal">Total no periodo: US$ 0,00 · 0,00 € · 0,00 QAR (0)</span>
+            </div>
+
+            <div class="filters charity-filters">
+              <label>
+                <span data-i18n="filter.from">De</span>
+                <input id="charityOutflowFilterStartDate" type="date" />
+              </label>
+              <label>
+                <span data-i18n="filter.to">Ate</span>
+                <input id="charityOutflowFilterEndDate" type="date" />
+              </label>
+              <button type="button" id="charityOutflowClearFilters" class="btn-ghost" data-i18n="filter.clear">
+                Limpar filtros
+              </button>
+            </div>
+
+            <div class="table-wrap">
+              <table class="expense-table">
+                <thead>
+                  <tr>
+                    <th data-i18n="table.date">Data</th>
+                    <th data-i18n="table.description">Descricao</th>
+                    <th data-i18n="table.amount">Valor</th>
+                    <th data-i18n="currency.label">Moeda</th>
+                    <th data-i18n="charity.recordedBy">Registado por</th>
+                  </tr>
+                </thead>
+                <tbody id="charityOutflowRows"></tbody>
               </table>
             </div>
           </div>
@@ -769,6 +848,48 @@
             Confirmar pagamento
           </button>
         </div>
+      </div>
+    </div>
+
+    <div
+      id="charityDisburseConfirmOverlay"
+      class="alert-overlay hidden"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="charityDisburseConfirmTitle"
+    >
+      <div class="alert-card">
+        <h3 id="charityDisburseConfirmTitle" data-i18n="charity.disburseConfirmTitle">Confirmar saida de caridade</h3>
+        <p id="charityDisburseConfirmMessage"></p>
+        <p id="charityDisburseConfirmCharityBalance" class="studio9-confirm-balance"></p>
+        <p id="charityDisburseConfirmCharityAfter" class="studio9-confirm-balance"></p>
+        <p id="charityDisburseConfirmAccountBalance" class="studio9-confirm-balance"></p>
+        <p id="charityDisburseConfirmAccountAfter" class="studio9-confirm-balance studio9-confirm-balance--after"></p>
+        <div class="reset-form-actions">
+          <button type="button" id="charityDisburseConfirmCancel" class="btn-ghost" data-i18n="charity.confirmCancel">
+            Cancelar
+          </button>
+          <button type="button" id="charityDisburseConfirmOk" class="btn-primary" data-i18n="charity.disburseConfirmOk">
+            Confirmar saida
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="charityDisburseMigrationOverlay"
+      class="alert-overlay hidden"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="charityDisburseMigrationTitle"
+    >
+      <div class="alert-card">
+        <h3 id="charityDisburseMigrationTitle" data-i18n="charity.disbursementMigrationTitle">Configuracao em falta no Supabase</h3>
+        <p data-i18n="charity.disbursementMigrationBody">
+          A tabela charity_disbursements ainda nao existe. No Supabase, abre SQL Editor, cola
+          migration_charity_disbursements.sql (ou a secao 8 de migration_all_pending.sql) e clica Run.
+        </p>
+        <button type="button" id="charityDisburseMigrationOk" class="btn-primary" data-i18n="misc.ok">OK</button>
       </div>
     </div>
 
