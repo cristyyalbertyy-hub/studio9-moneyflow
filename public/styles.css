@@ -890,6 +890,11 @@ h1 {
   font-size: 1.18rem;
 }
 
+.summary-item .summary-multi {
+  font-size: clamp(0.92rem, 1.35vw, 1.08rem);
+  gap: 2px;
+}
+
 .summary-item.income strong {
   color: #86efac;
 }
