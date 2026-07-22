@@ -144,12 +144,14 @@ const refs = {
   profitMigrationOk: document.getElementById("profitMigrationOk"),
   profitFilterStartDate: document.getElementById("profitFilterStartDate"),
   profitFilterEndDate: document.getElementById("profitFilterEndDate"),
+  profitFilterCurrency: document.getElementById("profitFilterCurrency"),
   profitClearFilters: document.getElementById("profitClearFilters"),
   profitDistributionRows: document.getElementById("profitDistributionRows"),
   profitListPeriodTotal: document.getElementById("profitListPeriodTotal"),
   charityEntryAmount: document.getElementById("charityEntryAmount"),
   charityFilterStartDate: document.getElementById("charityFilterStartDate"),
   charityFilterEndDate: document.getElementById("charityFilterEndDate"),
+  charityFilterCurrency: document.getElementById("charityFilterCurrency"),
   charityClearFilters: document.getElementById("charityClearFilters"),
   charityRows: document.getElementById("charityRows"),
   charityListPeriodTotal: document.getElementById("charityListPeriodTotal"),
@@ -171,6 +173,7 @@ const refs = {
   charityDisburseMigrationOk: document.getElementById("charityDisburseMigrationOk"),
   charityOutflowFilterStartDate: document.getElementById("charityOutflowFilterStartDate"),
   charityOutflowFilterEndDate: document.getElementById("charityOutflowFilterEndDate"),
+  charityOutflowFilterCurrency: document.getElementById("charityOutflowFilterCurrency"),
   charityOutflowClearFilters: document.getElementById("charityOutflowClearFilters"),
   charityOutflowRows: document.getElementById("charityOutflowRows"),
   charityOutflowListPeriodTotal: document.getElementById("charityOutflowListPeriodTotal"),
@@ -415,11 +418,35 @@ function canAffordCharityDisbursement(amount, currency = DEFAULT_CURRENCY) {
   return Math.round(balance * 100) >= Math.round(Number(amount) * 100);
 }
 
+function getListCurrencyFilter(selectEl) {
+  const value = selectEl?.value || "all";
+  return value === "all" || CURRENCY_CODES.includes(value) ? value : "all";
+}
+
+function matchesListCurrencyFilter(item, filterCurrency) {
+  if (filterCurrency === "all") return true;
+  return resolveCurrency(item) === filterCurrency;
+}
+
+function formatListPeriodTotal(items, filterCurrency, getAmount) {
+  if (filterCurrency !== "all") {
+    const total = items.reduce((sum, item) => sum + Number(getAmount(item) || 0), 0);
+    return formatMoney(total, filterCurrency);
+  }
+  const sums = emptyCurrencyBalances();
+  for (const item of items) {
+    sums[resolveCurrency(item)] += Number(getAmount(item) || 0);
+  }
+  return CURRENCY_CODES.map((code) => formatMoney(sums[code] || 0, code)).join(" · ");
+}
+
 function getFilteredCharityDisbursements() {
   const startDate = refs.charityOutflowFilterStartDate ? refs.charityOutflowFilterStartDate.value : "";
   const endDate = refs.charityOutflowFilterEndDate ? refs.charityOutflowFilterEndDate.value : "";
+  const filterCurrency = getListCurrencyFilter(refs.charityOutflowFilterCurrency);
   return (state.charityDisbursements || [])
     .filter((item) => {
+      if (!matchesListCurrencyFilter(item, filterCurrency)) return false;
       const date = item.date || (item.createdAt ? String(item.createdAt).slice(0, 10) : "");
       if (!date) return true;
       const startOk = !startDate || date >= startDate;
@@ -437,12 +464,9 @@ function renderCharityOutflowTable() {
   if (!refs.charityOutflowRows) return;
   const rows = getFilteredCharityDisbursements();
   if (refs.charityOutflowListPeriodTotal) {
-    const sums = emptyCurrencyBalances();
-    for (const item of rows) {
-      sums[resolveCurrency(item)] += Number(item.amount || 0);
-    }
-    const parts = CURRENCY_CODES.map((code) => formatMoney(sums[code] || 0, code)).join(" · ");
-    refs.charityOutflowListPeriodTotal.textContent = `${t("charity.periodPrefix")} ${parts} (${rows.length})`;
+    const filterCurrency = getListCurrencyFilter(refs.charityOutflowFilterCurrency);
+    const totalLabel = formatListPeriodTotal(rows, filterCurrency, (item) => item.amount);
+    refs.charityOutflowListPeriodTotal.textContent = `${t("charity.periodPrefix")} ${totalLabel} (${rows.length})`;
   }
   if (rows.length === 0) {
     refs.charityOutflowRows.innerHTML = `<tr><td colspan="5" class="empty">${escapeHtml(t("table.empty"))}</td></tr>`;
@@ -471,6 +495,7 @@ function clearCharityOutflowFilters() {
     refs.charityOutflowFilterStartDate.value = bounds.start;
     refs.charityOutflowFilterEndDate.value = bounds.end;
   }
+  if (refs.charityOutflowFilterCurrency) refs.charityOutflowFilterCurrency.value = "all";
   renderCharityOutflowTable();
 }
 
@@ -796,7 +821,9 @@ function getCharityHistoryEntries() {
 function getFilteredCharityAllocations() {
   const startDate = refs.charityFilterStartDate ? refs.charityFilterStartDate.value : "";
   const endDate = refs.charityFilterEndDate ? refs.charityFilterEndDate.value : "";
+  const filterCurrency = getListCurrencyFilter(refs.charityFilterCurrency);
   return getCharityHistoryEntries().filter((item) => {
+    if (!matchesListCurrencyFilter(item, filterCurrency)) return false;
     const date = item.date || "";
     if (!date) return true;
     const startOk = !startDate || date >= startDate;
@@ -808,8 +835,10 @@ function getFilteredCharityAllocations() {
 function getFilteredProfitDistributions() {
   const startDate = refs.profitFilterStartDate ? refs.profitFilterStartDate.value : "";
   const endDate = refs.profitFilterEndDate ? refs.profitFilterEndDate.value : "";
+  const filterCurrency = getListCurrencyFilter(refs.profitFilterCurrency);
   return (state.profitDistributions || [])
     .filter((item) => {
+      if (!matchesListCurrencyFilter(item, filterCurrency)) return false;
       const date = item.date || (item.createdAt ? String(item.createdAt).slice(0, 10) : "");
       if (!date) return true;
       const startOk = !startDate || date >= startDate;
@@ -827,12 +856,9 @@ function renderProfitDistributionTable() {
   if (!refs.profitDistributionRows) return;
   const rows = getFilteredProfitDistributions();
   if (refs.profitListPeriodTotal) {
-    const sums = emptyCurrencyBalances();
-    for (const item of rows) {
-      sums[resolveCurrency(item)] += Number(item.profitAmount || 0);
-    }
-    const parts = CURRENCY_CODES.map((code) => formatMoney(sums[code] || 0, code)).join(" · ");
-    refs.profitListPeriodTotal.textContent = `${t("profit.periodPrefix")} ${parts} (${rows.length})`;
+    const filterCurrency = getListCurrencyFilter(refs.profitFilterCurrency);
+    const totalLabel = formatListPeriodTotal(rows, filterCurrency, (item) => item.profitAmount);
+    refs.profitListPeriodTotal.textContent = `${t("profit.periodPrefix")} ${totalLabel} (${rows.length})`;
   }
   if (rows.length === 0) {
     refs.profitDistributionRows.innerHTML = `<tr><td colspan="4" class="empty">${escapeHtml(t("table.empty"))}</td></tr>`;
@@ -865,6 +891,7 @@ function clearProfitFilters() {
     refs.profitFilterStartDate.value = bounds.start;
     refs.profitFilterEndDate.value = bounds.end;
   }
+  if (refs.profitFilterCurrency) refs.profitFilterCurrency.value = "all";
   renderProfitDistributionTable();
 }
 
@@ -872,9 +899,9 @@ function renderCharityTable() {
   if (!refs.charityRows) return;
   const rows = getFilteredCharityAllocations();
   if (refs.charityListPeriodTotal) {
-    const sums = sumAmountsByCurrency(rows, () => true);
-    const parts = CURRENCY_CODES.map((code) => formatMoney(sums[code] || 0, code)).join(" · ");
-    refs.charityListPeriodTotal.textContent = `${t("charity.periodPrefix")} ${parts} (${rows.length})`;
+    const filterCurrency = getListCurrencyFilter(refs.charityFilterCurrency);
+    const totalLabel = formatListPeriodTotal(rows, filterCurrency, (item) => item.amount);
+    refs.charityListPeriodTotal.textContent = `${t("charity.periodPrefix")} ${totalLabel} (${rows.length})`;
   }
   if (rows.length === 0) {
     refs.charityRows.innerHTML = `<tr><td colspan="4" class="empty">${escapeHtml(t("table.empty"))}</td></tr>`;
@@ -905,6 +932,7 @@ function clearCharityFilters() {
     refs.charityFilterStartDate.value = bounds.start;
     refs.charityFilterEndDate.value = bounds.end;
   }
+  if (refs.charityFilterCurrency) refs.charityFilterCurrency.value = "all";
   renderCharityTable();
 }
 
@@ -958,16 +986,25 @@ async function boot() {
   [refs.profitFilterStartDate, refs.profitFilterEndDate].filter(Boolean).forEach((input) => {
     input.addEventListener("change", renderProfitDistributionTable);
   });
+  if (refs.profitFilterCurrency) {
+    refs.profitFilterCurrency.addEventListener("change", renderProfitDistributionTable);
+  }
   if (refs.charityClearFilters) refs.charityClearFilters.addEventListener("click", clearCharityFilters);
   [refs.charityFilterStartDate, refs.charityFilterEndDate].filter(Boolean).forEach((input) => {
     input.addEventListener("change", renderCharityTable);
   });
+  if (refs.charityFilterCurrency) {
+    refs.charityFilterCurrency.addEventListener("change", renderCharityTable);
+  }
   if (refs.charityOutflowClearFilters) {
     refs.charityOutflowClearFilters.addEventListener("click", clearCharityOutflowFilters);
   }
   [refs.charityOutflowFilterStartDate, refs.charityOutflowFilterEndDate].filter(Boolean).forEach((input) => {
     input.addEventListener("change", renderCharityOutflowTable);
   });
+  if (refs.charityOutflowFilterCurrency) {
+    refs.charityOutflowFilterCurrency.addEventListener("change", renderCharityOutflowTable);
+  }
   if (refs.charityDisburseConfirmOk) {
     refs.charityDisburseConfirmOk.addEventListener("click", confirmCharityDisbursement);
   }
