@@ -142,6 +142,14 @@ const DEFAULT_CURRENCY = "EUR";
 
 let listManageState = null;
 let pendingStudio9Expense = null;
+let profitAmountManual = false;
+
+function syncProfitAmountFromBalance() {
+  if (!refs.profitAmount || profitAmountManual) return;
+  if (document.activeElement === refs.profitAmount) return;
+  const balance = Math.max(0, getAccountBalance());
+  refs.profitAmount.value = balance.toFixed(2);
+}
 
 function initProfitDistribution() {
   if (!refs.profitAmount) return;
@@ -162,11 +170,13 @@ function initProfitDistribution() {
 
   inputs.forEach((input) => {
     input.addEventListener("input", () => {
+      if (input === refs.profitAmount) profitAmountManual = true;
       persistProfitSplits();
       renderProfitDistribution();
     });
   });
 
+  syncProfitAmountFromBalance();
   renderProfitDistribution();
 }
 
@@ -755,11 +765,12 @@ function resetLocalPreferences() {
   } catch {
     /* ignore */
   }
+  profitAmountManual = false;
   if (refs.profitPctCris) refs.profitPctCris.value = defaultProfitSplits.cris;
   if (refs.profitPctAlex) refs.profitPctAlex.value = defaultProfitSplits.alex;
   if (refs.profitPctStudio9) refs.profitPctStudio9.value = defaultProfitSplits.studio9;
   if (refs.profitPctCharity) refs.profitPctCharity.value = defaultProfitSplits.charity;
-  if (refs.profitAmount) refs.profitAmount.value = "";
+  syncProfitAmountFromBalance();
   renderProfitDistribution();
 }
 
@@ -1300,11 +1311,13 @@ function render() {
   renderCategories();
   renderClients();
   renderExpenseSeqPreview();
+  syncProfitAmountFromBalance();
   renderTotals();
   renderIncomeTable();
   renderExpenseRegisterTable();
   renderTable();
   renderActivities();
+  renderProfitDistribution();
 }
 
 function renderExpenseSeqPreview() {

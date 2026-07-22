@@ -144,7 +144,7 @@
       "client.noneSelected": "Escolhe um cliente primeiro.",
       "profit.title": "Distribuicao de lucro",
       "profit.desc":
-        "Introduz o lucro total e ajusta as percentagens. Os valores atribuidos calculam-se automaticamente.",
+        "O lucro a distribuir corresponde ao saldo acumulado (EUR) e aparece pre-preenchido. Ajusta as percentagens — os valores calculam-se automaticamente.",
       "profit.amount": "Lucro a distribuir (EUR)",
       "profit.percent": "Percentagem",
       "profit.assigned": "Valor atribuido",
@@ -344,7 +344,7 @@
       "client.noneSelected": "Choose a client first.",
       "profit.title": "Profit distribution",
       "profit.desc":
-        "Enter total profit and adjust the percentages. Assigned amounts are calculated automatically.",
+        "Profit to distribute matches the accumulated balance (EUR) and is filled in by default. Adjust the percentages — assigned amounts are calculated automatically.",
       "profit.amount": "Profit to distribute (EUR)",
       "profit.percent": "Percentage",
       "profit.assigned": "Assigned amount",
