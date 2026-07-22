@@ -113,7 +113,7 @@
         </div>
         <p class="summary-hint" data-i18n="hero.accountBalanceHint">
           Saldo acumulado por moeda = entradas menos reembolsos e pagamentos ja efectuados
-          (documentos em euros). Cada moeda tem saldo independente.
+          (documentos em dolares). Cada moeda tem saldo independente.
         </p>
       </header>
 
@@ -131,8 +131,8 @@
             <label>
               <span data-i18n="currency.label">Moeda</span>
               <select id="incomeCurrency" required>
+                <option value="USD" selected data-i18n="currency.USD">Dolar (USD)</option>
                 <option value="EUR" data-i18n="currency.EUR">Euro (EUR)</option>
-                <option value="USD" data-i18n="currency.USD">Dolar (USD)</option>
                 <option value="QAR" data-i18n="currency.QAR">Dinar Qatar (QAR)</option>
               </select>
             </label>
@@ -247,8 +247,8 @@
             <label>
               <span data-i18n="currency.label">Moeda</span>
               <select id="expenseCurrency" required>
+                <option value="USD" selected data-i18n="currency.USD">Dolar (USD)</option>
                 <option value="EUR" data-i18n="currency.EUR">Euro (EUR)</option>
-                <option value="USD" data-i18n="currency.USD">Dolar (USD)</option>
                 <option value="QAR" data-i18n="currency.QAR">Dinar Qatar (QAR)</option>
               </select>
             </label>
@@ -442,14 +442,14 @@
           <div class="panel-title">
             <h2 data-i18n="profit.title">Distribuicao de lucro</h2>
             <p data-i18n="profit.desc">
-              O lucro a distribuir corresponde ao saldo acumulado (EUR) e aparece
+              O lucro a distribuir corresponde ao saldo acumulado (USD) e aparece
               pre-preenchido. Ajusta as percentagens — os valores calculam-se
               automaticamente.
             </p>
           </div>
           <div class="profit-split-wrap">
             <label class="profit-amount-field">
-              <span data-i18n="profit.amount">Lucro a distribuir (EUR)</span>
+              <span data-i18n="profit.amount">Lucro a distribuir (USD)</span>
               <input
                 id="profitAmount"
                 type="number"
@@ -478,7 +478,7 @@
                   />
                   <span>%</span>
                 </label>
-                <strong id="profitAmtCris" class="profit-split-amount">EUR 0,00</strong>
+                <strong id="profitAmtCris" class="profit-split-amount">US$ 0,00</strong>
               </li>
               <li class="profit-split-row">
                 <span class="profit-split-label">Alex</span>
@@ -494,7 +494,7 @@
                   />
                   <span>%</span>
                 </label>
-                <strong id="profitAmtAlex" class="profit-split-amount">EUR 0,00</strong>
+                <strong id="profitAmtAlex" class="profit-split-amount">US$ 0,00</strong>
               </li>
               <li class="profit-split-row">
                 <span class="profit-split-label">Studio9</span>
@@ -510,7 +510,7 @@
                   />
                   <span>%</span>
                 </label>
-                <strong id="profitAmtStudio9" class="profit-split-amount">EUR 0,00</strong>
+                <strong id="profitAmtStudio9" class="profit-split-amount">US$ 0,00</strong>
               </li>
               <li class="profit-split-row profit-split-row--charity">
                 <span class="profit-split-label" data-i18n="profit.charity">Caridade</span>
@@ -526,7 +526,7 @@
                   />
                   <span>%</span>
                 </label>
-                <strong id="profitAmtCharity" class="profit-split-amount">EUR 0,00</strong>
+                <strong id="profitAmtCharity" class="profit-split-amount">US$ 0,00</strong>
                 <button type="button" id="charityAddBtn" class="btn-ghost btn-charity-add" data-i18n="charity.add">
                   Add
                 </button>
@@ -544,6 +544,10 @@
               A entrada so aparece aqui apos confirmacao.
             </p>
           </div>
+          <p id="charityMigrationNotice" class="charity-migration-notice hidden" data-i18n="charity.migrationNotice">
+            Falta criar a tabela de caridade no Supabase. Abre SQL Editor e corre
+            migration_charity.sql (ou a secao 6 de migration_all_pending.sql).
+          </p>
           <article class="charity-entry-card">
             <span data-i18n="charity.entry">Entrada (distribuicao de lucro)</span>
             <strong id="charityEntryAmount" class="charity-entry-empty">Ainda sem entrada</strong>
@@ -700,6 +704,24 @@
             Confirmar
           </button>
         </div>
+      </div>
+    </div>
+
+    <div
+      id="charityMigrationOverlay"
+      class="alert-overlay hidden"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="charityMigrationTitle"
+    >
+      <div class="alert-card">
+        <h3 id="charityMigrationTitle" data-i18n="charity.migrationTitle">Configuracao em falta no Supabase</h3>
+        <p data-i18n="charity.migrationBody">
+          A tabela charity_allocations ainda nao existe. No Supabase, abre SQL Editor, cola o ficheiro
+          migration_charity.sql do projecto (ou a secao 6 de migration_all_pending.sql) e clica Run.
+          Depois faz refresh a esta pagina.
+        </p>
+        <button type="button" id="charityMigrationOk" class="btn-primary" data-i18n="misc.ok">OK</button>
       </div>
     </div>
 

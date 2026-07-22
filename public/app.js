@@ -132,6 +132,9 @@ const refs = {
   charityAddConfirmBalance: document.getElementById("charityAddConfirmBalance"),
   charityAddConfirmOk: document.getElementById("charityAddConfirmOk"),
   charityAddConfirmCancel: document.getElementById("charityAddConfirmCancel"),
+  charityMigrationNotice: document.getElementById("charityMigrationNotice"),
+  charityMigrationOverlay: document.getElementById("charityMigrationOverlay"),
+  charityMigrationOk: document.getElementById("charityMigrationOk"),
 };
 
 const defaultProfitSplits = {
@@ -142,8 +145,8 @@ const defaultProfitSplits = {
 };
 
 const defaultIncomeClient = "Lemon Squeezy";
-const CURRENCY_CODES = ["EUR", "USD", "QAR"];
-const DEFAULT_CURRENCY = "EUR";
+const CURRENCY_CODES = ["USD", "EUR", "QAR"];
+const DEFAULT_CURRENCY = "USD";
 
 let listManageState = null;
 let pendingStudio9Expense = null;
@@ -246,11 +249,13 @@ function renderProfitDistribution() {
     if (!pctEl || !amtEl) return;
     const pct = clampPercent(pctEl.value, 0);
     totalPct += pct;
-    amtEl.textContent = formatEUR((profit * pct) / 100);
+    amtEl.textContent = formatPrimaryCurrency((profit * pct) / 100);
   });
 
   const charityAmount = getCharityAllocationAmount();
-  if (refs.charityAddBtn) refs.charityAddBtn.disabled = charityAmount <= 0;
+  if (refs.charityAddBtn) {
+    refs.charityAddBtn.disabled = charityAmount <= 0 || !isCharityTableReady();
+  }
 
   if (!refs.profitTotalHint) return;
   const totalLabel = `${t("profit.totalLabel")} ${totalPct.toFixed(1)}%`;
@@ -266,15 +271,22 @@ function renderProfitDistribution() {
   refs.profitTotalHint.classList.add("is-warning");
 }
 
+function isCharityTableReady() {
+  return state.summary?.charityTableReady !== false;
+}
+
 function renderCharityPanel() {
+  if (refs.charityMigrationNotice) {
+    refs.charityMigrationNotice.classList.toggle("hidden", isCharityTableReady());
+  }
   if (!refs.charityEntryAmount) return;
-  const balance = getCharityBalances().EUR;
+  const balance = getCharityBalances()[DEFAULT_CURRENCY];
   if (balance <= 0) {
     refs.charityEntryAmount.textContent = t("charity.noEntry");
     refs.charityEntryAmount.classList.add("charity-entry-empty");
     return;
   }
-  refs.charityEntryAmount.textContent = formatEUR(balance);
+  refs.charityEntryAmount.textContent = formatPrimaryCurrency(balance);
   refs.charityEntryAmount.classList.remove("charity-entry-empty");
 }
 
@@ -315,6 +327,12 @@ async function boot() {
   if (refs.charityAddConfirmOverlay) {
     refs.charityAddConfirmOverlay.addEventListener("click", (event) => {
       if (event.target === refs.charityAddConfirmOverlay) hideCharityAddConfirm();
+    });
+  }
+  if (refs.charityMigrationOk) refs.charityMigrationOk.addEventListener("click", hideCharityMigrationNotice);
+  if (refs.charityMigrationOverlay) {
+    refs.charityMigrationOverlay.addEventListener("click", (event) => {
+      if (event.target === refs.charityMigrationOverlay) hideCharityMigrationNotice();
     });
   }
   refs.clearFilters.addEventListener("click", clearFilters);
@@ -539,11 +557,10 @@ function getCharityBalances() {
       QAR: Number(raw.QAR) || 0,
     };
   }
-  return {
-    EUR: Number(state.summary?.charityBalance) || 0,
-    USD: 0,
-    QAR: 0,
-  };
+  const legacy = Number(state.summary?.charityBalance) || 0;
+  const out = emptyCurrencyBalances();
+  out[DEFAULT_CURRENCY] = legacy;
+  return out;
 }
 
 function getAccountBalances() {
@@ -555,7 +572,10 @@ function getAccountBalances() {
       QAR: Number(raw.QAR) || 0,
     };
   }
-  return { EUR: Number(state.summary?.accountBalance) || 0, USD: 0, QAR: 0 };
+  const legacy = Number(state.summary?.accountBalance) || 0;
+  const out = emptyCurrencyBalances();
+  out[DEFAULT_CURRENCY] = legacy;
+  return out;
 }
 
 function renderCurrencySummary(el, sums, options = {}) {
@@ -661,6 +681,7 @@ function applyBootstrapPayload(response) {
     accountBalances: emptyCurrencyBalances(),
     charityBalance: 0,
     charityBalances: emptyCurrencyBalances(),
+    charityTableReady: true,
     nextExpenseSeq: 1,
   };
   const balances = state.summary.accountBalances || {};
@@ -669,14 +690,14 @@ function applyBootstrapPayload(response) {
     USD: Number(balances.USD) || 0,
     QAR: Number(balances.QAR) || 0,
   };
-  state.summary.accountBalance = Number(state.summary.accountBalances.EUR) || 0;
+  state.summary.accountBalance = Number(state.summary.accountBalances[DEFAULT_CURRENCY]) || 0;
   const charityBalances = state.summary.charityBalances || {};
   state.summary.charityBalances = {
     EUR: Number(charityBalances.EUR) || 0,
     USD: Number(charityBalances.USD) || 0,
     QAR: Number(charityBalances.QAR) || 0,
   };
-  state.summary.charityBalance = Number(state.summary.charityBalances.EUR) || 0;
+  state.summary.charityBalance = Number(state.summary.charityBalances[DEFAULT_CURRENCY]) || 0;
   render();
 }
 
@@ -692,7 +713,7 @@ async function mutateAndRefresh(request) {
 }
 
 function getAccountBalance() {
-  return getAccountBalances().EUR;
+  return getAccountBalances()[DEFAULT_CURRENCY];
 }
 
 function canAffordPayment(amount, currency = DEFAULT_CURRENCY) {
@@ -761,6 +782,18 @@ function showCharityAddConfirm() {
 function hideCharityAddConfirm() {
   if (refs.charityAddConfirmOverlay) refs.charityAddConfirmOverlay.classList.add("hidden");
   pendingCharityAdd = null;
+}
+
+function showCharityMigrationNotice() {
+  if (refs.charityMigrationOverlay) refs.charityMigrationOverlay.classList.remove("hidden");
+}
+
+function hideCharityMigrationNotice() {
+  if (refs.charityMigrationOverlay) refs.charityMigrationOverlay.classList.add("hidden");
+}
+
+function isCharityMigrationError(message) {
+  return String(message || "").toLowerCase().includes("tabela de caridade");
 }
 
 function resetExpenseFormAfterSave() {
@@ -1246,6 +1279,10 @@ function stopBootstrapPolling() {
 }
 
 async function handleCharityAdd() {
+  if (!isCharityTableReady()) {
+    showCharityMigrationNotice();
+    return;
+  }
   showCharityAddConfirm();
 }
 
@@ -1253,8 +1290,8 @@ async function confirmCharityAdd() {
   if (!pendingCharityAdd) return;
   const payload = pendingCharityAdd;
   hideCharityAddConfirm();
-  const ok = await mutateAndRefresh(() =>
-    apiFetch("/api/charity", {
+  try {
+    const response = await apiFetch("/api/charity", {
       method: "POST",
       body: JSON.stringify({
         amount: payload.amount,
@@ -1262,9 +1299,14 @@ async function confirmCharityAdd() {
         profitAmount: payload.profitAmount,
         charityPct: payload.charityPct,
       }),
-    })
-  );
-  if (ok) renderProfitDistribution();
+    });
+    applyBootstrapPayload(response);
+    renderProfitDistribution();
+  } catch (error) {
+    const message = parseApiErrorMessage(error);
+    if (isCharityMigrationError(message)) showCharityMigrationNotice();
+    else window.alert(message);
+  }
 }
 
 async function handleExpenseSubmit(event) {
@@ -1582,13 +1624,13 @@ function renderTotals() {
   };
 
   const totalEntradas = sumAmountsByCurrency(state.incomes, (item) => inMonth(item.date));
-  const docsAsEur = (state.documents || []).map((item) => ({ ...item, currency: DEFAULT_CURRENCY }));
+  const docsAsPrimary = (state.documents || []).map((item) => ({ ...item, currency: DEFAULT_CURRENCY }));
   const studio9Expenses = sumAmountsByCurrency(
     state.expenses,
     (item) => resolveExpensePayer(item) === "Studio9" && item.paid && isExpensePaidInMonth(item, inMonth)
   );
   const studio9Documents = sumAmountsByCurrency(
-    docsAsEur,
+    docsAsPrimary,
     (item) => item.paid && inMonth(item.date)
   );
   const pagamentosStudio9 = addCurrencyBalances(studio9Expenses, studio9Documents);
@@ -1868,7 +1910,7 @@ function formatMoney(value, currency = DEFAULT_CURRENCY) {
   }).format(value || 0);
 }
 
-function formatEUR(value) {
+function formatPrimaryCurrency(value) {
   return formatMoney(value, DEFAULT_CURRENCY);
 }
 

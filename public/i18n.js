@@ -24,7 +24,7 @@
       "hero.totalOutflow": "Total de saida (no mes)",
       "hero.accountBalance": "Saldo acumulado (conta)",
       "hero.accountBalanceHint":
-        "Saldo acumulado por moeda = entradas menos reembolsos e pagamentos ja efectuados (documentos em euros). Cada moeda tem saldo independente.",
+        "Saldo acumulado por moeda = entradas menos reembolsos e pagamentos ja efectuados (documentos em dolares). Cada moeda tem saldo independente.",
       "currency.label": "Moeda",
       "currency.EUR": "Euro (EUR)",
       "currency.USD": "Dolar (USD)",
@@ -144,8 +144,8 @@
       "client.noneSelected": "Escolhe um cliente primeiro.",
       "profit.title": "Distribuicao de lucro",
       "profit.desc":
-        "O lucro a distribuir corresponde ao saldo acumulado (EUR) e aparece pre-preenchido. Ajusta as percentagens — os valores calculam-se automaticamente.",
-      "profit.amount": "Lucro a distribuir (EUR)",
+        "O lucro a distribuir corresponde ao saldo acumulado (USD) e aparece pre-preenchido. Ajusta as percentagens — os valores calculam-se automaticamente.",
+      "profit.amount": "Lucro a distribuir (USD)",
       "profit.percent": "Percentagem",
       "profit.assigned": "Valor atribuido",
       "profit.charity": "Caridade",
@@ -164,6 +164,11 @@
         "Vais mover {amount} do saldo da conta para Caridade Saldo ({pct}% do lucro a distribuir). Confirmas?",
       "charity.confirmOk": "Confirmar",
       "charity.confirmCancel": "Cancelar",
+      "charity.migrationNotice":
+        "Falta criar a tabela de caridade no Supabase. Abre SQL Editor e corre migration_charity.sql (ou a secao 6 de migration_all_pending.sql).",
+      "charity.migrationTitle": "Configuracao em falta no Supabase",
+      "charity.migrationBody":
+        "A tabela charity_allocations ainda nao existe. No Supabase, abre SQL Editor, cola o ficheiro migration_charity.sql do projecto (ou a secao 6 de migration_all_pending.sql) e clica Run. Depois faz refresh a esta pagina.",
       "activity.title": "Atividade recente",
       "activity.desc":
         "Gastos, entradas e reembolsos (quando uma despesa «por pagar» passa a paga).",
@@ -230,7 +235,7 @@
       "hero.totalOutflow": "Total outflow (this month)",
       "hero.accountBalance": "Running account balance",
       "hero.accountBalanceHint":
-        "Running balance per currency = income minus reimbursements and payments made (documents in euros). Each currency has an independent balance.",
+        "Running balance per currency = income minus reimbursements and payments made (documents in dollars). Each currency has an independent balance.",
       "currency.label": "Currency",
       "currency.EUR": "Euro (EUR)",
       "currency.USD": "US Dollar (USD)",
@@ -350,8 +355,8 @@
       "client.noneSelected": "Choose a client first.",
       "profit.title": "Profit distribution",
       "profit.desc":
-        "Profit to distribute matches the accumulated balance (EUR) and is filled in by default. Adjust the percentages — assigned amounts are calculated automatically.",
-      "profit.amount": "Profit to distribute (EUR)",
+        "Profit to distribute matches the accumulated balance (USD) and is filled in by default. Adjust the percentages — assigned amounts are calculated automatically.",
+      "profit.amount": "Profit to distribute (USD)",
       "profit.percent": "Percentage",
       "profit.assigned": "Assigned amount",
       "profit.charity": "Charity",
@@ -370,6 +375,11 @@
         "You will move {amount} from the account balance to Charity Balance ({pct}% of profit to distribute). Confirm?",
       "charity.confirmOk": "Confirm",
       "charity.confirmCancel": "Cancel",
+      "charity.migrationNotice":
+        "Charity table missing in Supabase. Open SQL Editor and run migration_charity.sql (or section 6 of migration_all_pending.sql).",
+      "charity.migrationTitle": "Missing Supabase setup",
+      "charity.migrationBody":
+        "The charity_allocations table does not exist yet. In Supabase, open SQL Editor, paste migration_charity.sql from the project (or section 6 of migration_all_pending.sql) and click Run. Then refresh this page.",
       "activity.title": "Recent activity",
       "activity.desc":
         "Expenses, income and reimbursements (when an unpaid expense becomes paid).",
