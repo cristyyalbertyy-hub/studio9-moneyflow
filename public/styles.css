@@ -1095,6 +1095,7 @@ h1 {
 
 .profit-list-section .table-wrap {
   overflow-x: auto;
+  overflow-y: auto;
 }
 
 table.profit-table {
@@ -1406,7 +1407,7 @@ select option {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  max-height: 320px;
+  max-height: calc(2.75rem * 4 + 30px);
   overflow-y: auto;
 }
 
@@ -1473,17 +1474,14 @@ select option {
 }
 
 .table-wrap {
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: calc(2.75rem * 5);
   border: 1px solid rgba(148, 163, 184, 0.25);
   border-radius: 12px;
 }
 
-.table-wrap--scroll-4 {
-  max-height: calc(2.75rem * 5);
-  overflow-y: auto;
-}
-
-.table-wrap--scroll-4 thead th {
+.table-wrap thead th {
   position: sticky;
   top: 0;
   z-index: 1;
