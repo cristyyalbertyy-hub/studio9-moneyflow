@@ -4,6 +4,7 @@ const state = {
   documents: [],
   charityAllocations: [],
   charityDisbursements: [],
+  expenseInvoices: [],
   profitDistributions: [],
   categories: [],
   clients: [],
@@ -28,6 +29,7 @@ const periodStorageKey = "studio9-period-month-v1";
 const profitSplitsStorageKey = "studio9-profit-splits-v1";
 const profitCurrencyStorageKey = "studio9-profit-currency-v1";
 const bootstrapPollMs = 15000;
+const MAX_INVOICE_BYTES = 3 * 1024 * 1024;
 let bootstrapPollTimer = null;
 
 const refs = {
@@ -173,6 +175,15 @@ const refs = {
   charityOutflowClearFilters: document.getElementById("charityOutflowClearFilters"),
   charityOutflowRows: document.getElementById("charityOutflowRows"),
   charityOutflowListPeriodTotal: document.getElementById("charityOutflowListPeriodTotal"),
+  invoiceUploadForm: document.getElementById("invoiceUploadForm"),
+  invoiceExpenseSelect: document.getElementById("invoiceExpenseSelect"),
+  invoiceFileInput: document.getElementById("invoiceFileInput"),
+  invoiceMigrationNotice: document.getElementById("invoiceMigrationNotice"),
+  invoiceFilterStartDate: document.getElementById("invoiceFilterStartDate"),
+  invoiceFilterEndDate: document.getElementById("invoiceFilterEndDate"),
+  invoiceClearFilters: document.getElementById("invoiceClearFilters"),
+  invoiceRows: document.getElementById("invoiceRows"),
+  invoiceListPeriodTotal: document.getElementById("invoiceListPeriodTotal"),
 };
 
 const defaultProfitSplits = {
@@ -464,6 +475,220 @@ function clearCharityOutflowFilters() {
   renderCharityOutflowTable();
 }
 
+function isExpenseInvoicesTableReady() {
+  return state.summary?.expenseInvoicesTableReady !== false;
+}
+
+function getExpenseInvoiceIds() {
+  return new Set((state.expenseInvoices || []).map((item) => item.expenseId));
+}
+
+function findExpenseById(expenseId) {
+  return (state.expenses || []).find((item) => item.id === expenseId) || null;
+}
+
+function buildExpenseInvoiceOptionLabel(expense) {
+  const seq = expense.seqNumber != null ? `#${expense.seqNumber}` : "—";
+  const label = buildExpensePaymentLabel(expense.category, expense.description);
+  return `${seq} · ${formatDate(expense.date)} · ${label} · ${formatMoney(expense.amount, expense.currency)}`;
+}
+
+function getExpensesWithoutInvoice() {
+  const invoiced = getExpenseInvoiceIds();
+  return (state.expenses || [])
+    .filter((item) => !invoiced.has(item.id))
+    .sort((a, b) => {
+      const dateCmp = (b.date || "").localeCompare(a.date || "");
+      if (dateCmp !== 0) return dateCmp;
+      return (Number(b.seqNumber) || 0) - (Number(a.seqNumber) || 0);
+    });
+}
+
+function renderInvoiceExpenseSelect() {
+  if (!refs.invoiceExpenseSelect) return;
+  const current = refs.invoiceExpenseSelect.value;
+  const items = getExpensesWithoutInvoice();
+  if (items.length === 0) {
+    refs.invoiceExpenseSelect.innerHTML = `<option value="" disabled selected>${escapeHtml(t("invoices.noExpensesWithoutInvoice"))}</option>`;
+    refs.invoiceExpenseSelect.disabled = true;
+    return;
+  }
+  refs.invoiceExpenseSelect.disabled = false;
+  refs.invoiceExpenseSelect.innerHTML = items
+    .map(
+      (expense) =>
+        `<option value="${escapeHtml(expense.id)}">${escapeHtml(buildExpenseInvoiceOptionLabel(expense))}</option>`
+    )
+    .join("");
+  if (current && items.some((item) => item.id === current)) {
+    refs.invoiceExpenseSelect.value = current;
+  }
+}
+
+function getFilteredExpenseInvoices() {
+  const startDate = refs.invoiceFilterStartDate ? refs.invoiceFilterStartDate.value : "";
+  const endDate = refs.invoiceFilterEndDate ? refs.invoiceFilterEndDate.value : "";
+  return (state.expenseInvoices || [])
+    .map((invoice) => {
+      const expense = findExpenseById(invoice.expenseId);
+      if (!expense) return null;
+      return { invoice, expense };
+    })
+    .filter(Boolean)
+    .filter(({ expense }) => {
+      const date = expense.date || "";
+      if (!date) return true;
+      const startOk = !startDate || date >= startDate;
+      const endOk = !endDate || date <= endDate;
+      return startOk && endOk;
+    })
+    .sort((a, b) => (b.expense.date || "").localeCompare(a.expense.date || ""));
+}
+
+function renderInvoicePanel() {
+  if (refs.invoiceMigrationNotice) {
+    refs.invoiceMigrationNotice.classList.toggle("hidden", isExpenseInvoicesTableReady());
+  }
+  renderInvoiceExpenseSelect();
+  renderInvoiceTable();
+}
+
+function renderInvoiceTable() {
+  if (!refs.invoiceRows) return;
+  const rows = getFilteredExpenseInvoices();
+  if (refs.invoiceListPeriodTotal) {
+    refs.invoiceListPeriodTotal.textContent = `${t("invoices.periodPrefix")} ${rows.length}`;
+  }
+  if (rows.length === 0) {
+    refs.invoiceRows.innerHTML = `<tr><td colspan="6" class="empty">${escapeHtml(t("table.empty"))}</td></tr>`;
+    return;
+  }
+  refs.invoiceRows.innerHTML = rows
+    .map(({ invoice, expense }) => {
+      const seq = expense.seqNumber != null ? escapeHtml(String(expense.seqNumber)) : "—";
+      return `
+      <tr>
+        <td class="td-seq">${seq}</td>
+        <td>${formatDate(expense.date)}</td>
+        <td>${escapeHtml(expense.category)}</td>
+        <td>${escapeHtml(expense.description)}</td>
+        <td>${formatMoney(expense.amount, expense.currency)}</td>
+        <td>
+          <button type="button" class="btn-ghost btn-invoice-view" data-invoice-view="${escapeHtml(invoice.id)}">
+            ${escapeHtml(t("invoices.viewPdf"))}
+          </button>
+        </td>
+      </tr>
+    `;
+    })
+    .join("");
+
+  refs.invoiceRows.querySelectorAll("[data-invoice-view]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const invoiceId = button.getAttribute("data-invoice-view");
+      if (invoiceId) openExpenseInvoicePdf(invoiceId);
+    });
+  });
+}
+
+function clearInvoiceFilters() {
+  const bounds = getSelectedMonthBounds();
+  if (bounds && refs.invoiceFilterStartDate && refs.invoiceFilterEndDate) {
+    refs.invoiceFilterStartDate.value = bounds.start;
+    refs.invoiceFilterEndDate.value = bounds.end;
+  }
+  renderInvoiceTable();
+}
+
+function initInvoicePanel() {
+  if (!refs.invoiceUploadForm) return;
+  refs.invoiceUploadForm.addEventListener("submit", handleInvoiceUploadSubmit);
+  if (refs.invoiceClearFilters) refs.invoiceClearFilters.addEventListener("click", clearInvoiceFilters);
+  if (refs.invoiceFilterStartDate) refs.invoiceFilterStartDate.addEventListener("change", renderInvoiceTable);
+  if (refs.invoiceFilterEndDate) refs.invoiceFilterEndDate.addEventListener("change", renderInvoiceTable);
+}
+
+function resetInvoiceUploadForm() {
+  if (!refs.invoiceUploadForm) return;
+  refs.invoiceUploadForm.reset();
+  renderInvoiceExpenseSelect();
+}
+
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result || "");
+      const comma = result.indexOf(",");
+      resolve(comma >= 0 ? result.slice(comma + 1) : result);
+    };
+    reader.onerror = () => reject(reader.error || new Error("Ficheiro invalido"));
+    reader.readAsDataURL(file);
+  });
+}
+
+function isInvoiceMigrationError(message) {
+  const text = String(message || "").toLowerCase();
+  return text.includes("faturas em falta") || text.includes("expense_invoices") || text.includes("invoice table");
+}
+
+async function handleInvoiceUploadSubmit(event) {
+  event.preventDefault();
+  if (!isExpenseInvoicesTableReady()) {
+    if (refs.invoiceMigrationNotice) refs.invoiceMigrationNotice.classList.remove("hidden");
+    return;
+  }
+
+  const expenseId = refs.invoiceExpenseSelect?.value;
+  const file = refs.invoiceFileInput?.files?.[0];
+  if (!expenseId || !file) return;
+
+  const mimeType = String(file.type || "").toLowerCase();
+  const name = String(file.name || "").toLowerCase();
+  if (mimeType !== "application/pdf" && !name.endsWith(".pdf")) {
+    window.alert(t("invoices.invalidFile"));
+    return;
+  }
+  if (file.size > MAX_INVOICE_BYTES) {
+    window.alert(t("invoices.fileTooLarge"));
+    return;
+  }
+
+  try {
+    const fileBase64 = await readFileAsBase64(file);
+    const response = await apiFetch("/api/invoices", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "upload",
+        expenseId,
+        fileName: file.name,
+        mimeType: "application/pdf",
+        fileBase64,
+      }),
+    });
+    applyBootstrapPayload(response);
+    resetInvoiceUploadForm();
+    renderInvoicePanel();
+  } catch (error) {
+    const message = parseApiErrorMessage(error);
+    if (isInvoiceMigrationError(message) && refs.invoiceMigrationNotice) {
+      refs.invoiceMigrationNotice.classList.remove("hidden");
+    } else {
+      window.alert(message);
+    }
+  }
+}
+
+async function openExpenseInvoicePdf(invoiceId) {
+  try {
+    const payload = await apiFetch(`/api/invoices?id=${encodeURIComponent(invoiceId)}`);
+    if (!payload?.url) throw new Error("Fatura nao encontrada");
+    window.open(payload.url, "_blank", "noopener,noreferrer");
+  } catch (error) {
+    window.alert(parseApiErrorMessage(error));
+  }
+}
+
 function initCharityDisbursementForm() {
   if (!refs.charityDisbursementForm) return;
   if (refs.charityDisburseDate) refs.charityDisburseDate.value = todayISO();
@@ -720,6 +945,7 @@ async function boot() {
     });
   }
   initCharityDisbursementForm();
+  initInvoicePanel();
   refs.clearFilters.addEventListener("click", clearFilters);
   refs.logoutBtn.addEventListener("click", () => logout(true));
   refs.exportExcelBtn.addEventListener("click", exportExcel);
@@ -1080,6 +1306,7 @@ function applyBootstrapPayload(response) {
   state.documents = Array.isArray(response.documents) ? response.documents : [];
   state.charityAllocations = Array.isArray(response.charityAllocations) ? response.charityAllocations : [];
   state.charityDisbursements = Array.isArray(response.charityDisbursements) ? response.charityDisbursements : [];
+  state.expenseInvoices = Array.isArray(response.expenseInvoices) ? response.expenseInvoices : [];
   state.profitDistributions = Array.isArray(response.profitDistributions) ? response.profitDistributions : [];
   state.activities = Array.isArray(response.activities) ? response.activities : [];
   state.summary = response.summary || {
@@ -1961,6 +2188,7 @@ function render() {
   renderCharityOutflowTable();
   renderProfitDistribution();
   renderProfitDistributionTable();
+  renderInvoicePanel();
 }
 
 function renderExpenseSeqPreview() {
@@ -2569,6 +2797,10 @@ function applyPeriodMonthToDateFilters() {
   if (refs.profitFilterStartDate && refs.profitFilterEndDate) {
     refs.profitFilterStartDate.value = bounds.start;
     refs.profitFilterEndDate.value = bounds.end;
+  }
+  if (refs.invoiceFilterStartDate && refs.invoiceFilterEndDate) {
+    refs.invoiceFilterStartDate.value = bounds.start;
+    refs.invoiceFilterEndDate.value = bounds.end;
   }
 }
 

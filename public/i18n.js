@@ -218,6 +218,23 @@
       "charity.migrationTitle": "Configuracao em falta no Supabase",
       "charity.migrationBody":
         "A tabela charity_allocations ainda nao existe. No Supabase, abre SQL Editor, cola o ficheiro migration_charity.sql do projecto (ou a secao 6 de migration_all_pending.sql) e clica Run. Depois faz refresh a esta pagina.",
+      "invoices.title": "Faturas",
+      "invoices.desc":
+        "Anexa o PDF da fatura a uma despesa registada. Cada despesa pode ter uma fatura.",
+      "invoices.expense": "Despesa",
+      "invoices.file": "Ficheiro PDF",
+      "invoices.fileHint": "Max. 3 MB por ficheiro.",
+      "invoices.upload": "Anexar fatura",
+      "invoices.listTitle": "Faturas registadas",
+      "invoices.listDesc": "Despesas com PDF anexado — clica em Ver PDF para abrir.",
+      "invoices.periodPrefix": "Total no periodo:",
+      "invoices.pdf": "PDF",
+      "invoices.viewPdf": "Ver PDF",
+      "invoices.noExpensesWithoutInvoice": "Todas as despesas ja tem fatura ou ainda nao ha despesas.",
+      "invoices.migrationNotice":
+        "Falta criar a tabela de faturas no Supabase. Corre migration_expense_invoices.sql (ou a seccao 9 de migration_all_pending.sql).",
+      "invoices.fileTooLarge": "Ficheiro demasiado grande (max. 3 MB).",
+      "invoices.invalidFile": "Apenas ficheiros PDF sao permitidos.",
       "activity.title": "Atividade recente",
       "activity.desc":
         "Gastos, entradas e reembolsos (quando uma despesa «por pagar» passa a paga).",
@@ -262,6 +279,14 @@
       "api.clientsTableMissing":
         "Tabela de clientes em falta. Abre o Supabase SQL Editor e corre migration_clients.sql.",
       "api.invalidCurrency": "Moeda invalida",
+      "api.invoiceExists": "Ja existe uma fatura para esta despesa.",
+      "api.invoiceTableMissing":
+        "Tabela de faturas em falta. Abre o Supabase SQL Editor e corre migration_expense_invoices.sql.",
+      "api.invoiceBucketMissing":
+        "Bucket expense-invoices em falta no Supabase Storage. Corre migration_expense_invoices.sql.",
+      "api.invoiceTooLarge": "Ficheiro demasiado grande (max. 3 MB).",
+      "api.invoiceNotFound": "Fatura nao encontrada.",
+      "api.invoiceInvalidFile": "Apenas ficheiros PDF sao permitidos.",
     },
     en: {
       "auth.title": "Sign in to MoneyFlow",
@@ -479,6 +504,23 @@
       "charity.migrationTitle": "Missing Supabase setup",
       "charity.migrationBody":
         "The charity_allocations table does not exist yet. In Supabase, open SQL Editor, paste migration_charity.sql from the project (or section 6 of migration_all_pending.sql) and click Run. Then refresh this page.",
+      "invoices.title": "Invoices",
+      "invoices.desc":
+        "Attach the invoice PDF to a recorded expense. Each expense can have one invoice.",
+      "invoices.expense": "Expense",
+      "invoices.file": "PDF file",
+      "invoices.fileHint": "Max. 3 MB per file.",
+      "invoices.upload": "Attach invoice",
+      "invoices.listTitle": "Recorded invoices",
+      "invoices.listDesc": "Expenses with an attached PDF — click View PDF to open.",
+      "invoices.periodPrefix": "Period total:",
+      "invoices.pdf": "PDF",
+      "invoices.viewPdf": "View PDF",
+      "invoices.noExpensesWithoutInvoice": "All expenses already have an invoice or there are no expenses yet.",
+      "invoices.migrationNotice":
+        "Invoice table missing in Supabase. Run migration_expense_invoices.sql (or section 9 of migration_all_pending.sql).",
+      "invoices.fileTooLarge": "File too large (max. 3 MB).",
+      "invoices.invalidFile": "Only PDF files are allowed.",
       "activity.title": "Recent activity",
       "activity.desc":
         "Expenses, income and reimbursements (when an unpaid expense becomes paid).",
@@ -523,6 +565,14 @@
       "api.clientsTableMissing":
         "Clients table is missing. Open the Supabase SQL Editor and run migration_clients.sql.",
       "api.invalidCurrency": "Invalid currency",
+      "api.invoiceExists": "This expense already has an invoice.",
+      "api.invoiceTableMissing":
+        "Invoice table missing. Open the Supabase SQL Editor and run migration_expense_invoices.sql.",
+      "api.invoiceBucketMissing":
+        "expense-invoices bucket missing in Supabase Storage. Run migration_expense_invoices.sql.",
+      "api.invoiceTooLarge": "File too large (max. 3 MB).",
+      "api.invoiceNotFound": "Invoice not found.",
+      "api.invoiceInvalidFile": "Only PDF files are allowed.",
     },
   };
 
@@ -543,6 +593,12 @@
     "Moeda invalida": "api.invalidCurrency",
     "Tabela de clientes em falta. Corre migration_clients.sql no Supabase SQL Editor.":
       "api.clientsTableMissing",
+    "Ja existe uma fatura para esta despesa": "api.invoiceExists",
+    "Ja existe uma fatura para esta despesa.": "api.invoiceExists",
+    "Ficheiro demasiado grande (max. 3 MB)": "api.invoiceTooLarge",
+    "Apenas ficheiros PDF sao permitidos": "api.invoiceInvalidFile",
+    "Fatura nao encontrada": "api.invoiceNotFound",
+    "Despesa nao encontrada": "api.invoiceNotFound",
   };
 
   let currentLang = readLang();

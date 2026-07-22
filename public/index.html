@@ -721,6 +721,73 @@
         </section>
       </div>
 
+      <section class="panel invoices-panel">
+        <div class="panel-title">
+          <h2 data-i18n="invoices.title">Faturas</h2>
+          <p data-i18n="invoices.desc">
+            Anexa o PDF da fatura a uma despesa registada. Cada despesa pode ter uma fatura.
+          </p>
+        </div>
+        <p id="invoiceMigrationNotice" class="invoice-migration-notice hidden" data-i18n="invoices.migrationNotice">
+          Falta criar a tabela de faturas no Supabase. Corre migration_expense_invoices.sql
+          (ou a seccao 9 de migration_all_pending.sql).
+        </p>
+
+        <form id="invoiceUploadForm" class="invoice-upload-form form-grid">
+          <label class="full-width">
+            <span data-i18n="invoices.expense">Despesa</span>
+            <select id="invoiceExpenseSelect" required></select>
+          </label>
+          <label class="full-width">
+            <span data-i18n="invoices.file">Ficheiro PDF</span>
+            <input id="invoiceFileInput" type="file" accept="application/pdf,.pdf" required />
+          </label>
+          <p class="invoice-upload-hint full-width" data-i18n="invoices.fileHint">Max. 3 MB por ficheiro.</p>
+          <button type="submit" class="btn-primary full-width" data-i18n="invoices.upload">Anexar fatura</button>
+        </form>
+
+        <div class="invoice-list-section">
+          <div class="panel-title panel-title--sub">
+            <h3 data-i18n="invoices.listTitle">Faturas registadas</h3>
+            <p data-i18n="invoices.listDesc">Despesas com PDF anexado — clica em Ver PDF para abrir.</p>
+          </div>
+
+          <div class="invoice-register-meta">
+            <span id="invoiceListPeriodTotal">Total no periodo: 0</span>
+          </div>
+
+          <div class="filters invoice-filters">
+            <label>
+              <span data-i18n="filter.from">De</span>
+              <input id="invoiceFilterStartDate" type="date" />
+            </label>
+            <label>
+              <span data-i18n="filter.to">Ate</span>
+              <input id="invoiceFilterEndDate" type="date" />
+            </label>
+            <button type="button" id="invoiceClearFilters" class="btn-ghost" data-i18n="filter.clear">
+              Limpar filtros
+            </button>
+          </div>
+
+          <div class="table-wrap">
+            <table class="expense-table">
+              <thead>
+                <tr>
+                  <th data-i18n="expense.seqNumber">N.o</th>
+                  <th data-i18n="table.date">Data</th>
+                  <th data-i18n="table.category">Categoria</th>
+                  <th data-i18n="table.description">Descricao</th>
+                  <th data-i18n="table.amount">Valor</th>
+                  <th data-i18n="invoices.pdf">PDF</th>
+                </tr>
+              </thead>
+              <tbody id="invoiceRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
       <section class="panel activity-panel">
         <div class="panel-title">
           <h2 data-i18n="activity.title">Atividade recente</h2>

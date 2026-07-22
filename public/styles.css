@@ -1130,6 +1130,55 @@ table.profit-table td:nth-child(3) {
   display: none;
 }
 
+.invoices-panel .panel-title p {
+  max-width: 52rem;
+}
+
+.invoice-migration-notice {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(251, 191, 36, 0.45);
+  background: rgba(120, 53, 15, 0.35);
+  color: #fde68a;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.invoice-migration-notice.hidden {
+  display: none;
+}
+
+.invoice-upload-form {
+  margin-bottom: 18px;
+}
+
+.invoice-upload-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.invoice-list-section {
+  margin-top: 8px;
+}
+
+.invoice-register-meta {
+  margin-bottom: 10px;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.invoice-filters {
+  margin-bottom: 12px;
+}
+
+.btn-invoice-view {
+  white-space: nowrap;
+  padding: 6px 10px;
+  font-size: 0.82rem;
+}
+
 .charity-entry-card {
   max-width: 320px;
   border-radius: 14px;

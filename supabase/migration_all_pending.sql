@@ -144,3 +144,26 @@ create index if not exists charity_disbursements_created_at_idx
 
 create index if not exists charity_disbursements_date_idx
   on public.charity_disbursements (date desc);
+
+-- 9) Faturas PDF das despesas (Storage bucket + metadados)
+insert into storage.buckets (id, name, public)
+values ('expense-invoices', 'expense-invoices', false)
+on conflict (id) do nothing;
+
+create table if not exists public.expense_invoices (
+  id uuid primary key default gen_random_uuid(),
+  expense_id uuid not null references public.expenses(id) on delete cascade,
+  storage_path text not null,
+  file_name text not null,
+  mime_type text not null default 'application/pdf',
+  file_size bigint,
+  created_by text not null check (created_by in ('Cris', 'Alex')),
+  created_at timestamptz not null default now(),
+  unique (expense_id)
+);
+
+create index if not exists expense_invoices_created_at_idx
+  on public.expense_invoices (created_at desc);
+
+create index if not exists expense_invoices_expense_id_idx
+  on public.expense_invoices (expense_id);
