@@ -946,7 +946,7 @@ h1 {
 }
 
 .profit-split-wrap {
-  max-width: 420px;
+  max-width: 480px;
 }
 
 .profit-amount-field {
@@ -954,7 +954,7 @@ h1 {
 }
 
 .profit-amount-field input {
-  max-width: 180px;
+  max-width: 220px;
 }
 
 .profit-split-head,
@@ -1050,6 +1050,7 @@ h1 {
   margin-top: 28px;
   padding-top: 22px;
   border-top: 1px solid rgba(148, 163, 184, 0.15);
+  width: 100%;
 }
 
 .profit-register-meta {
@@ -1060,6 +1061,30 @@ h1 {
 
 .profit-filters {
   margin-bottom: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, max-content));
+  gap: 12px;
+}
+
+.profit-filters .btn-ghost {
+  justify-self: start;
+  white-space: nowrap;
+}
+
+.profit-list-section .table-wrap {
+  overflow-x: auto;
+}
+
+table.profit-table {
+  min-width: 0;
+  width: 100%;
+}
+
+table.profit-table th:nth-child(3),
+table.profit-table td:nth-child(3) {
+  min-width: 180px;
+  white-space: normal;
+  line-height: 1.4;
+  font-size: 0.85rem;
 }
 
 .charity-panel .panel-title p {

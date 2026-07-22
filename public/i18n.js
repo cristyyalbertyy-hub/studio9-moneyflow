@@ -144,7 +144,7 @@
       "client.noneSelected": "Escolhe um cliente primeiro.",
       "profit.title": "Distribuicao de lucro",
       "profit.desc":
-        "O lucro a distribuir corresponde ao saldo acumulado (USD) e aparece pre-preenchido. Ajusta as percentagens e usa Accao para confirmar a distribuicao completa.",
+        "O lucro a distribuir aparece pre-preenchido com o saldo USD, mas podes editar o valor. Ajusta as percentagens e usa Accao para confirmar a distribuicao completa.",
       "profit.amount": "Lucro a distribuir (USD)",
       "profit.percent": "Percentagem",
       "profit.assigned": "Valor atribuido",
@@ -153,6 +153,8 @@
       "profit.totalOk": "100% — distribuicao completa.",
       "profit.totalWarn": "Atencao: as percentagens somam {total}%. Ajusta para 100%.",
       "profit.action": "Accao",
+      "profit.actionDisabledNoAmount": "Indica um valor de lucro maior que zero.",
+      "profit.actionDisabledPct": "As percentagens devem somar 100%.",
       "profit.listTitle": "Accoes registadas",
       "profit.listDesc":
         "Cada linha corresponde a uma distribuicao de lucro confirmada com Accao.",
@@ -378,7 +380,7 @@
       "client.noneSelected": "Choose a client first.",
       "profit.title": "Profit distribution",
       "profit.desc":
-        "Profit to distribute matches the accumulated balance (USD) and is filled in by default. Adjust the percentages and use Action to confirm the full distribution.",
+        "Profit to distribute is pre-filled with the USD balance, but you can edit the amount. Adjust the percentages and use Action to confirm the full distribution.",
       "profit.amount": "Profit to distribute (USD)",
       "profit.percent": "Percentage",
       "profit.assigned": "Assigned amount",
@@ -387,6 +389,8 @@
       "profit.totalOk": "100% — full distribution.",
       "profit.totalWarn": "Note: percentages add up to {total}%. Adjust to 100%.",
       "profit.action": "Action",
+      "profit.actionDisabledNoAmount": "Enter a profit amount greater than zero.",
+      "profit.actionDisabledPct": "Percentages must add up to 100%.",
       "profit.listTitle": "Recorded actions",
       "profit.listDesc":
         "Each row is a profit distribution confirmed with Action.",

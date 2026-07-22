@@ -166,7 +166,6 @@ let profitAmountManual = false;
 
 function syncProfitAmountFromBalance() {
   if (!refs.profitAmount || profitAmountManual) return;
-  if (document.activeElement === refs.profitAmount) return;
   const balance = Math.max(0, getAccountBalance());
   refs.profitAmount.value = balance.toFixed(2);
 }
@@ -195,6 +194,12 @@ function initProfitDistribution() {
       renderProfitDistribution();
     });
   });
+
+  if (refs.profitAmount) {
+    refs.profitAmount.addEventListener("focus", () => {
+      profitAmountManual = true;
+    });
+  }
 
   syncProfitAmountFromBalance();
   renderProfitDistribution();
@@ -288,10 +293,19 @@ function renderProfitDistribution() {
   if (refs.profitActionBtn) {
     const canAfford = canAffordPayment(snapshot.profitAmount, snapshot.currency);
     refs.profitActionBtn.disabled =
-      !isProfitDistributionTableReady() ||
       snapshot.profitAmount <= 0 ||
       Math.abs(snapshot.totalPct - 100) > 0.05 ||
       !canAfford;
+    refs.profitActionBtn.title =
+      !isProfitDistributionTableReady()
+        ? t("profit.migrationNotice")
+        : snapshot.profitAmount <= 0
+          ? t("profit.actionDisabledNoAmount")
+          : Math.abs(snapshot.totalPct - 100) > 0.05
+            ? t("profit.actionDisabledPct")
+            : !canAfford
+              ? t("payments.insufficientBalanceMsg")
+              : "";
   }
 
   if (!refs.profitTotalHint) return;
@@ -888,6 +902,7 @@ function applyBootstrapPayload(response) {
     QAR: Number(charityBalances.QAR) || 0,
   };
   state.summary.charityBalance = Number(state.summary.charityBalances[DEFAULT_CURRENCY]) || 0;
+  syncProfitAmountFromBalance();
   render();
 }
 
@@ -1606,7 +1621,6 @@ function render() {
   renderCategories();
   renderClients();
   renderExpenseSeqPreview();
-  syncProfitAmountFromBalance();
   renderTotals();
   renderIncomeTable();
   renderExpenseRegisterTable();
